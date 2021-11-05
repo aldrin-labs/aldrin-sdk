@@ -81,7 +81,7 @@
     }
   },
   "lint-staged": {
-    "**/*.ts": [
+    "*.ts": [
       "yarn lint",
       "git add"
     ]

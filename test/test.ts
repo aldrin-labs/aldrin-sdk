@@ -27,6 +27,8 @@ const wallet = new Wallet(payer)
 
 console.log('Wallet:', wallet.payer.secretKey);
 
+let a = 1
+
 const connection = new Connection('https://api.mainnet-beta.solana.com');
 
 const pool = new PoolProgram(connection, wallet);
