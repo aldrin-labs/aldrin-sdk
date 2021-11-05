@@ -1,6 +1,6 @@
-import { Wallet } from "@project-serum/anchor"
-import { Connection, Transaction } from "@solana/web3.js"
-import { log } from ".."
+import { Wallet } from '@project-serum/anchor'
+import { Connection, Transaction } from '@solana/web3.js'
+import { log } from '..'
 
 export interface SendTransactionParams {
   transaction: Transaction

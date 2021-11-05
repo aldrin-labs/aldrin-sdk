@@ -1,8 +1,8 @@
-import { Connection, PublicKey } from "@solana/web3.js";
-import BN from "bn.js";
+import { Connection, PublicKey } from '@solana/web3.js';
+import BN from 'bn.js';
 import { AccountLayout, TokenLayout } from '../layout';
 import { u64 } from '../utils';
-import { TokenInfo } from "./types";
+import { TokenInfo } from './types';
 
 
 export class TokenProgram {

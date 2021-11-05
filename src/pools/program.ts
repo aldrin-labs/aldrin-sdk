@@ -1,13 +1,12 @@
-import { Program, Provider, Wallet } from '@project-serum/anchor'
+import { Idl, Program, Provider, Wallet } from '@project-serum/anchor'
+import { TOKEN_PROGRAM_ID } from '@solana/spl-token'
 import { Connection, PublicKey, SYSVAR_CLOCK_PUBKEY, SYSVAR_RENT_PUBKEY, Transaction } from '@solana/web3.js'
-
 import BN from 'bn.js'
-import { Idl } from '@project-serum/anchor'
-import idl from './idl.json'
-import { BasketParams, CreateBasketParams, Pool, PoolRpcResponse, RedeemBasketParams, Side, SIDE, SnapshotQueue, SnapshotQueueRpcResponse, SwapParams } from './types'
 import { TokenProgram } from '../token'
 import { createTokenAccountTransaction, sendTransaction } from '../transactions'
-import { TOKEN_PROGRAM_ID } from '@solana/spl-token'
+import idl from './idl.json'
+import { CreateBasketParams, Pool, PoolRpcResponse, RedeemBasketParams, Side, SIDE, SnapshotQueue, SnapshotQueueRpcResponse, SwapParams } from './types'
+
 
 export class PoolProgram {
   readonly program: Program

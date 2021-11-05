@@ -1,5 +1,5 @@
-import { Wallet } from "@project-serum/anchor"
-import { PublicKey, Transaction } from "@solana/web3.js"
+import { Wallet } from '@project-serum/anchor'
+import { PublicKey, Transaction } from '@solana/web3.js'
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   Token,

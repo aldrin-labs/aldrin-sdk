@@ -1,20 +1,20 @@
 
-import { Wallet } from "@project-serum/anchor";
-import { Connection, Keypair } from "@solana/web3.js";
+import { Wallet } from '@project-serum/anchor';
+import { Connection, Keypair } from '@solana/web3.js';
 
 import os from 'os'
 import fs from 'fs'
 import * as bs58 from 'bs58'
 import BN from 'bn.js'
-import { PoolProgram, TokenProgram } from "../src";
-import { TOKEN_LIST } from "../src/token";
-import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
-import { SIDE } from "../src/pools/types";
+import { PoolProgram, TokenProgram } from '../src';
+import { TOKEN_LIST } from '../src/token';
+import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { SIDE } from '../src/pools/types';
 
 const privateKey = fs.readFileSync(
-  os.homedir() + "/.config/aldrin/privatekey",
+  os.homedir() + '/.config/aldrin/privatekey',
   {
-    encoding: "utf-8",
+    encoding: 'utf-8',
   }
 )
 
