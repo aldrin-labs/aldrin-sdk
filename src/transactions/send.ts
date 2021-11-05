@@ -1,5 +1,6 @@
 import { Wallet } from "@project-serum/anchor"
 import { Connection, Transaction } from "@solana/web3.js"
+import { log } from ".."
 
 export interface SendTransactionParams {
   transaction: Transaction
@@ -17,7 +18,7 @@ export async function sendTransaction({
     await connection.getRecentBlockhash('max')
   ).blockhash
 
-  console.log('Transaction signers', wallet)
+  log('Transaction signers', wallet)
 
   if (!wallet.publicKey) {
     throw new Error(`No publicKey for wallet: ${wallet}`)
@@ -33,7 +34,7 @@ export async function sendTransaction({
     skipPreflight: true,
   })
 
-  console.log('Transaction sent: ', txid)
+  log('Transaction sent: ', txid)
 
   return txid
 
