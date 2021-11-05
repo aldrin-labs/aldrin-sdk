@@ -286,8 +286,6 @@ export class PoolProgram {
   }
 
 
-
-
   async getMaxWithdrawable(params: RedeemBasketParams) {
     const { pool: { poolMint, baseTokenMint, quoteTokenMint, baseTokenVault, quoteTokenVault }, poolTokenAmount } = params
 

@@ -129,7 +129,6 @@ async function addLiquidity() {
     .find((wt) => wt.account.data.parsed.info.mint === usdc?.address)
 
 
-
   if (!rinAccount || !usdcAccount) {
     throw new Error('Please create token accounts first!')
   }
@@ -160,8 +159,6 @@ async function addLiquidity() {
 
   // Add some logic to check transaction confirmations
 }
-
-
 
 
 async function withdrawLiquidity() {
@@ -249,7 +246,6 @@ async function withdrawLiquidity() {
 }
 
 
-
 async function swapTokens() {
   const allPools = await pool.getPools()
 
@@ -304,7 +300,6 @@ async function swapTokens() {
 
   const usdcAccount = walletTokens.value
     .find((wt) => wt.account.data.parsed.info.mint === usdc?.address)
-
 
 
   /**
