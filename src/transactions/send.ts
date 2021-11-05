@@ -9,6 +9,7 @@ export interface SendTransactionParams {
   timeout?: number
 }
 
+
 export async function sendTransaction({
   transaction,
   wallet,

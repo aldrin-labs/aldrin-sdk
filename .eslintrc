@@ -13,6 +13,7 @@
     "quotes": [
       "error",
       "single"
-    ]
+    ],
+    "comma-dangle": ["error", "always-multiline"]
   }
 }

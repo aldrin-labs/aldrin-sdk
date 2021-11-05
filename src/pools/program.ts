@@ -59,7 +59,7 @@ export class PoolProgram {
           ownerWithdrawFeeNumerator: fees.ownerWithdrawFeeNumerator.toNumber(),
           ownerWithdrawFeeDenominator: fees.ownerWithdrawFeeDenominator.toNumber(),
         },
-        poolPublicKey: publicKey
+        poolPublicKey: publicKey,
       }
     })
   }
@@ -153,7 +153,7 @@ export class PoolProgram {
       baseTokenVault,
       quoteTokenVault,
       feeBaseAccount,
-      feeQuoteAccount
+      feeQuoteAccount,
     } = pool
 
     const [vaultSigner] = await PublicKey.findProgramAddress(
@@ -208,7 +208,7 @@ export class PoolProgram {
         quoteTokenVault,
         poolMint,
         feePoolTokenAccount,
-        poolPublicKey
+        poolPublicKey,
       },
       side,
       outcomeAmount,
@@ -217,7 +217,7 @@ export class PoolProgram {
 
     let {
       baseTokenAccount,
-      quoteTokenAccount
+      quoteTokenAccount,
     } = params
 
     const transactionBeforeSwap = new Transaction()
@@ -289,7 +289,7 @@ export class PoolProgram {
 
 
   async getMaxWithdrawable(params: RedeemBasketParams) {
-    const { pool: { poolMint, baseTokenMint, quoteTokenMint, baseTokenVault, quoteTokenVault, }, poolTokenAmount } = params
+    const { pool: { poolMint, baseTokenMint, quoteTokenMint, baseTokenVault, quoteTokenVault }, poolTokenAmount } = params
 
     const poolToken = new TokenProgram(
       this.connection,
@@ -312,11 +312,11 @@ export class PoolProgram {
     const [
       poolMintInfo,
       baseTokenInfo,
-      quoteTokenInfo
+      quoteTokenInfo,
     ] = await Promise.all([
       poolToken.getTokenInfo(),
       baseToken.getVaultTokenAmount(),
-      quoteToken.getVaultTokenAmount()
+      quoteToken.getVaultTokenAmount(),
     ])
 
     const supply = poolMintInfo.supply

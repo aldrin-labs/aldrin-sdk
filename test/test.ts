@@ -340,7 +340,7 @@ async function swapTokens() {
     minIncomeAmount: B.muln(0.995), // Add slippage 0.5%
     baseTokenAccount: rinAccount?.pubkey,
     quoteTokenAccount: usdcAccount?.pubkey,
-    side: SIDE.BID
+    side: SIDE.BID,
   })
 
   console.log('Swap transaction sent: ', txId)
