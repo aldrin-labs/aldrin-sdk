@@ -5,7 +5,7 @@ import BN from 'bn.js'
 import { TokenProgram } from '../token'
 import { createTokenAccountTransaction, sendTransaction } from '../transactions'
 import idl from './idl.json'
-import { CreateBasketParams, Pool, PoolRpcResponse, RedeemBasketParams, Side, SIDE, SnapshotQueue, SnapshotQueueRpcResponse, SwapParams } from './types'
+import { CreateBasketParams, GetFarmingStateParams, Pool, PoolRpcResponse, RedeemBasketParams, Side, SIDE, SnapshotQueue, SnapshotQueueRpcResponse, SwapParams } from './types'
 
 
 export class PoolProgram {
@@ -144,7 +144,7 @@ export class PoolProgram {
     })
   }
 
-  async withdrawLiquidity(params: RedeemBasketParams) {
+  async withdrawLiquidity(params: RedeemBasketParams): Promise<string> {
 
     const { pool, poolTokenAccount, baseTokenAccount, quoteTokenAccount, poolTokenAmount } = params
     const {
@@ -199,7 +199,7 @@ export class PoolProgram {
   }
 
 
-  async swap(params: SwapParams) {
+  async swap(params: SwapParams): Promise<string> {
     const {
       pool: {
         baseTokenMint,
@@ -285,6 +285,13 @@ export class PoolProgram {
     })
   }
 
+  async getFarmingState(
+    // params: GetFarmingStateParams
+  ) {
+    // const filter = this.program.account.farmingState.
+    const all = await this.program.account.farmingState.all()
+    console.log('ALL: ', all)
+  }
 
   async getMaxWithdrawable(params: RedeemBasketParams) {
     const { pool: { poolMint, baseTokenMint, quoteTokenMint, baseTokenVault, quoteTokenVault }, poolTokenAmount } = params

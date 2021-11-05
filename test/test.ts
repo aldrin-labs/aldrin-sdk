@@ -27,8 +27,6 @@ const wallet = new Wallet(payer)
 
 console.log('Wallet:', wallet.payer.secretKey);
 
-const a = 1
-
 const connection = new Connection('https://api.mainnet-beta.solana.com');
 
 const pool = new PoolProgram(connection, wallet);
@@ -345,5 +343,10 @@ async function swapTokens() {
   // Add some logic to check transaction confirmations
 }
 
+async function getFarmingState() {
+  await pool.getFarmingState()
+}
 
-swapTokens()
+
+getFarmingState()
+// swapTokens()
