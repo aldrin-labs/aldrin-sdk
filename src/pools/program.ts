@@ -285,13 +285,13 @@ export class PoolProgram {
     })
   }
 
-  async getFarmingState(
-    // params: GetFarmingStateParams
-  ) {
-    // const filter = this.program.account.farmingState.
-    const all = await this.program.account.farmingState.all()
-    console.log('ALL: ', all)
-  }
+  // async getFarmingState(
+  //   // params: GetFarmingStateParams
+  // ) {
+  //   // const filter = this.program.account.farmingState.
+  //   const all = await this.program.account.farmingState.all()
+  //   console.log('ALL: ', all)
+  // }
 
   async getMaxWithdrawable(params: RedeemBasketParams) {
     const { pool: { poolMint, baseTokenMint, quoteTokenMint, baseTokenVault, quoteTokenVault }, poolTokenAmount } = params

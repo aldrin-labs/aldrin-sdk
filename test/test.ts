@@ -343,10 +343,10 @@ async function swapTokens() {
   // Add some logic to check transaction confirmations
 }
 
-async function getFarmingState() {
-  await pool.getFarmingState()
-}
+// async function getFarmingState() {
+//   await pool.getFarmingState()
+// }
 
 
-getFarmingState()
-// swapTokens()
+// getFarmingState()
+swapTokens()
