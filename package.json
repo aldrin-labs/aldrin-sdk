@@ -20,7 +20,8 @@
     "test": "jest --no-cache --runInBand",
     "test:cov": "jest --coverage --no-cache --runInBand",
     "addscope": "node tools/packagejson name @tomchen/example-typescript-package",
-    "lint": "eslint . --ext .ts --fix"
+    "lint": "eslint . --ext .ts --fix",
+    "prepare": "husky install"
   },
   "publishConfig": {
     "access": "public"
@@ -64,7 +65,7 @@
     "eslint": "^7.32.0",
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-prettier": "^4.0.0",
-    "husky": "^7.0.2",
+    "husky": "^7.0.4",
     "jest": "^27.2.0",
     "lint-staged": "^11.2.6",
     "pinst": "^2.1.6",
@@ -75,15 +76,7 @@
     "webpack": "^5.52.1",
     "webpack-cli": "^4.8.0"
   },
-  "husky": {
-    "hooks": {
-      "pre-commit": "lint-staged"
-    }
-  },
   "lint-staged": {
-    "*.ts": [
-      "yarn lint",
-      "git add"
-    ]
+    "*.ts": "yarn eslint"
   }
 }
