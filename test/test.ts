@@ -325,20 +325,33 @@ async function swapTokens() {
   const Y = quoteAmount.amount
   const B = new BN(5 * quoteTokenInfo.decDelimiter) // 5 USDC
 
-  const buyAmount = X.sub(X.mul(Y).div(Y.add(B)))
+  const rinAmount = X.sub(X.mul(Y).div(Y.add(B)))
 
-  console.log('Buy amount: ', buyAmount.toString())
+  console.log('Buy RIN: ', rinAmount.toString())
 
-  const txId = await pool.swap({
+  const buyTxId = await pool.swap({
     pool: myPool,
     outcomeAmount: B,
-    minIncomeAmount: B.muln(0.995), // Add slippage 0.5%
+    minIncomeAmount: rinAmount.muln(0.995), // Add slippage 0.5%
     baseTokenAccount: rinAccount?.pubkey,
     quoteTokenAccount: usdcAccount?.pubkey,
     side: SIDE.BID,
   })
 
-  console.log('Swap transaction sent: ', txId)
+  console.log('Swap (buy RIN) transaction sent: ', buyTxId)
+
+
+  const sellTxId = await pool.swap({
+    pool: myPool,
+    outcomeAmount: rinAmount,
+    minIncomeAmount: B.muln(0.995), // Add slippage 0.5%
+    baseTokenAccount: rinAccount?.pubkey,
+    quoteTokenAccount: usdcAccount?.pubkey,
+    side: SIDE.ASK,
+  })
+
+
+  console.log('Swap (sell RIN) transaction sent: ', sellTxId)
 
   // Add some logic to check transaction confirmations
 }
