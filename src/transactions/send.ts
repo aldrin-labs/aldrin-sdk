@@ -1,5 +1,5 @@
 import { Wallet } from '@project-serum/anchor'
-import { Connection, Transaction } from '@solana/web3.js'
+import { Connection, Signer, Transaction } from '@solana/web3.js'
 import { log } from '..'
 
 export interface SendTransactionParams {
@@ -7,6 +7,7 @@ export interface SendTransactionParams {
   wallet: Wallet
   connection: Connection
   timeout?: number
+  partialSigners?: Signer[]
 }
 
 
@@ -14,6 +15,7 @@ export async function sendTransaction({
   transaction,
   wallet,
   connection,
+  partialSigners,
 }: SendTransactionParams): Promise<string> {
   transaction.recentBlockhash = (
     await connection.getRecentBlockhash('max')
@@ -26,6 +28,10 @@ export async function sendTransaction({
   }
 
   transaction.feePayer = wallet.payer.publicKey
+
+  if (partialSigners) {
+    transaction.partialSign(...partialSigners)
+  }
 
   const transactionFromWallet = await wallet.signTransaction(transaction)
 

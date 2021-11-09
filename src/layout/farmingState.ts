@@ -53,5 +53,10 @@ export const FarmingStateLayout = BufferLayout.struct([
   uint64('tokensPerPeriod'),
   uint64('tokensTotal'),
   uint64('periodLength'),
-  // BufferLayout, //TODO:
+  uint64('noWithdrawalTime'),
+  uint64('startTime'),
+  uint64('currentTime'),
+  publicKey('pool'),
+  publicKey('farmingTokenVault'),
+  publicKey('farmingSnapshots'),
 ]);

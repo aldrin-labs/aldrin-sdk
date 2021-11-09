@@ -8,13 +8,16 @@ import { TokenInfo } from './types';
 export class TokenProgram {
   constructor(
     private connection: Connection,
-    private mint: PublicKey,
+    private mint: PublicKey | null = null,
     private vault: PublicKey | null = null,
   ) {
 
   }
 
   async getTokenInfo(): Promise<TokenInfo> {
+    if (!this.mint) {
+      throw new Error('Mint not defined!')
+    }
     const resp = await this.connection.getAccountInfo(this.mint)
     if (!resp) {
       throw new Error(`No account for public key: ${this.mint}`)
@@ -52,7 +55,7 @@ export class TokenProgram {
       amount: u64.fromBuffer(accountInfo.amount),
     }
 
-    if (!result.mint.equals(this.mint)) {
+    if (this.mint !== null && !result.mint.equals(this.mint)) {
       throw new Error(
         `Invalid account mint: ${JSON.stringify(
           accountInfo.mint,

@@ -35,6 +35,11 @@
       "symbol": "USDT",
       "name": "USDT",
       "address": "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB"
+    },
+    {
+      "symbol": "MNDE",
+      "name": "MNDE",
+      "address": "MNDEFzGvMt87ueuHvVU9VcTqsAP5b3fTGPsHuuPA5ey"
     }
   ]
 }

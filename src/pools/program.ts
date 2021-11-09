@@ -1,12 +1,14 @@
 import { Idl, Program, Provider, Wallet } from '@project-serum/anchor'
+import * as bs58 from 'bs58'
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token'
-import { Connection, PublicKey, SYSVAR_CLOCK_PUBKEY, SYSVAR_RENT_PUBKEY, Transaction } from '@solana/web3.js'
+import { Connection, Keypair, PublicKey, SYSVAR_CLOCK_PUBKEY, SYSVAR_RENT_PUBKEY, Transaction } from '@solana/web3.js'
 import BN from 'bn.js'
 import { TokenProgram } from '../token'
 import { createTokenAccountTransaction, sendTransaction } from '../transactions'
 import idl from './idl.json'
-import { CreateBasketParams, GetFarmingStateParams, Pool, PoolRpcResponse, RedeemBasketParams, Side, SIDE, SnapshotQueue, SnapshotQueueRpcResponse, SwapParams } from './types'
+import { CreateBasketParams, FarmingSnapshotRpcResponse, GetFarmingStateParams, Pool, PoolRpcResponse, RedeemBasketParams, Side, SIDE, SnapshotQueue, SnapshotQueueRpcResponse, StartFarminParams, SwapParams } from './types'
 
+const FARMING_STATE_POOL_OFFSET = 73 // TODO:
 
 export class PoolProgram {
   readonly program: Program
@@ -285,13 +287,74 @@ export class PoolProgram {
     })
   }
 
-  // async getFarmingState(
-  //   // params: GetFarmingStateParams
-  // ) {
-  //   // const filter = this.program.account.farmingState.
-  //   const all = await this.program.account.farmingState.all()
-  //   console.log('ALL: ', all)
-  // }
+  async getFarmingState(
+    params: GetFarmingStateParams
+  ) {
+    const states = await this.connection.getProgramAccounts(this.program.programId, {
+      commitment: 'finalized',
+      filters: [
+        { dataSize: this.program.account.farmingState.size },
+        { memcmp: { offset: FARMING_STATE_POOL_OFFSET, bytes: params.poolPublicKey.toBase58() } },
+      ],
+    })
+
+    return states.map((s) => {
+      const data = Buffer.from(s.account.data)
+
+      const snapshot = this.program.coder.accounts.decode<FarmingSnapshotRpcResponse>('FarmingState', data)
+
+      return {
+        ...snapshot,
+        periodLength: snapshot.periodLength.toNumber(),
+        noWithdrawalTime: snapshot.noWithdrawalTime.toNumber(),
+        vestingPeriod: snapshot.vestingPeriod.toNumber(),
+        startTime: snapshot.startTime.toNumber(),
+        currentTime: snapshot.currentTime.toNumber(),
+        farmingStatePublicKey: s.pubkey,
+      }
+    })
+  }
+
+
+  async startFarming(params: StartFarminParams) {
+    const { lpTokenFreezeVault, tokenAmount, poolPublicKey, farmingState, lpTokenAccount } = params
+
+    const farmingTicket = Keypair.generate()
+    const farmingTicketInstruction = await this.program.account.farmingTicket.createInstruction(
+      farmingTicket
+    )
+
+    const startFarmingTransaction = await this.program.instruction.startFarming(
+      tokenAmount,
+      {
+        accounts: {
+          pool: poolPublicKey,
+          farmingState,
+          farmingTicket: farmingTicket.publicKey,
+          lpTokenFreezeVault: lpTokenFreezeVault,
+          userLpTokenAccount: lpTokenAccount,
+          walletAuthority: this.wallet.publicKey,
+          userKey: this.wallet.publicKey,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          clock: SYSVAR_CLOCK_PUBKEY,
+          rent: SYSVAR_RENT_PUBKEY,
+        },
+      }
+    )
+
+    const transaction = new Transaction()
+
+    transaction.add(farmingTicketInstruction)
+    transaction.add(startFarmingTransaction)
+
+    return sendTransaction({
+      transaction,
+      wallet: this.wallet,
+      connection: this.connection,
+      partialSigners: [farmingTicket],
+    })
+
+  }
 
   async getMaxWithdrawable(params: RedeemBasketParams) {
     const { pool: { poolMint, baseTokenMint, quoteTokenMint, baseTokenVault, quoteTokenVault }, poolTokenAmount } = params
