@@ -1,3 +1,3 @@
 # Aldrin DEX SDK
 
-You can find examples of usage at `test/test.ts`
+You can find examples of usage at `test/index.ts`

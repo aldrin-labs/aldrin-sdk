@@ -1,19 +1,25 @@
 import { PublicKey } from '@solana/web3.js';
 import BN from 'bn.js';
-import { CreateBasketPool } from './pools';
+import { WithAuhority, WithWallet } from '.';
+import { LiquidityPool } from './pools';
 
 export enum SIDE {
   BID = 1,
   ASK = -1
 }
 
-type SwapPool = CreateBasketPool & { feePoolTokenAccount: PublicKey }
+type SwapPool = LiquidityPool & { feePoolTokenAccount: PublicKey }
 
-export interface SwapParams {
+export interface SwapParams extends WithWallet {
   outcomeAmount: BN // Outcome for client - income for program 
   minIncomeAmount: BN // Income for client - outcome for program
-  baseTokenAccount: PublicKey | undefined
-  quoteTokenAccount: PublicKey | undefined
+  userBaseTokenAccount: PublicKey | undefined
+  userQuoteTokenAccount: PublicKey | undefined
   side: SIDE
   pool: SwapPool
+}
+
+export interface SwapInstructionParams extends SwapParams, WithAuhority {
+  userBaseTokenAccount: PublicKey
+  userQuoteTokenAccount: PublicKey
 }

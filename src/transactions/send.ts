@@ -1,5 +1,5 @@
-import { Connection, Signer, Transaction } from '@solana/web3.js'
-import { log } from '..'
+import { Connection, Signer, Transaction, sendAndConfirmTransaction } from '@solana/web3.js'
+import { log } from '../utils'
 import { Wallet } from '../types'
 
 export interface SendTransactionParams {

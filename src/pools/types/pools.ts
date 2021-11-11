@@ -1,16 +1,8 @@
 import { PublicKey } from '@solana/web3.js'
 import BN from 'bn.js'
+import { Wallet } from '../../types'
 
-interface FeesResponse<N> {
-  tradeFeeNumerator: N
-  tradeFeeDenominator: N
-  ownerTradeFeeNumerator: N
-  ownerTradeFeeDenominator: N
-  ownerWithdrawFeeNumerator: N
-  ownerWithdrawFeeDenominator: N
-}
-
-interface PoolCommon {
+export interface PoolCommon {
   poolMint: PublicKey
   baseTokenVault: PublicKey
   baseTokenMint: PublicKey
@@ -18,44 +10,85 @@ interface PoolCommon {
   quoteTokenMint: PublicKey
 }
 
-interface WithFeesAccount {
+export interface WithFeesAccount {
   feeBaseAccount: PublicKey
   feeQuoteAccount: PublicKey
   feePoolTokenAccount: PublicKey
 }
 
-interface PoolBase<F> extends PoolCommon, WithFeesAccount {
+export interface PoolResponse extends PoolCommon, WithFeesAccount {
   lpTokenFreezeVault: PublicKey
   poolSigner: PublicKey
   poolSignerNonce: number
   authority: PublicKey
   initializerAccount: PublicKey
-  fees: F
+  fees: {
+    tradeFeeNumerator: number
+    tradeFeeDenominator: number
+    ownerTradeFeeNumerator: number
+    ownerTradeFeeDenominator: number
+    ownerWithdrawFeeNumerator: number
+    ownerWithdrawFeeDenominator: number
+  }
 }
+
+export interface GetPoolsParams {
+  mint?: PublicKey
+}
+
+export type PoolRpcResponse = PoolResponse & WithPoolPK
 
 export interface WithPoolPK {
   poolPublicKey: PublicKey
 }
 
-export type PoolRpcResponse = PoolBase<FeesResponse<BN>>
-export type Pool = PoolBase<FeesResponse<number>> & WithPoolPK
+export type LiquidityPool = PoolCommon & WithPoolPK
 
-export type CreateBasketPool = PoolCommon & WithPoolPK
-
-interface BasketParams {
-  pool: CreateBasketPool
-  poolTokenAccount: PublicKey | null
-  baseTokenAccount: PublicKey
-  quoteTokenAccount: PublicKey
+export interface BaseLiquidityParams {
+  pool: LiquidityPool
+  userPoolTokenAccount: PublicKey | null
+  userBaseTokenAccount: PublicKey
+  userQuoteTokenAccount: PublicKey
 }
 
-export type CreateBasketParams = BasketParams & {
-  baseTokenAmount: BN
-  quoteTokenAmount: BN
+export interface WithWallet {
+  wallet: Wallet
 }
 
-export type RedeemBasketParams = BasketParams & {
-  pool: CreateBasketPool & WithFeesAccount
+export interface DepositLiquidityAmount {
+  maxBaseTokenAmount: BN
+  maxQuoteTokenAmount: BN
+}
+
+export interface WithSlippage {
+  // Amount slippage, default 0.01
+  slippage?: number
+}
+
+export interface DepositLiquidityParams extends BaseLiquidityParams, WithWallet, DepositLiquidityAmount, WithSlippage {
+ 
+}
+
+export interface WithAuhority {
+  poolSigner: PublicKey
+  walletAuthority: PublicKey
+}
+
+export interface DepositLiquididtyInstructionParams extends BaseLiquidityParams, DepositLiquidityAmount, WithAuhority {
+  creationSize: BN
+  userPoolTokenAccount: PublicKey
+}
+
+export interface WithdrawLiquidityParams extends BaseLiquidityParams, WithWallet, WithSlippage {
+  pool: LiquidityPool & WithFeesAccount
   poolTokenAmount: BN
-  poolTokenAccount: PublicKey
+  userPoolTokenAccount: PublicKey
+  baseTokenReturnedMin?: BN
+  quoteTokenReturnedMin?: BN
+}
+
+export interface WithdrawLiquidityInstructionParams extends WithdrawLiquidityParams, WithAuhority {
+  baseTokenReturnedMin: BN
+  quoteTokenReturnedMin: BN
+  userPoolTokenAccount: PublicKey
 }
