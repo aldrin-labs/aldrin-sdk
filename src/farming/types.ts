@@ -77,20 +77,16 @@ export interface EndFarmingInstructionParams extends EndFarmingCommon {
 
 export interface FarmingSnapshot {
   /**
-   * 
-   * Rewards  
-   * 
+   * LP tokens staked  
    * */
 
   tokensFrozen: BN
 
   /**
-   * 
-   * Total tokens
-   * 
+   * Total tokens (rewards) unlocked
    * */
   farmingTokens: BN
-
+  
   time: number
 }
 

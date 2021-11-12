@@ -171,15 +171,13 @@ export class Farming {
 
     const ZERO = new BN(0)
 
-    if (DEFAULT_FARMING_TICKET_END_TIME.eq(ticket.endTime)) { // Ticket already claimed
-      return ZERO
-    }
 
     const snapshotQueue = queue.find(
       (snapshotQueue) => snapshotQueue.queuePublicKey.equals(state.farmingSnapshots)
     )
 
 
+    // Snapshot not found
     if (!snapshotQueue) {
       return ZERO
     }
@@ -188,12 +186,10 @@ export class Farming {
       (el) => state.farmingStatePublicKey.equals(el.farmingState)
     )
 
-
     // if state attached and last withdraw time more than last farming state snapshot -
     // farming ended
     if (
-      stateAttached &&
-      stateAttached.lastVestedWithdrawTime >= state.currentTime
+      (stateAttached?.lastVestedWithdrawTime || 0) >= state.currentTime
     ) {
       return ZERO
     }

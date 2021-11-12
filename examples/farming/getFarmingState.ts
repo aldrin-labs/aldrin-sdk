@@ -46,7 +46,7 @@ async function getFarmingState() {
     throw new Error('No tickets, nothing to check')
   }
 
-  
+
   const queue = await farmingClient.getFarmingSnapshotsQueue()
   stateVaults.forEach((sv) => {
     tickets.forEach(async (t) => {
@@ -62,3 +62,5 @@ async function getFarmingState() {
   })
 
 }
+
+getFarmingState()

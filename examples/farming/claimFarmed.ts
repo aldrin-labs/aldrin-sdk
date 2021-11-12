@@ -1,5 +1,5 @@
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token'
-import { AUTHORIZED_POOLS } from '../../src'
+import { AUTHORIZED_POOLS, Farming } from '../../src'
 import { connection, farmingClient, poolClient, tokenClient, wallet } from '../common'
 
 
@@ -34,6 +34,8 @@ async function claimFarmed() {
     throw new Error('No tickets, nothing to check')
   }
 
+
+  const queue = await farmingClient.getFarmingSnapshotsQueue()
   activeStates.forEach(async (as) => {
     const farmingToken = await tokenClient.getTokenAccount(as.farmingTokenVault)
 
@@ -42,20 +44,34 @@ async function claimFarmed() {
 
     if (userFarmingTokenAccount) {
       tickets.forEach(async (t) => {
-        const txId = await farmingClient.claimFarmed({
-          wallet,
-          poolPublicKey: myPool.poolPublicKey,
-          farmingState: as.farmingStatePublicKey,
-          farmingSnapshots: as.farmingSnapshots,
-          farmingTicket: t.farmingTicketPublicKey,
-          farmingTokenVault: as.farmingTokenVault,
-          userFarmingTokenAccount: userFarmingTokenAccount.pubkey,
+        const reward = Farming.calculateFarmingRewards({
+          ticket: t,
+          queue,
+          state: as,
         })
 
-        console.log('Unstake LP tokens: Transaction sent', txId)
+
+        if (reward.gtn(0)) { // If reward > 0
+          const txId = await farmingClient.claimFarmed({
+            wallet,
+            poolPublicKey: myPool.poolPublicKey,
+            farmingState: as.farmingStatePublicKey,
+            farmingSnapshots: as.farmingSnapshots,
+            farmingTicket: t.farmingTicketPublicKey,
+            farmingTokenVault: as.farmingTokenVault,
+            userFarmingTokenAccount: userFarmingTokenAccount.pubkey,
+          })
+
+          console.log('Unstake LP tokens: Transaction sent', txId)
+        } else {
+          console.log('Rearwrd is zero, ticket already claimed? ')
+        }
+
       })
     } else {
       console.warn(`Cannot claim reward: User wallet for token ${farmingToken.mint.toBase58()} does not exists`)
     }
   })
 }
+
+claimFarmed()

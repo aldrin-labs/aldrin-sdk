@@ -21,20 +21,23 @@ export const getFarmingRewardsFromSnapshots = ({
     amount: new BN(0),
   }
 
+  const lastClaimTime = stateAttached?.lastVestedWithdrawTime || 0
+  const dateFrom = BN.max(ticket.startTime, new BN(lastClaimTime)) // Select last claim or ticket start
+
   const rewardsState = snapshots
     .reduce(
       (acc, snapshot) => {
         const { prevSnapshot, amount } = acc
 
-        // Skip snapshots on other than ticket time
-        if (ticket.startTime.gte(new BN(snapshot.time)) || ticket.endTime.lte(new BN(snapshot.time)) || (
-          stateAttached && stateAttached.lastVestedWithdrawTime > snapshot.time
-        )) {
-          return {...acc, prevSnapshot: snapshot}
+        const st = new BN(snapshot.time)
+
+        if (dateFrom.gte(st) || ticket.endTime.lte(st)) { // Filter by date
+          return { ...acc, prevSnapshot: snapshot }
         }
 
-        const totalUserSnapshotReward = snapshot.farmingTokens
-          .sub(prevSnapshot.farmingTokens)
+        const poolReward = snapshot.farmingTokens.sub(prevSnapshot.farmingTokens)
+
+        const ticketReward = poolReward
           .mul(ticket.tokensFrozen)
           .div(snapshot.tokensFrozen)
 
@@ -42,14 +45,13 @@ export const getFarmingRewardsFromSnapshots = ({
 
 
         // Decrease reward on vesting period
-        const vestingDivider = currentTime >= snapshot.time + state.vestingPeriod ? new BN(1) : PRE_VESTING_DENOMINATOR
+        const vestingDenominator = currentTime >= (snapshot.time + state.vestingPeriod) ? new BN(1) : PRE_VESTING_DENOMINATOR
 
-        const snapshotReward = totalUserSnapshotReward
-          .div(vestingDivider)
+        const finalReward = ticketReward.div(vestingDenominator)
 
         return {
           prevSnapshot: snapshot,
-          amount: amount.add(snapshotReward),
+          amount: amount.add(finalReward),
         }
       }, initialState
     )
