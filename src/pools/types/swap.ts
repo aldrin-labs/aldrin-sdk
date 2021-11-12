@@ -33,13 +33,14 @@ export interface TokenSwapMints {
 
 export type TokenSwapGetPriceParams = TokenSwapMints
 
-export interface TokenSwapSwapParams extends TokenSwapMints {
+export type OptionalAmounts = { outcomeAmount: BN, minIncomeAmount?: BN } | { outcomeAmount?: BN, minIncomeAmount: BN } // including token decimals
 
-  outcomeAmount: BN // including token decimals
-  minIncomeAmount?: BN
+export interface TokenSwapSwapParamsInner extends TokenSwapMints {
   wallet?: Wallet
   slippage?: number
 }
+
+export type TokenSwapParams = TokenSwapSwapParamsInner & OptionalAmounts
 
 
 export interface TokenSwapLoadParams {

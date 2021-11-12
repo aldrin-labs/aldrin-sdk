@@ -1,7 +1,7 @@
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { AccountInfo, Connection, ParsedAccountData, PublicKey } from '@solana/web3.js';
 import BN from 'bn.js';
-import { PoolClient, PoolRpcResponse, SIDE, SOLANA_RPC_ENDPOINT, TokenSwapGetPriceParams, TokenSwapLoadParams, TokenSwapSwapParams } from '.';
+import { PoolClient, PoolRpcResponse, SIDE, SOLANA_RPC_ENDPOINT, TokenSwapGetPriceParams, TokenSwapLoadParams, TokenSwapParams } from '.';
 import { TokenClient, TokenMintInfo } from '..';
 import { Wallet } from '../types';
 
@@ -47,7 +47,7 @@ export class TokenSwap {
 
   }
 
-  async swap(params: TokenSwapSwapParams) {
+  async swap(params: TokenSwapParams) {
     const resolvedInputs = await this.resolveSwapInputs(params)
 
     console.log('Resolved inputs: ', resolvedInputs, resolvedInputs.minIncomeAmount.toString(), resolvedInputs.outcomeAmount.toString())
@@ -61,9 +61,10 @@ export class TokenSwap {
    * @returns Transaction Id
    */
 
-  private async resolveSwapInputs(params: TokenSwapSwapParams) {
-    const { wallet = this.wallet, mintFrom, mintTo, outcomeAmount } = params
-    let { minIncomeAmount } = params
+  private async resolveSwapInputs(params: TokenSwapParams) {
+    const { wallet = this.wallet, mintFrom, mintTo } = params
+    let { minIncomeAmount, outcomeAmount } = params
+
     if (!wallet) {
       throw new Error('Wallet not provided')
     }
@@ -97,8 +98,8 @@ export class TokenSwap {
     * 
     * X - Base token amount in pool
     * Y - Quote token amount in pool
-    * A - Token amount to buy (unknown)
-    * B - Quote token amount (params) 
+    * A - Token amount to buy 
+    * B - Quote token amount  
     * 
     * X * Y = (X - A) * (Y + B)
     * 
@@ -106,15 +107,43 @@ export class TokenSwap {
     * 
     * A = X - (X * Y) / (Y + B)
     * 
+    * 
+    * 
+    * Y + B = (X * Y)  / (X - A)
+    * 
+    * B = (X * Y)  / (X - A) - Y
+    * 
     * */
 
+    const X = isInverted ? quoteVaultAccount.amount : baseVaultAccount.amount
+    const Y = isInverted ? baseVaultAccount.amount : quoteVaultAccount.amount
+
+
     if (!minIncomeAmount) {
-      const X = isInverted ? quoteVaultAccount.amount : baseVaultAccount.amount
-      const Y = isInverted ? baseVaultAccount.amount : quoteVaultAccount.amount
+      if (!outcomeAmount) {
+        throw new Error('No amounts defined') // Type-check hack
+      }
 
       const B = outcomeAmount
-      minIncomeAmount = X.sub(X.mul(Y).div(Y.add(B)))
+      minIncomeAmount = X
+        .sub(
+          X.mul(Y)
+            .div(
+              Y.add(B)
+            )
+        )
     }
+
+    if (!outcomeAmount) {
+      const A = minIncomeAmount
+      outcomeAmount = X
+        .mul(Y)
+        .div(
+          X.sub(A)
+        )
+        .sub(Y)
+    }
+
 
     const walletTokens = await this.getWalletTokens(wallet)
 

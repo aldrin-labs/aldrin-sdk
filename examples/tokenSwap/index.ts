@@ -17,23 +17,23 @@ export async function useTokenSwap() {
 
   console.log('USDC/RIN price:  ', usdRinPrice)
 
-  const buyTxId = await tokenSwap.swap({
+  // const buyTxId = await tokenSwap.swap({
+  //   wallet: wallet,
+  //   outcomeAmount: new BN(10_000_000), // 10 USDC
+  //   mintFrom: usdc,
+  //   mintTo: rin,
+  // })
+
+  // console.log('Buy RIN on 10 USDC success, txId: ', buyTxId)
+
+  const txId = await tokenSwap.swap({
     wallet: wallet,
-    outcomeAmount: new BN(10_000_000), // 10 USDC
+    minIncomeAmount: new BN(1_000_000_000), // 1 RIN
     mintFrom: usdc,
     mintTo: rin,
   })
 
-  console.log('Buy RIN on 10 USDC success, txId: ', buyTxId)
-
-  const sellTxId = await tokenSwap.swap({
-    wallet: wallet,
-    outcomeAmount: new BN(1_000_000_000), // 1 RIN
-    mintFrom: rin,
-    mintTo: usdc,
-  })
-
-  console.log('Sell 1 RIN for USDC success, txId: ', sellTxId)
+  console.log('Buy 1 RIN for USDC success, txId: ', txId)
   
 
 }
