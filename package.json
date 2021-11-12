@@ -1,11 +1,13 @@
 {
   "name": "ldrn-sdk",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
   "umd:main": "dist/umd/index.js",
   "types": "dist/types/index.d.js",
+  "repository": "aldrin-exchange/aldrin-sdk",
+  "homepage": "https://dex.aldrin.com/",
   "scripts": {
     "prepublishOnly": "pinst --disable",
     "postpublish": "pinst --enable",
@@ -43,7 +45,7 @@
     "umd"
   ],
   "author": "Aldrin dev team <support@aldrin.com>",
-  "license": "MIT",
+  "license": "Apache",
   "dependencies": {
     "@solana/buffer-layout": "^3.0.0",
     "@solana/spl-token": "0.1.8",
