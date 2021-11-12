@@ -59,6 +59,3 @@ async function claimFarmed() {
     }
   })
 }
-
-
-claimFarmed()
