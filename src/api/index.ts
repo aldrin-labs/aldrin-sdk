@@ -1,2 +1,2 @@
 export * from './constants'
-export * from './pools'
+export * from './apiPoolsClient'

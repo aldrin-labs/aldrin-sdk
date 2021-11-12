@@ -1,7 +1,7 @@
 import { Connection, GetProgramAccountsFilter, PublicKey, Transaction } from '@solana/web3.js';
 import {
   DepositLiquidityParams, GetPoolsParams, PoolResponse, PoolRpcResponse,
-  POOL_LAYOUT, WithdrawLiquidityParams,
+  POOL_LAYOUT, SOLANA_RPC_ENDPOINT, WithdrawLiquidityParams,
 } from '.';
 import { POOLS_PROGRAM_ADDRESS, TokenClient } from '..';
 import { sendTransaction } from '../transactions';
@@ -16,7 +16,7 @@ import { SwapParams } from './types/swap';
 export class PoolClient {
 
   private tokenClient = new TokenClient(this.connection)
-  constructor(private connection: Connection) {
+  constructor(private connection: Connection = new Connection(SOLANA_RPC_ENDPOINT)) {
   }
 
 
@@ -215,6 +215,7 @@ export class PoolClient {
         quoteTokenMint,
         poolPublicKey,
       },
+      slippage = 0.01,
       wallet,
     } = params
 
@@ -262,6 +263,7 @@ export class PoolClient {
     transaction.add(
       Pool.swapInstruction({
         ...params,
+        minIncomeAmount: params.minIncomeAmount.muln(1 - slippage),
         poolSigner,
         walletAuthority: wallet.publicKey,
         userBaseTokenAccount,

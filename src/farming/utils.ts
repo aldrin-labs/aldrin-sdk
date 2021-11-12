@@ -14,10 +14,7 @@ export const getFarmingRewardsFromSnapshots = ({
   snapshots: FarmingSnapshot[]
 }): BN => {
   const initialState = {
-    prevSnapshot: {
-      tokensFrozen: new BN(0),
-      farmingTokens: new BN(0),
-    },
+    tokensUnlocked: new BN(0),
     amount: new BN(0),
   }
 
@@ -27,15 +24,15 @@ export const getFarmingRewardsFromSnapshots = ({
   const rewardsState = snapshots
     .reduce(
       (acc, snapshot) => {
-        const { prevSnapshot, amount } = acc
+        const { tokensUnlocked, amount } = acc
 
         const st = new BN(snapshot.time)
 
         if (dateFrom.gte(st) || ticket.endTime.lte(st)) { // Filter by date
-          return { ...acc, prevSnapshot: snapshot }
+          return { ...acc, tokensUnlocked: snapshot.farmingTokens }
         }
 
-        const poolReward = snapshot.farmingTokens.sub(prevSnapshot.farmingTokens)
+        const poolReward = snapshot.farmingTokens.sub(tokensUnlocked)
 
         const ticketReward = poolReward
           .mul(ticket.tokensFrozen)
@@ -50,7 +47,7 @@ export const getFarmingRewardsFromSnapshots = ({
         const finalReward = ticketReward.div(vestingDenominator)
 
         return {
-          prevSnapshot: snapshot,
+          tokensUnlocked: snapshot.farmingTokens,
           amount: amount.add(finalReward),
         }
       }, initialState
