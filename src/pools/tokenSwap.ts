@@ -49,11 +49,7 @@ export class TokenSwap {
 
   async swap(params: TokenSwapParams) {
     const resolvedInputs = await this.resolveSwapInputs(params)
-
-    console.log('Resolved inputs: ', resolvedInputs, resolvedInputs.minIncomeAmount.toString(), resolvedInputs.outcomeAmount.toString())
-
     return this.poolClient.swap(resolvedInputs)
-
   }
 
   /**
