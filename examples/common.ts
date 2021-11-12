@@ -6,7 +6,7 @@ import os from 'os'
 import fs from 'fs'
 import * as bs58 from 'bs58'
 import BN from 'bn.js'
-import { PoolClient, TokenClient } from '../src';
+import { FarmingClient, PoolClient, TokenClient } from '../src';
 
 const privateKey = fs.readFileSync(
   os.homedir() + '/.config/aldrin/privatekey',
@@ -26,6 +26,7 @@ const wallet = new Wallet(payer)
 const connection = new Connection('https://api.mainnet-beta.solana.com');
 
 const poolClient = new PoolClient(connection)
+const farmingClient = new FarmingClient(connection)
 const tokenClient = new TokenClient(connection)
 
 export {
@@ -33,4 +34,5 @@ export {
   poolClient,
   connection,
   tokenClient,
+  farmingClient,
 }

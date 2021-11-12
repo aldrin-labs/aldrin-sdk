@@ -1,8 +1,8 @@
 
-import { blob, struct, u8, Structure, seq } from '@solana/buffer-layout';
+import { blob, seq, struct, u8 } from '@solana/buffer-layout';
 import BN from 'bn.js';
+import { publicKey, uint64 } from '../layout/common';
 
-import { publicKey, rustEnum, uint64 } from '../layout/common';
 
 export const DEFAULT_FARMING_TICKET_END_TIME = new BN('9223372036854775807')
 
@@ -43,6 +43,9 @@ export const FARMING_TICKET_LAYOUT = struct([
 export const END_FARMING_INSTRUCTION_LAYOUT = struct([
   blob(8, 'instruction'),
 ])
+
+
+export const CLAIM_FARMED_INSTRUCTION_LAYOUT = END_FARMING_INSTRUCTION_LAYOUT
 
 export const START_FARMING_INSTRUCTION_LAYOUT = struct([
   blob(8, 'instruction'),

@@ -1,5 +1,6 @@
 import { Connection, GetProgramAccountsFilter, Keypair, PublicKey, Transaction } from '@solana/web3.js';
 import {
+  ClaimFarmedParams,
   FARMING_STATE_LAYOUT,
   FARMING_TICKET_LAYOUT, SNAPSHOT_QUEUE_LAYOUT,
 } from '.';
@@ -150,6 +151,35 @@ export class FarmingClient {
   }
 
   /**
+   * Claim staking rewards
+   * @param params 
+   * @returns Transaction Id
+   */
+  async claimFarmed(params: ClaimFarmedParams): Promise<string> {
+    const { poolPublicKey, wallet } = params
+    const [poolSigner] = await PublicKey.findProgramAddress(
+      [poolPublicKey.toBuffer()],
+      POOLS_PROGRAM_ADDRESS,
+    )
+
+    const transaction = new Transaction()
+
+    transaction.add(
+      Farming.claimFarmedInstruction({
+        ...params,
+        poolSigner,
+        userKey: wallet.publicKey,
+      })
+    )
+
+    return sendTransaction({
+      wallet: wallet,
+      connection: this.connection,
+      transaction,
+    })
+  }
+
+  /**
    * Get farming snapshots. Useful for reward calculations.
    * // TODO: add caching
    * 
@@ -168,6 +198,5 @@ export class FarmingClient {
         queuePublicKey: s.pubkey,
       }
     })
-
   }
 }

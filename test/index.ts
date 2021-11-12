@@ -336,78 +336,78 @@
 //   // Add some logic to check transaction confirmations
 // }
 
-// // async function getFarmingState() {
-// //   const allPools = await pool.getPools()
+// async function getFarmingState() {
+//   const allPools = await pool.getPools()
 
-// //   const mSol = TOKEN_LIST.tokens.find((t) => t.symbol === 'mSOL')
-// //   const usdc = TOKEN_LIST.tokens.find((t) => t.symbol === 'USDC')
+//   const mSol = TOKEN_LIST.tokens.find((t) => t.symbol === 'mSOL')
+//   const usdc = TOKEN_LIST.tokens.find((t) => t.symbol === 'USDC')
 
-// //   console.log('getPools:', allPools)
+//   console.log('getPools:', allPools)
 
-// //   const myPool = allPools.find((p) => p.baseTokenMint.toBase58() === mSol?.address && p.quoteTokenMint.toBase58() === usdc?.address)
+//   const myPool = allPools.find((p) => p.baseTokenMint.toBase58() === mSol?.address && p.quoteTokenMint.toBase58() === usdc?.address)
 
-// //   console.log('myPool: ', myPool)
+//   console.log('myPool: ', myPool)
 
-// //   if (!myPool) {
-// //     throw new Error('Pool not found!')
-// //   }
-// //   const states = await pool.getFarmingState({ poolPublicKey: myPool?.poolPublicKey })
+//   if (!myPool) {
+//     throw new Error('Pool not found!')
+//   }
+//   const states = await pool.getFarmingState({ poolPublicKey: myPool?.poolPublicKey })
 
-// //   const activeStates = states.filter((s) => !s.tokensTotal.eq(s.tokensUnlocked)) // Skip finished staking states
-
-
-// //   // Optional - resolve rewards
-// //   const stateVaults = await Promise.all(activeStates.map(async (state) => {
-// //     const t = new TokenProgram(connection, null, state.farmingTokenVault)
-// //     const tokenInfo = await t.getVaultTokenAmount()
-// //     return {
-// //       tokenInfo,
-// //       state,
-// //     }
-// //   })
-// //   )
-
-// //   stateVaults.forEach((sv) => {
-// //     console.log('Reward for staking: mint ', sv.tokenInfo.mint, 'reward ', sv.state.tokensPerPeriod.toString(), ' per', sv.state.periodLength)
-// //   })
+//   const activeStates = states.filter((s) => !s.tokensTotal.eq(s.tokensUnlocked)) // Skip finished staking states
 
 
-// //   const walletTokens = await connection.getParsedTokenAccountsByOwner(wallet.publicKey, {
-// //     programId: TOKEN_PROGRAM_ID,
-// //   })
+//   // Optional - resolve rewards
+//   const stateVaults = await Promise.all(activeStates.map(async (state) => {
+//     const t = new TokenProgram(connection, null, state.farmingTokenVault)
+//     const tokenInfo = await t.getVaultTokenAmount()
+//     return {
+//       tokenInfo,
+//       state,
+//     }
+//   })
+//   )
 
-// //   const poolTokenAccount = walletTokens.value
-// //     .find((wt) => wt.account.data.parsed.info.mint === myPool.poolMint.toBase58())
-
-
-// //   if (!poolTokenAccount) {
-// //     throw new Error('No LP account - nothing to stake!')
-// //   }
-
-// //   const lpTokenAmount = new BN(poolTokenAccount.account.data.parsed.info.tokenAmount.amount)
-
-// //   if (lpTokenAmount.eqn(0)) {
-// //     throw new Error('LP account is empty - nothing to stake!')
-// //   }
+//   stateVaults.forEach((sv) => {
+//     console.log('Reward for staking: mint ', sv.tokenInfo.mint, 'reward ', sv.state.tokensPerPeriod.toString(), ' per', sv.state.periodLength)
+//   })
 
 
-// //   console.log('Available to stake (LP tokens): ', lpTokenAmount.toString())
+//   const walletTokens = await connection.getParsedTokenAccountsByOwner(wallet.publicKey, {
+//     programId: TOKEN_PROGRAM_ID,
+//   })
 
-// //   // Stake 10% of all tokens
-// //   const stakeAmount = lpTokenAmount.muln(0.1)
+//   const poolTokenAccount = walletTokens.value
+//     .find((wt) => wt.account.data.parsed.info.mint === myPool.poolMint.toBase58())
 
-// //   const fs = activeStates[0] // Start farming on any of active states
-// //   const txId = await pool.startFarming({
-// //     poolPublicKey: myPool.poolPublicKey,
-// //     farmingState: fs.farmingStatePublicKey,
-// //     lpTokenFreezeVault: myPool.lpTokenFreezeVault,
-// //     lpTokenAccount: poolTokenAccount.pubkey,
-// //     tokenAmount: stakeAmount,
-// //   })
-// //   // // myPool?.poolPublicKey
-// //   console.log('Start farming: transaction sent, ', txId)
 
-// // }
+//   if (!poolTokenAccount) {
+//     throw new Error('No LP account - nothing to stake!')
+//   }
+
+//   const lpTokenAmount = new BN(poolTokenAccount.account.data.parsed.info.tokenAmount.amount)
+
+//   if (lpTokenAmount.eqn(0)) {
+//     throw new Error('LP account is empty - nothing to stake!')
+//   }
+
+
+//   console.log('Available to stake (LP tokens): ', lpTokenAmount.toString())
+
+//   // Stake 10% of all tokens
+//   const stakeAmount = lpTokenAmount.muln(0.1)
+
+//   const fs = activeStates[0] // Start farming on any of active states
+//   const txId = await pool.startFarming({
+//     poolPublicKey: myPool.poolPublicKey,
+//     farmingState: fs.farmingStatePublicKey,
+//     lpTokenFreezeVault: myPool.lpTokenFreezeVault,
+//     lpTokenAccount: poolTokenAccount.pubkey,
+//     tokenAmount: stakeAmount,
+//   })
+//   // // myPool?.poolPublicKey
+//   console.log('Start farming: transaction sent, ', txId)
+
+// }
 
 // async function useTokenSwap() {
 //   const rinPool = AUTHORIZED_POOLS.RIN_USDC

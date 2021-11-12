@@ -1,15 +1,14 @@
 # Aldrin DEX SDK
 
+[![GitHub license](https://img.shields.io/badge/license-APACHE-blue.svg)](https://github.com/aldrin-exchange/aldrin-sdk/blob/main/LICENSE)
+
 <p align="center">
   <img src="https://aldrin.com/logo.png" alt="Aldrin logo">
 </p>
 
 <p align="center">
-  [<a href="https://dex.aldrin.com">Website</a> |  <a href="#">API Reference</a> | <a href="#">Examples</a> ]
+  [<a href="https://dex.aldrin.com">Website</a> |  <a href="#">API Reference</a> | <a href="https://github.com/aldrin-exchange/aldrin-sdk/tree/main/examples">Examples</a> ]
 </p>
-
-## Warning 
-This library is under active development. Please use it at own risk.
 
 ## Instalation
 
@@ -29,3 +28,8 @@ yarn add @aldrin/sdk
 
 ## Demo
 You can find examples of usage at `examples` folder.
+
+
+## Warning 
+The library is under active development. Use it at your own risk.
+

@@ -106,3 +106,20 @@ export interface GetFarmingRewardParams {
   queue: FarmingSnapshotQueue[]
   ticket: FarmingTicket
 }
+
+export interface ClaimFarmedCommons extends WithPoolPK {
+  farmingState: PublicKey
+  farmingSnapshots: PublicKey
+  farmingTicket: PublicKey
+  farmingTokenVault: PublicKey
+}
+
+export interface ClaimFarmedParams extends ClaimFarmedCommons, WithWallet {
+  userFarmingTokenAccount: PublicKey
+}
+
+export interface ClaimFarmedInstructionParams extends ClaimFarmedCommons {
+  userFarmingTokenAccount: PublicKey
+  poolSigner: PublicKey
+  userKey: PublicKey
+}

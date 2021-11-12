@@ -2,7 +2,13 @@
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { SYSVAR_CLOCK_PUBKEY, SYSVAR_RENT_PUBKEY, TransactionInstruction } from '@solana/web3.js';
 import BN from 'bn.js';
-import { DEFAULT_FARMING_TICKET_END_TIME, END_FARMING_INSTRUCTION_LAYOUT, START_FARMING_INSTRUCTION_LAYOUT } from '.';
+import {
+  DEFAULT_FARMING_TICKET_END_TIME,
+  END_FARMING_INSTRUCTION_LAYOUT,
+  START_FARMING_INSTRUCTION_LAYOUT,
+  CLAIM_FARMED_INSTRUCTION_LAYOUT,
+  ClaimFarmedInstructionParams,
+} from '.';
 import { POOLS_PROGRAM_ADDRESS } from '..';
 import { account, sighash } from '../utils';
 import { EndFarmingInstructionParams, GetFarmingRewardParams, StartFarmingInstructionParams } from './types';
@@ -20,7 +26,7 @@ export class Farming {
    * @returns 
    */
 
-  static startFarmingInstruction(params: StartFarmingInstructionParams) {
+  static startFarmingInstruction(params: StartFarmingInstructionParams): TransactionInstruction {
     const data = Buffer.alloc(START_FARMING_INSTRUCTION_LAYOUT.span)
     const {
       poolPublicKey,
@@ -67,7 +73,7 @@ export class Farming {
    * @returns 
    */
 
-  static endFarmingInstruction(params: EndFarmingInstructionParams) {
+  static endFarmingInstruction(params: EndFarmingInstructionParams): TransactionInstruction {
     const data = Buffer.alloc(END_FARMING_INSTRUCTION_LAYOUT.span)
     const {
       poolPublicKey,
@@ -97,6 +103,52 @@ export class Farming {
       account(poolSigner),
       account(userPoolTokenAccount, true),
       account(userKey, false, true),
+      account(TOKEN_PROGRAM_ID),
+      account(SYSVAR_CLOCK_PUBKEY),
+      account(SYSVAR_RENT_PUBKEY),
+    ]
+
+    return new TransactionInstruction({
+      programId: POOLS_PROGRAM_ADDRESS,
+      keys,
+      data,
+    });
+  }
+
+  /**
+   * Create claimFarmed instruction
+   */
+
+  static claimFarmedInstruction(params: ClaimFarmedInstructionParams): TransactionInstruction {
+    const data = Buffer.alloc(CLAIM_FARMED_INSTRUCTION_LAYOUT.span)
+    const {
+      poolPublicKey,
+      poolSigner,
+      farmingState,
+      farmingSnapshots,
+      farmingTicket,
+      userKey,
+      farmingTokenVault,
+      userFarmingTokenAccount,
+    } = params
+
+    END_FARMING_INSTRUCTION_LAYOUT.encode(
+      {
+        instruction: sighash('withdraw_farmed'),
+      },
+      data,
+    );
+
+    const keys = [
+      account(poolPublicKey),
+      account(farmingState),
+      account(farmingSnapshots),
+      account(farmingTicket, true),
+      account(farmingTokenVault, true),
+      account(poolSigner),
+      account(userFarmingTokenAccount, true),
+      account(userKey, false, true),
+      account(userKey, true),
       account(TOKEN_PROGRAM_ID),
       account(SYSVAR_CLOCK_PUBKEY),
       account(SYSVAR_RENT_PUBKEY),
@@ -152,6 +204,6 @@ export class Farming {
       stateAttached,
       snapshots: snapshotQueue.snapshots,
     })
-
   }
+
 }
