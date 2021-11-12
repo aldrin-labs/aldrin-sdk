@@ -17,13 +17,14 @@ This library is under active development. Please use it at own risk.
 npm install @aldrin/sdk
 ``` 
 or 
+
 ```bash
 yarn add @aldrin/sdk
 ```
 
 ## Development
 
-1. Clone (repository)[https://github.com/aldrin-exchange/aldrin-sdk]
+1. Clone [repository](https://github.com/aldrin-exchange/aldrin-sdk)
 2. Run `yarn` or `npm install`
 
 ## Demo
