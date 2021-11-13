@@ -1,10 +1,10 @@
-import { Wallet } from '@project-serum/anchor'
 import { PublicKey, Transaction } from '@solana/web3.js'
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   Token,
   TOKEN_PROGRAM_ID,
 } from '@solana/spl-token'
+import { Wallet } from '../types'
 
 interface CreateAccountParams {
   wallet: Wallet
