@@ -1,2 +1,2 @@
-export const API_URL = 'https://api.cryptocurrencies.ai/graphql'
+export const API_URL = 'https://api.aldrin.com/graphql'
 
