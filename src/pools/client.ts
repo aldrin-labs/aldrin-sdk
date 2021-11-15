@@ -160,16 +160,48 @@ export class PoolClient {
 
   async withdrawLiquidity(params: WithdrawLiquidityParams): Promise<string> {
 
-    const { pool, slippage = 0.01, wallet } = params
-    let { baseTokenReturnedMin, quoteTokenReturnedMin } = params
+    const { pool, slippage = 0.001, wallet } = params
+    let { baseTokenReturnedMin, quoteTokenReturnedMin, userBaseTokenAccount, userQuoteTokenAccount } = params
     const {
       poolPublicKey,
+      baseTokenMint,
+      quoteTokenMint,
     } = pool
 
     const [poolSigner] = await PublicKey.findProgramAddress(
       [poolPublicKey.toBuffer()],
       POOLS_PROGRAM_ADDRESS
     )
+
+    const transaction = new Transaction()
+
+    if (!userBaseTokenAccount) {
+      const {
+        transaction: createAccountTransaction,
+        newAccountPubkey,
+      } = await TokenClient.createTokenAccountTransaction({
+        owner: wallet.publicKey,
+        mint: baseTokenMint,
+      })
+
+      userBaseTokenAccount = newAccountPubkey
+      transaction.add(createAccountTransaction)
+    }
+
+
+    if (!userQuoteTokenAccount) {
+      const {
+        transaction: createAccountTransaction,
+        newAccountPubkey,
+      } = await TokenClient.createTokenAccountTransaction({
+        owner: wallet.publicKey,
+        mint: quoteTokenMint,
+      })
+
+      userQuoteTokenAccount = newAccountPubkey
+      transaction.add(createAccountTransaction)
+    }
+
 
     if (!baseTokenReturnedMin || !quoteTokenReturnedMin) {
       const maxWithdraw = await this.getMaxWithdrawable(params)
@@ -182,13 +214,14 @@ export class PoolClient {
 
     const instruction = Pool.withdrawLiquidityInstruction({
       ...params,
+      userBaseTokenAccount,
+      userQuoteTokenAccount,
       baseTokenReturnedMin,
       quoteTokenReturnedMin,
       poolSigner,
       walletAuthority: wallet.publicKey,
     })
 
-    const transaction = new Transaction()
 
     transaction.add(instruction)
 
@@ -215,7 +248,7 @@ export class PoolClient {
         quoteTokenMint,
         poolPublicKey,
       },
-      slippage = 0.01,
+      slippage = 0.001,
       wallet,
     } = params
 

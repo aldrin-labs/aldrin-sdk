@@ -79,16 +79,20 @@ export interface DepositLiquididtyInstructionParams extends BaseLiquidityParams,
   userPoolTokenAccount: PublicKey
 }
 
-export interface WithdrawLiquidityParams extends BaseLiquidityParams, WithWallet, WithSlippage {
+export interface WithdrawLiquidityParams extends WithWallet, WithSlippage {
   pool: LiquidityPool & WithFeesAccount
   poolTokenAmount: BN
   userPoolTokenAccount: PublicKey
   baseTokenReturnedMin?: BN
   quoteTokenReturnedMin?: BN
+  userBaseTokenAccount?: PublicKey
+  userQuoteTokenAccount?: PublicKey
 }
 
 export interface WithdrawLiquidityInstructionParams extends WithdrawLiquidityParams, WithAuhority {
   baseTokenReturnedMin: BN
   quoteTokenReturnedMin: BN
   userPoolTokenAccount: PublicKey
+  userBaseTokenAccount: PublicKey
+  userQuoteTokenAccount: PublicKey
 }
