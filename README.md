@@ -54,9 +54,8 @@ async function trade() {
     mintFrom: usdc,
     mintTo: rin,
   })
-
-  trade()
 } 
+trade()
 ```
 
 ***
