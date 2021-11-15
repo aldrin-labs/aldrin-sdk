@@ -2,7 +2,7 @@
   "entryPoints": [
     "./src/index.ts"
   ],
-  "out": "dist",
+  "out": "docs",
   "githubPages": false,
   "hideGenerator": true,
   "preserveWatchOutput": true,

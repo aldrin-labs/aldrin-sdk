@@ -7,15 +7,17 @@
 </p>
 
 <p align="center">
-  [<a href="https://dex.aldrin.com">Website</a> |  <a href="#">API Reference</a> | <a href="https://github.com/aldrin-exchange/aldrin-sdk/tree/main/examples">Examples</a> ]
+  [<a href="https://dex.aldrin.com">Website</a> |  <a href="https://github.com/aldrin-exchange/aldrin-sdk/tree/main/docs">API Reference</a> | <a href="https://github.com/aldrin-exchange/aldrin-sdk/tree/main/examples">Examples</a> ]
 </p>
 
-## Instalation
+## Installation
 
 ```bash
 npm install @aldrin/sdk
 ``` 
+
 or 
+
 
 ```bash
 yarn add @aldrin/sdk
