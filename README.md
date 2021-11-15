@@ -49,6 +49,7 @@ async function trade() {
 
   const transactionId = await tokenSwap.swap({
     wallet: wallet,
+    // A least 1 of parameters minIncomeAmount/outcomeAmount is required
     minIncomeAmount: new BN(1_000_000_000), // 1 RIN
     // outcomeAmount: new BN(5_000_000) // 5 USDC
     mintFrom: usdc,
@@ -77,6 +78,7 @@ async function depositLiquidity() {
   const transactionId = await tokenSwap.depositLiquidity({
     wallet: wallet,
     poolMint: AUTHORIZED_POOLS.RIN_USDC.poolMint,
+    // A least 1 of parameters maxBase/maxQuote is required
     // maxBase: new BN(1_000_000_000), // 1 RIN
     maxQuote: new BN(5_000_000), // 5 USDC
   })
@@ -103,6 +105,7 @@ export async function withdrawLiquidity() {
     wallet: wallet,
     poolMint: AUTHORIZED_POOLS.RIN_USDC.poolMint,
     poolTokenAmount: new BN(100_000), // LP tokens
+    // A least 1 of parameters minBase/minQuote is required
     // minBase: new BN(1_000_000), // 1 RIN
     // minQuote: new BN(5_000_000), // 1 RIN
   })
