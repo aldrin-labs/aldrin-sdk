@@ -1,9 +1,19 @@
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { AccountInfo, Connection, ParsedAccountData, PublicKey } from '@solana/web3.js';
+import { AccountInfo, Connection, ParsedAccountData, PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
 import BN from 'bn.js';
-import { PoolClient, PoolRpcResponse, SIDE, SOLANA_RPC_ENDPOINT, TokenSwapAddlLiquidityParams, TokenSwapGetPriceParams, TokenSwapLoadParams, TokenSwapParams, TokenSwapWithdrawLiquidityParams } from '.';
-import { TokenClient, TokenMintInfo } from '..';
-import { Wallet } from '../types';
+import { Farming, FarmingClient, POOLS_PROGRAM_ADDRESS, TokenClient, TokenMintInfo } from '.';
+import {
+  PoolClient,
+  PoolRpcResponse,
+  SIDE,
+  SOLANA_RPC_ENDPOINT,
+  TokenSwapAddlLiquidityParams, TokenSwapGetFarmedParams, TokenSwapGetPriceParams,
+  TokenSwapLoadParams,
+  TokenSwapParams,
+  TokenSwapWithdrawLiquidityParams,
+} from './pools';
+import { sendTransaction } from './transactions';
+import { Wallet } from './types';
 
 
 const PRECISION_NOMINATOR = new BN(1_000_000) // BN precision
@@ -11,8 +21,6 @@ const PRECISION_NOMINATOR = new BN(1_000_000) // BN precision
  * High-level API for Aldrin AMM Pools 
  */
 export class TokenSwap {
-
-
   private mintInfos = new Map<string, TokenMintInfo>()
   private walletTokens = new Map<
     string,
@@ -26,6 +34,7 @@ export class TokenSwap {
     private pools: PoolRpcResponse[],
     private poolClient: PoolClient,
     private tokenClient: TokenClient,
+    private farmingClient: FarmingClient,
     private connection = new Connection(SOLANA_RPC_ENDPOINT),
     private wallet: Wallet | null = null
   ) {
@@ -351,6 +360,7 @@ export class TokenSwap {
     const { connection = new Connection(SOLANA_RPC_ENDPOINT), wallet } = params
     const poolClient = new PoolClient(connection)
     const tokenClient = new TokenClient(connection)
+    const farmingClient = new FarmingClient(connection)
 
     const pools = await poolClient.getPools()
 
@@ -358,6 +368,7 @@ export class TokenSwap {
       pools,
       poolClient,
       tokenClient,
+      farmingClient,
       connection,
       wallet
     )
@@ -373,6 +384,155 @@ export class TokenSwap {
     this.mintInfos.set(mint.toBase58(), info)
 
     return info
+  }
+
+  async getFarmed(params: TokenSwapGetFarmedParams) {
+    const { poolMint, wallet = this.wallet } = params
+
+    if (!wallet) {
+      throw new Error('Wallet not provided')
+    }
+
+    const pool = this.pools.find((p) => p.poolMint.equals(poolMint))
+
+    if (!pool) {
+      throw new Error('Pool not found!')
+    }
+    const states = await this.farmingClient.getFarmingState({ poolPublicKey: pool.poolPublicKey })
+
+    const activeStates = states.filter((s) => !s.tokensTotal.eq(s.tokensUnlocked)) // Skip finished staking states
+
+
+    // Resolve rewards
+    const stateVaults = await Promise.all(
+      activeStates.map(async (state) => {
+
+        const tokenInfo = await this.tokenClient.getTokenAccount(state.farmingTokenVault)
+
+        return {
+          tokenInfo,
+          state,
+        }
+      })
+    )
+
+
+    const tickets = await this.farmingClient.getFarmingTickets({ userKey: wallet.publicKey, pool: pool.poolPublicKey })
+
+    if (tickets.length === 0) {
+      throw new Error('No tickets, nothing to check')
+    }
+
+    const queue = await this.farmingClient.getFarmingSnapshotsQueue()
+
+    return stateVaults.map((sv) => {
+      const rewardsPerTicket = tickets.map((ticket) => {
+
+        const rewards = Farming.calculateFarmingRewards({
+          ticket,
+          queue,
+          state: sv.state, // Calculate for each state separately, sometimes there are few reward pools
+        })
+
+        return { ...rewards, ticket }
+      })
+
+      const rewardsAmount = rewardsPerTicket.reduce((acc, _) => acc.add(_.unclaimedTokens), new BN(0))
+
+      return { ...sv, rewardsPerTicket, rewardsAmount }
+    })
+
+  }
+
+  async claimFarmed(params: TokenSwapGetFarmedParams): Promise<string[]> {
+    const { wallet = this.wallet, poolMint } = params
+
+    if (!wallet) {
+      throw new Error('Wallet not provided')
+    }
+
+    const farmed = await this.getFarmed(params)
+
+    const pool = this.pools.find((p) => p.poolMint.equals(poolMint))
+
+    if (!pool) {
+      throw new Error('Pool not found!')
+    }
+
+    const [poolSigner] = await PublicKey.findProgramAddress(
+      [pool?.poolPublicKey.toBuffer()],
+      POOLS_PROGRAM_ADDRESS,
+    )
+
+
+    const walletTokens = await this.getWalletTokens(wallet)
+
+    const transactions = await Promise.all(farmed
+      .flatMap(async (state) => {
+
+        const farmingToken = await this.tokenClient.getTokenAccount(state.state.farmingTokenVault)
+
+
+        const instructions: TransactionInstruction[] = []
+        let userFarmingTokenAccount = walletTokens.find((wt) => wt.account.data.parsed.info.mint === farmingToken.mint.toBase58())?.pubkey
+
+
+        if (!userFarmingTokenAccount) {
+          const {
+            transaction: createAccountTransaction,
+            newAccountPubkey,
+          } = await TokenClient.createTokenAccountTransaction({
+            owner: wallet.publicKey,
+            mint: farmingToken.mint,
+          })
+
+          userFarmingTokenAccount = newAccountPubkey
+          instructions.push(...createAccountTransaction.instructions)
+        }
+
+
+        const ticketInstructions = state.rewardsPerTicket.flatMap((rpt) => {
+          const result: TransactionInstruction[] = []
+          let unclaimed = rpt.unclaimedSnapshots
+
+          while (unclaimed > 0) {
+            const maxSnapshots = Math.min(unclaimed, 22) // TODO: 25
+            unclaimed -= 22
+            result.push(
+              Farming.claimFarmedInstruction({
+                maxSnapshots: new BN(maxSnapshots),
+                userKey: wallet.publicKey,
+                userFarmingTokenAccount: userFarmingTokenAccount as PublicKey, // TODO:?
+                poolSigner,
+                farmingState: state.state.farmingStatePublicKey,
+                farmingSnapshots: state.state.farmingSnapshots,
+                farmingTicket: rpt.ticket.farmingTicketPublicKey,
+                poolPublicKey: pool.poolPublicKey,
+                farmingTokenVault: state.state.farmingTokenVault,
+              })
+            )
+          }
+
+          return result
+        })
+
+        instructions.push(...ticketInstructions)
+
+        return instructions
+      })
+    )
+
+    console.log('Transactions: ', transactions)
+
+    return Promise.all(transactions
+      .flatMap((_) => _)
+      .map((_) => new Transaction().add(_))
+      .map(async (transaction) => sendTransaction({
+        transaction,
+        wallet,
+        connection: this.connection,
+      }))
+    )
   }
 
   private async getWalletTokens(wallet: Wallet) {

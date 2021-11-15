@@ -44,8 +44,10 @@ export const END_FARMING_INSTRUCTION_LAYOUT = struct([
   blob(8, 'instruction'),
 ])
 
-
-export const CLAIM_FARMED_INSTRUCTION_LAYOUT = END_FARMING_INSTRUCTION_LAYOUT
+export const CLAIM_FARMED_INSTRUCTION_LAYOUT = struct([
+  blob(8, 'instruction'),
+  uint64('maxSnapshots'),
+])
 
 export const START_FARMING_INSTRUCTION_LAYOUT = struct([
   blob(8, 'instruction'),

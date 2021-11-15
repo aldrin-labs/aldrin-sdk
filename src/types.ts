@@ -6,3 +6,9 @@ export interface Wallet {
   publicKey: PublicKey;
   payer: Keypair
 }
+
+
+export interface TokenSwapClaimFarmedParams {
+  wallet?: Wallet
+  poolMint: PublicKey
+}

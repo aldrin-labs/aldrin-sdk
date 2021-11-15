@@ -12,10 +12,11 @@ export const getFarmingRewardsFromSnapshots = ({
   state: FarmingState
   stateAttached?: AttachedFarmingState
   snapshots: FarmingSnapshot[]
-}): BN => {
+}): { unclaimedTokens: BN, unclaimedSnapshots: number } => {
   const initialState = {
     tokensUnlocked: new BN(0),
     amount: new BN(0),
+    unclaimedSnapshots: 0,
   }
 
   const lastClaimTime = stateAttached?.lastVestedWithdrawTime || 0
@@ -24,7 +25,7 @@ export const getFarmingRewardsFromSnapshots = ({
   const rewardsState = snapshots
     .reduce(
       (acc, snapshot) => {
-        const { tokensUnlocked, amount } = acc
+        const { tokensUnlocked, amount, unclaimedSnapshots } = acc
 
         const st = new BN(snapshot.time)
 
@@ -49,9 +50,10 @@ export const getFarmingRewardsFromSnapshots = ({
         return {
           tokensUnlocked: snapshot.farmingTokens,
           amount: amount.add(finalReward),
+          unclaimedSnapshots: finalReward.gtn(0) ? unclaimedSnapshots + 1 : 0,
         }
       }, initialState
     )
 
-  return rewardsState.amount
+  return { unclaimedTokens: rewardsState.amount, unclaimedSnapshots: rewardsState.unclaimedSnapshots }
 }
