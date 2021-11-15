@@ -27,7 +27,7 @@ yarn add @aldrin/sdk
 
 ### Trade (swap tokens)
 
-```
+```js
 import { Wallet } from '@project-serum/anchor';
 import { PublicKey } from '@solana/web3.js';
 import BN from 'bn.js';
@@ -64,7 +64,7 @@ async function trade() {
 ### Add [pool](https://dex.aldrin.com/pools) liquidity
 
 
-```
+```js
 import BN from 'bn.js'
 import { Wallet } from '@project-serum/anchor';
 import { AUTHORIZED_POOLS } from '../../src'
@@ -90,7 +90,7 @@ async function depositLiquidity() {
 
 ### Withdraw liquidity from pool
 
-```
+```js
 import BN from 'bn.js'
 import { Wallet } from '@project-serum/anchor';
 import { AUTHORIZED_POOLS } from '../../src'
