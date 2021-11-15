@@ -1,7 +1,7 @@
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { AccountInfo, Connection, ParsedAccountData, PublicKey } from '@solana/web3.js';
 import BN from 'bn.js';
-import { PoolClient, PoolRpcResponse, SIDE, SOLANA_RPC_ENDPOINT, TokenSwapGetPriceParams, TokenSwapLoadParams, TokenSwapParams } from '.';
+import { PoolClient, PoolRpcResponse, SIDE, SOLANA_RPC_ENDPOINT, TokenSwapAddlLiquidityParams, TokenSwapGetPriceParams, TokenSwapLoadParams, TokenSwapParams, TokenSwapWithdrawLiquidityParams } from '.';
 import { TokenClient, TokenMintInfo } from '..';
 import { Wallet } from '../types';
 
@@ -164,6 +164,136 @@ export class TokenSwap {
 
   }
 
+
+  /**
+   * Add liquidity to Aldrin's AMM pool
+   * @param params 
+   * @returns Transaction Id
+   */
+
+  async depositLiquidity(params: TokenSwapAddlLiquidityParams): Promise<string> {
+    const { poolMint, wallet = this.wallet } = params
+    let { maxBase, maxQuote } = params
+
+
+    if (!wallet) {
+      throw new Error('Wallet not provided')
+    }
+
+    const pool = this.pools.find((p) => p.poolMint.equals(poolMint))
+
+    if (!pool) {
+      throw new Error(`Pool with mint ${poolMint.toBase58()} not found`)
+    }
+
+    const { baseTokenVault, quoteTokenVault, baseTokenMint, quoteTokenMint } = pool
+
+
+    const [
+      baseVaultAccount,
+      quoteVaultAccount,
+    ] = await Promise.all([
+      this.tokenClient.getTokenAccount(baseTokenVault),
+      this.tokenClient.getTokenAccount(quoteTokenVault),
+    ])
+
+
+    const price = quoteVaultAccount.amount.mul(PRECISION_NOMINATOR).div(baseVaultAccount.amount)
+
+    const walletTokens = await this.getWalletTokens(wallet)
+
+    const baseMint = baseTokenMint.toBase58()
+    const quoteMint = quoteTokenMint.toBase58()
+
+
+    const userBaseTokenAccount = walletTokens.find((wt) => wt.account.data.parsed.info.mint === baseMint)
+    const userQuoteTokenAccount = walletTokens.find((wt) => wt.account.data.parsed.info.mint === quoteMint)
+
+
+    if (!userBaseTokenAccount) {
+      throw new Error('Unable to add liquidity: base token account not found')
+    }
+
+    if (!userQuoteTokenAccount) {
+      throw new Error('Unable to add liquidity: quote token account not found')
+    }
+
+    if (!maxBase) {
+      if (!maxQuote) {
+        throw new Error('Neither base nor quote amounts does not provided!') // TODO: max?
+      }
+
+      maxBase = maxQuote.mul(PRECISION_NOMINATOR).div(price)
+    }
+
+    if (!maxQuote) {
+      maxQuote = maxBase.mul(price).div(PRECISION_NOMINATOR)
+    }
+
+    const poolTokenAccount = walletTokens.find((wt) => wt.account.data.parsed.info.mint === pool.poolMint.toBase58())
+
+    return this.poolClient.depositLiquidity({
+      pool,
+      userPoolTokenAccount: poolTokenAccount ? poolTokenAccount.pubkey : null,
+      maxBaseTokenAmount: maxBase,
+      maxQuoteTokenAmount: maxQuote,
+      userBaseTokenAccount: userBaseTokenAccount.pubkey,
+      userQuoteTokenAccount: userQuoteTokenAccount.pubkey,
+      wallet,
+    })
+
+  }
+
+  /**
+   * Withdraw liquidity from Aldrin's AMM pool
+   * @param params 
+   * @returns Transaction Id
+   */
+
+  async withdrawLiquidity(params: TokenSwapWithdrawLiquidityParams): Promise<string> {
+    const { poolMint, wallet = this.wallet, poolTokenAmount } = params
+
+    if (!wallet) {
+      throw new Error('Wallet not provided')
+    }
+
+    const pool = this.pools.find((p) => p.poolMint.equals(poolMint))
+
+    if (!pool) {
+      throw new Error(`Pool with mint ${poolMint.toBase58()} not found`)
+    }
+
+    const { baseTokenMint, quoteTokenMint } = pool
+
+
+    const walletTokens = await this.getWalletTokens(wallet)
+
+    const baseMint = baseTokenMint.toBase58()
+    const quoteMint = quoteTokenMint.toBase58()
+
+
+    const userBaseTokenAccount = walletTokens.find((wt) => wt.account.data.parsed.info.mint === baseMint)
+    const userQuoteTokenAccount = walletTokens.find((wt) => wt.account.data.parsed.info.mint === quoteMint)
+
+    const poolTokenAccount = walletTokens.find((wt) => wt.account.data.parsed.info.mint === pool.poolMint.toBase58())
+
+    if (!poolTokenAccount) {
+      throw new Error('Unable to withdraw liquidity: pool token account not found')
+    }
+
+    return this.poolClient.withdrawLiquidity({
+      pool,
+      userPoolTokenAccount: poolTokenAccount.pubkey,
+      userBaseTokenAccount: userBaseTokenAccount?.pubkey,
+      userQuoteTokenAccount: userQuoteTokenAccount?.pubkey,
+      poolTokenAmount,
+      slippage: params.slippage,
+      wallet,
+      baseTokenReturnedMin: params.minBase,
+      quoteTokenReturnedMin: params.minQuote,
+    })
+
+  }
 
   /**
    * Calculate price of mintForm/mintTo tokens

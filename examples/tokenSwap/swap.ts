@@ -3,6 +3,7 @@ import BN from 'bn.js';
 import { TokenSwap } from '../../src';
 import { wallet } from '../common';
 
+
 export async function useTokenSwap() {
   const tokenSwap = await TokenSwap.initialize()
 
@@ -29,6 +30,7 @@ export async function useTokenSwap() {
   const txId = await tokenSwap.swap({
     wallet: wallet,
     minIncomeAmount: new BN(1_000_000_000), // 1 RIN
+    // outcomeAmount: new BN(5_000_000) // 5 USDC
     mintFrom: usdc,
     mintTo: rin,
   })

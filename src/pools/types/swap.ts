@@ -47,3 +47,30 @@ export interface TokenSwapLoadParams {
   connection?: Connection
   wallet?: Wallet
 }
+
+export type OptionalDepositAmounts = {
+  maxBase: BN
+  maxQuote?: BN
+} | {
+  maxQuote: BN
+  maxBase?: BN
+} | {
+  maxBase: BN
+  maxQuote: BN
+}
+
+export interface TokenSwapAddLiquidityParamsBase {
+  poolMint: PublicKey
+  wallet?: Wallet
+}
+
+
+export type TokenSwapAddlLiquidityParams = OptionalDepositAmounts & TokenSwapAddLiquidityParamsBase
+
+
+export type TokenSwapWithdrawLiquidityParams = TokenSwapAddLiquidityParamsBase & {
+  poolTokenAmount: BN
+  slippage?: number // Optional, 0.01 (1%) by default
+  minBase?: BN
+  minQuote?: BN
+}
