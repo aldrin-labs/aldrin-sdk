@@ -1,9 +1,9 @@
+import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { Connection, PublicKey, Transaction } from '@solana/web3.js';
-import { ASSOCIATED_TOKEN_PROGRAM_ID, MintInfo, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token'
-import { CreateAccountParams, CreateAccountResponse, TokenInfoResponse, TokenMintInfo } from './types';
-import { SPL_ACCOUNT_LAYOUT, SPL_TOKEN_LAYOUT } from './layout';
 import BN from 'bn.js';
 import { TokenAccountInfo } from '.';
+import { SPL_ACCOUNT_LAYOUT, SPL_TOKEN_LAYOUT } from './layout';
+import { CreateAccountParams, CreateAccountResponse, TokenMintInfo } from './types';
 
 
 /**

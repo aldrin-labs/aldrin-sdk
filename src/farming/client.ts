@@ -4,7 +4,7 @@ import {
   FARMING_STATE_LAYOUT,
   FARMING_TICKET_LAYOUT, SNAPSHOT_QUEUE_LAYOUT,
 } from '.';
-import { POOLS_PROGRAM_ADDRESS, TokenClient } from '..';
+import { POOLS_PROGRAM_ADDRESS, SOLANA_RPC_ENDPOINT, TokenClient } from '..';
 import { createInstruction, sendTransaction } from '../transactions';
 import { Farming } from './farming';
 import { EndFarmingParams, FarmingSnapshotQueue, FarmingState, FarmingTicket, GetFarmingStateParams, GetFarmingTicketsParams, StartFarmingParams } from './types';
@@ -17,7 +17,7 @@ export class FarmingClient {
 
 
   private tokenClient = new TokenClient(this.connection)
-  constructor(private connection: Connection) {
+  constructor(private connection: Connection = new Connection(SOLANA_RPC_ENDPOINT)) {
   }
 
 

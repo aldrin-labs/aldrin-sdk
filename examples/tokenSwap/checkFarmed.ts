@@ -1,10 +1,9 @@
-import BN from 'bn.js';
 import { AUTHORIZED_POOLS, TokenSwap } from '../../src';
 import { wallet } from '../common';
 
 
 /** Check farming state */
-export async function getFarmed() {
+export async function checkFarmed() {
   const tokenSwap = await TokenSwap.initialize()
 
   const farmed = await tokenSwap.getFarmed({
@@ -19,4 +18,4 @@ export async function getFarmed() {
   // console.log('farmed: ', farmed)
 }
 
-getFarmed()
+checkFarmed()

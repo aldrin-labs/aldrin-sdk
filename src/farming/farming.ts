@@ -3,11 +3,10 @@ import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { SYSVAR_CLOCK_PUBKEY, SYSVAR_RENT_PUBKEY, TransactionInstruction } from '@solana/web3.js';
 import BN from 'bn.js';
 import {
-  DEFAULT_FARMING_TICKET_END_TIME,
+  ClaimFarmedInstructionParams,
+  CLAIM_FARMED_INSTRUCTION_LAYOUT,
   END_FARMING_INSTRUCTION_LAYOUT,
   START_FARMING_INSTRUCTION_LAYOUT,
-  CLAIM_FARMED_INSTRUCTION_LAYOUT,
-  ClaimFarmedInstructionParams,
 } from '.';
 import { POOLS_PROGRAM_ADDRESS } from '..';
 import { account, sighash } from '../utils';
