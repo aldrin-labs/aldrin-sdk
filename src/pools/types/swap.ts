@@ -74,3 +74,9 @@ export type TokenSwapWithdrawLiquidityParams = TokenSwapAddLiquidityParamsBase &
   minBase?: BN
   minQuote?: BN
 }
+
+
+export interface TokenSwapGetFarmedParams {
+  wallet?: Wallet
+  poolMint: PublicKey
+}

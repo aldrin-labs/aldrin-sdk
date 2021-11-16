@@ -1,7 +1,6 @@
 import { PublicKey } from '@solana/web3.js'
 import BN from 'bn.js'
-import { WithWallet } from '../'
-import { WithPoolPK } from '../pools'
+import { WithPoolPK, WithWallet } from '../pools/types'
 
 export type GetFarmingStateParams = WithPoolPK
 
@@ -112,10 +111,12 @@ export interface ClaimFarmedCommons extends WithPoolPK {
 
 export interface ClaimFarmedParams extends ClaimFarmedCommons, WithWallet {
   userFarmingTokenAccount: PublicKey
+  maxSnapshots: BN
 }
 
 export interface ClaimFarmedInstructionParams extends ClaimFarmedCommons {
   userFarmingTokenAccount: PublicKey
   poolSigner: PublicKey
   userKey: PublicKey
+  maxSnapshots: BN
 }

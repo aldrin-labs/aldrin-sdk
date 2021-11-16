@@ -7,19 +7,13 @@
 </p>
 
 <p align="center">
-  [<a href="https://dex.aldrin.com">Website</a> |  <a href="#">API Reference</a> | <a href="https://github.com/aldrin-exchange/aldrin-sdk/tree/main/examples">Examples</a> ]
+  [<a href="https://dex.aldrin.com">Website</a> |  <a href="https://github.com/aldrin-exchange/aldrin-sdk/tree/main/docs">API Reference</a> | <a href="https://github.com/aldrin-exchange/aldrin-sdk/tree/main/examples">Examples</a> ]
 </p>
 
-## Instalation
-
-```bash
-npm install @aldrin/sdk
-``` 
-or 
-
-```bash
-yarn add @aldrin/sdk
-```
+## Getting Started
+1. Install one of available [Solana wallets](https://docs.solana.com/wallet-guide)
+2. Install library with `npm install @aldrin/sdk` or `yarn add @aldrin/sdk` 
+3. Check [Usage](#usage) section or take a look at [examples](https://github.com/aldrin-exchange/aldrin-sdk/tree/main/examples) and [API reference](https://github.com/aldrin-exchange/aldrin-sdk/tree/main/docs)
 
 ## Usage
 
@@ -49,6 +43,7 @@ async function trade() {
 
   const transactionId = await tokenSwap.swap({
     wallet: wallet,
+    // A least 1 of parameters minIncomeAmount/outcomeAmount is required
     minIncomeAmount: new BN(1_000_000_000), // 1 RIN
     // outcomeAmount: new BN(5_000_000) // 5 USDC
     mintFrom: usdc,
@@ -77,6 +72,7 @@ async function depositLiquidity() {
   const transactionId = await tokenSwap.depositLiquidity({
     wallet: wallet,
     poolMint: AUTHORIZED_POOLS.RIN_USDC.poolMint,
+    // A least 1 of parameters maxBase/maxQuote is required
     // maxBase: new BN(1_000_000_000), // 1 RIN
     maxQuote: new BN(5_000_000), // 5 USDC
   })
@@ -103,6 +99,7 @@ export async function withdrawLiquidity() {
     wallet: wallet,
     poolMint: AUTHORIZED_POOLS.RIN_USDC.poolMint,
     poolTokenAmount: new BN(100_000), // LP tokens
+    // A least 1 of parameters minBase/minQuote is required
     // minBase: new BN(1_000_000), // 1 RIN
     // minQuote: new BN(5_000_000), // 1 RIN
   })

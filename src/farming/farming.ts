@@ -132,9 +132,10 @@ export class Farming {
       userFarmingTokenAccount,
     } = params
 
-    END_FARMING_INSTRUCTION_LAYOUT.encode(
+    CLAIM_FARMED_INSTRUCTION_LAYOUT.encode(
       {
         instruction: sighash('withdraw_farmed'),
+        maxSnapshots: params.maxSnapshots,
       },
       data,
     );
@@ -166,10 +167,10 @@ export class Farming {
    * @param params 
    * @returns 
    */
-  static calculateFarmingRewards(params: GetFarmingRewardParams): BN {
+  static calculateFarmingRewards(params: GetFarmingRewardParams): { unclaimedTokens: BN, unclaimedSnapshots: number } {
     const { queue, ticket, state } = params
 
-    const ZERO = new BN(0)
+    const ZERO = { unclaimedTokens: new BN(0), unclaimedSnapshots: 0 }
 
 
     const snapshotQueue = queue.find(
