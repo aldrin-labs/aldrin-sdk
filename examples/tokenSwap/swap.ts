@@ -29,7 +29,7 @@ export async function useTokenSwap() {
 
   const swapImpact = await tokenSwap.getSwapImpact({
     wallet,
-    minIncomeAmount: new BN(100_000_000_000), // 1 RIN
+    minIncomeAmount: new BN(1_000_000_000), // 1 RIN
     // outcomeAmount: new BN(5_000_000), // 5 USDC
     mintFrom: usdc,
     mintTo: rin,

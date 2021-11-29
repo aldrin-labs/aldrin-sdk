@@ -194,7 +194,7 @@ export class TokenSwap {
 
     const priceImpact = 100 / (poolsAmountDiff.toNumber() + 1)
 
-    const fee = minIncomeAmount.mul(SWAP_FEE_NUMERATOR).div(SWAP_FEE_DENUMERATOR)
+    const fee = outcomeAmount.mul(SWAP_FEE_NUMERATOR).div(SWAP_FEE_DENUMERATOR)
 
     return {
       minIncomeAmount,
