@@ -7,6 +7,8 @@ import {
   PoolRpcResponse,
   SIDE,
   SOLANA_RPC_ENDPOINT,
+  SWAP_FEE_NUMERATOR,
+  SWAP_FEE_DENUMERATOR,
   TokenSwapAddlLiquidityParams, TokenSwapGetFarmedParams, TokenSwapGetPriceParams,
   TokenSwapLoadParams,
   TokenSwapParams,
@@ -173,6 +175,35 @@ export class TokenSwap {
 
   }
 
+  public async getSwapImpact(params: TokenSwapParams) {
+    const {
+      pool,
+      minIncomeAmount,
+      outcomeAmount,
+      isInverted,
+    } = await this.resolveSwapInputs(params)
+
+    const { baseTokenVault } = pool
+
+    const baseVaultAccount = await this.tokenClient.getTokenAccount(baseTokenVault);
+    
+    // isInverted probably is not correct, remove ! later
+    const poolsAmountDiff = !isInverted
+    ? baseVaultAccount.amount.div(minIncomeAmount)
+    : baseVaultAccount.amount.div(outcomeAmount)
+
+    const priceImpact = 100 / (poolsAmountDiff.toNumber() + 1)
+
+    const fee = outcomeAmount.mul(SWAP_FEE_NUMERATOR).div(SWAP_FEE_DENUMERATOR)
+
+    return {
+      minIncomeAmount,
+      outcomeAmount,
+      priceImpact,
+      isInverted,
+      fee,
+    }
+  }
 
   /**
    * Add liquidity to Aldrin's AMM pool

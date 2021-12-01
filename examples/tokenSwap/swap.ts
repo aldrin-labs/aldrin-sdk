@@ -27,6 +27,16 @@ export async function useTokenSwap() {
 
   // console.log('Buy RIN on 10 USDC success, txId: ', buyTxId)
 
+  const swapImpact = await tokenSwap.getSwapImpact({
+    wallet,
+    minIncomeAmount: new BN(1_000_000_000), // 1 RIN
+    // outcomeAmount: new BN(5_000_000), // 5 USDC
+    mintFrom: usdc,
+    mintTo: rin,
+  })
+
+  console.log('swapImpact: ', swapImpact)
+
   const txId = await tokenSwap.swap({
     wallet: wallet,
     minIncomeAmount: new BN(1_000_000_000), // 1 RIN
