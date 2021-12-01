@@ -2,9 +2,9 @@ import { Connection, GetProgramAccountsFilter, Keypair, PublicKey, Transaction }
 import {
   ClaimFarmedParams,
   FARMING_STATE_LAYOUT,
-  FARMING_TICKET_LAYOUT, SNAPSHOT_QUEUE_LAYOUT,
+  FARMING_TICKET_LAYOUT, GetFarmingSnapshotParams, SNAPSHOT_QUEUE_LAYOUT,
 } from '.';
-import { POOLS_PROGRAM_ADDRESS, SOLANA_RPC_ENDPOINT, TokenClient } from '..';
+import { PoolClient, SOLANA_RPC_ENDPOINT, TokenClient } from '..';
 import { createInstruction, sendTransaction } from '../transactions';
 import { Farming } from './farming';
 import { EndFarmingParams, FarmingSnapshotQueue, FarmingState, FarmingTicket, GetFarmingStateParams, GetFarmingTicketsParams, StartFarmingParams } from './types';
@@ -30,7 +30,8 @@ export class FarmingClient {
   async getFarmingState(
     params: GetFarmingStateParams
   ): Promise<FarmingState[]> {
-    const states = await this.connection.getProgramAccounts(POOLS_PROGRAM_ADDRESS, {
+    const programId = PoolClient.getPoolAddress(params.poolVersion || 1)
+    const states = await this.connection.getProgramAccounts(programId, {
       commitment: 'finalized',
       filters: [
         { dataSize: FARMING_STATE_LAYOUT.span },
@@ -56,6 +57,7 @@ export class FarmingClient {
    */
 
   async getFarmingTickets(params: GetFarmingTicketsParams = {}): Promise<FarmingTicket[]> {
+    const programId = PoolClient.getPoolAddress(params.poolVersion || 1)
 
     const filters: GetProgramAccountsFilter[] = [
       { dataSize: FARMING_TICKET_LAYOUT.span },
@@ -69,7 +71,7 @@ export class FarmingClient {
       filters.push({ memcmp: { offset: FARMING_TICKET_LAYOUT.offsetOf('userKey') || 0, bytes: params.userKey.toBase58() } })
     }
 
-    const tickets = await this.connection.getProgramAccounts(POOLS_PROGRAM_ADDRESS, {
+    const tickets = await this.connection.getProgramAccounts(programId, {
       filters,
     })
 
@@ -89,6 +91,8 @@ export class FarmingClient {
    */
 
   async startFarming(params: StartFarmingParams): Promise<string> {
+    const programId = PoolClient.getPoolAddress(params.poolVersion || 1)
+
     const { wallet } = params
     const farmingTicket = Keypair.generate()
 
@@ -96,7 +100,7 @@ export class FarmingClient {
       size: FARMING_TICKET_LAYOUT.span,
       connection: this.connection,
       wallet,
-      programId: POOLS_PROGRAM_ADDRESS,
+      programId,
       newAccountPubkey: farmingTicket.publicKey,
     })
 
@@ -104,6 +108,7 @@ export class FarmingClient {
       ...params,
       userKey: wallet.publicKey,
       farmingTicket: farmingTicket.publicKey,
+      programId,
     })
 
     const transaction = new Transaction()
@@ -127,10 +132,12 @@ export class FarmingClient {
    */
 
   async endFarming(params: EndFarmingParams) {
+    const programId = PoolClient.getPoolAddress(params.poolVersion || 1)
+
     const { poolPublicKey, wallet } = params
     const [poolSigner] = await PublicKey.findProgramAddress(
       [poolPublicKey.toBuffer()],
-      POOLS_PROGRAM_ADDRESS,
+      programId,
     )
 
     const transaction = new Transaction()
@@ -140,6 +147,7 @@ export class FarmingClient {
         ...params,
         poolSigner,
         userKey: wallet.publicKey,
+        programId,
       })
     )
 
@@ -156,10 +164,12 @@ export class FarmingClient {
    * @returns Transaction Id
    */
   async claimFarmed(params: ClaimFarmedParams): Promise<string> {
+    const programId = PoolClient.getPoolAddress(params.poolVersion || 1)
+
     const { poolPublicKey, wallet } = params
     const [poolSigner] = await PublicKey.findProgramAddress(
       [poolPublicKey.toBuffer()],
-      POOLS_PROGRAM_ADDRESS,
+      programId,
     )
 
     const transaction = new Transaction()
@@ -169,6 +179,7 @@ export class FarmingClient {
         ...params,
         poolSigner,
         userKey: wallet.publicKey,
+        programId,
       })
     )
 
@@ -184,8 +195,9 @@ export class FarmingClient {
    * // TODO: add caching
    * 
    */
-  async getFarmingSnapshotsQueue(): Promise<FarmingSnapshotQueue[]> {
-    const snapshots = await this.connection.getProgramAccounts(POOLS_PROGRAM_ADDRESS, {
+  async getFarmingSnapshotsQueue(params: GetFarmingSnapshotParams): Promise<FarmingSnapshotQueue[]> {
+    const programId = PoolClient.getPoolAddress(params.poolVersion || 1)
+    const snapshots = await this.connection.getProgramAccounts(programId, {
       filters: [
         { dataSize: SNAPSHOT_QUEUE_LAYOUT.span },
       ],

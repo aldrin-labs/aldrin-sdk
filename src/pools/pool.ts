@@ -1,8 +1,15 @@
 
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { SYSVAR_CLOCK_PUBKEY, SYSVAR_RENT_PUBKEY, TransactionInstruction } from '@solana/web3.js';
-import { DepositLiquididtyInstructionParams, DEPOSIT_LIQUIDITY_INSTRUCTION_LAYOUT, Side, SWAP_INSTRUCTION_LAYOUT, WithdrawLiquidityInstructionParams, WITHDRAW_LIQUIDITY_INSTRUCTION_LAYOUT } from '.';
-import { POOLS_PROGRAM_ADDRESS } from '..';
+import {
+  DepositLiquididtyInstructionParams,
+  DEPOSIT_LIQUIDITY_INSTRUCTION_LAYOUT,
+  Side,
+  SWAP_INSTRUCTION_LAYOUT,
+  WithdrawLiquidityInstructionParams,
+  WITHDRAW_LIQUIDITY_INSTRUCTION_LAYOUT,
+} from '.';
+import { POOLS_PROGRAM_ADDRESS, POOLS_V2_PROGRAM_ADDRESS } from '..';
 import { account, sighash } from '../utils';
 import { SIDE, SwapInstructionParams } from './types/swap';
 
@@ -12,7 +19,7 @@ import { SIDE, SwapInstructionParams } from './types/swap';
  */
 
 export class Pool {
-  
+
   /**
      * Create deposit liquidity instruction
      * @param params 
@@ -21,7 +28,7 @@ export class Pool {
   static depositLiquididtyInstruction(params: DepositLiquididtyInstructionParams) {
 
     const data = Buffer.alloc(DEPOSIT_LIQUIDITY_INSTRUCTION_LAYOUT.span)
-    const { creationSize, maxBaseTokenAmount, maxQuoteTokenAmount } = params
+    const { creationSize, maxBaseTokenAmount, maxQuoteTokenAmount, programId } = params
 
     DEPOSIT_LIQUIDITY_INSTRUCTION_LAYOUT.encode(
       {
@@ -49,7 +56,7 @@ export class Pool {
     ]
 
     return new TransactionInstruction({
-      programId: POOLS_PROGRAM_ADDRESS,
+      programId: programId,
       keys,
       data,
     });
@@ -82,6 +89,7 @@ export class Pool {
         baseTokenVault,
         quoteTokenVault,
       },
+      programId,
     } = params
 
     WITHDRAW_LIQUIDITY_INSTRUCTION_LAYOUT.encode(
@@ -112,25 +120,55 @@ export class Pool {
     ]
 
     return new TransactionInstruction({
-      programId: POOLS_PROGRAM_ADDRESS,
+      programId,
       keys,
       data,
     });
   }
 
   /**
-   * Create swap tokens instruction
+   * Create swap tokens instruction. Detect pool program version base on `poolVersion` field
    * @param params 
    * @returns
    */
 
   static swapInstruction(params: SwapInstructionParams): TransactionInstruction {
+    if (params.poolVersion === 1) {
+      return this.swapInstructionV1(params)
+    }
+    return this.swapInstructionV2(params)
+  }
 
+  private static swapInstructionData(params: SwapInstructionParams) {
     const data = Buffer.alloc(SWAP_INSTRUCTION_LAYOUT.span)
     const {
       outcomeAmount,
       minIncomeAmount,
       side,
+    } = params
+
+    SWAP_INSTRUCTION_LAYOUT.encode(
+      {
+        instruction: sighash('swap'),
+        tokens: outcomeAmount,
+        minTokens: minIncomeAmount,
+        side: side === SIDE.ASK ? Side.Ask : Side.Bid,
+      },
+      data,
+    )
+
+    return data
+  }
+
+
+  /**
+   * Create swap tokens instruction for v1 pool
+   * @param params 
+   * @returns
+   */
+
+  static swapInstructionV1(params: SwapInstructionParams) {
+    const {
       pool: {
         poolPublicKey,
         poolMint,
@@ -144,15 +182,8 @@ export class Pool {
       userQuoteTokenAccount,
     } = params
 
-    SWAP_INSTRUCTION_LAYOUT.encode(
-      {
-        instruction: sighash('swap'),
-        tokens: outcomeAmount,
-        minTokens: minIncomeAmount,
-        side: side === SIDE.ASK ? Side.Ask : Side.Bid,
-      },
-      data,
-    );
+    const data = Pool.swapInstructionData(params)
+
 
     const keys = [
       account(poolPublicKey),
@@ -169,6 +200,58 @@ export class Pool {
 
     return new TransactionInstruction({
       programId: POOLS_PROGRAM_ADDRESS,
+      keys,
+      data,
+    })
+  }
+
+
+  /**
+   * Create swap tokens instruction for v2 pool
+   * @param params 
+   * @returns
+   */
+
+
+  static swapInstructionV2(params: SwapInstructionParams) {
+    const {
+      pool: {
+        poolPublicKey,
+        poolMint,
+        baseTokenVault,
+        quoteTokenVault,
+        feePoolTokenAccount,
+        curve,
+      },
+      walletAuthority,
+      poolSigner,
+      userBaseTokenAccount,
+      userQuoteTokenAccount,
+    } = params
+
+    if (!curve) {
+      throw new Error('No curve account provided')
+    }
+
+    const data = Pool.swapInstructionData(params)
+
+    const keys = [
+      account(poolPublicKey),
+      account(poolSigner),
+      account(poolMint, true),
+      account(baseTokenVault, true),
+      account(quoteTokenVault, true),
+      account(feePoolTokenAccount, true),
+      account(walletAuthority, false, true),
+      account(userBaseTokenAccount, true),
+      account(userQuoteTokenAccount, true),
+      account(curve),
+      account(TOKEN_PROGRAM_ID),
+    ]
+
+
+    return new TransactionInstruction({
+      programId: POOLS_V2_PROGRAM_ADDRESS,
       keys,
       data,
     });

@@ -1,7 +1,7 @@
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { AccountInfo, Connection, ParsedAccountData, PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
 import BN from 'bn.js';
-import { Farming, FarmingClient, POOLS_PROGRAM_ADDRESS, TokenClient, TokenMintInfo } from '.';
+import { Farming, FarmingClient, TokenClient, TokenMintInfo } from '.';
 import {
   PoolClient,
   PoolRpcResponse,
@@ -186,11 +186,11 @@ export class TokenSwap {
     const { baseTokenVault } = pool
 
     const baseVaultAccount = await this.tokenClient.getTokenAccount(baseTokenVault);
-    
+
     // isInverted probably is not correct, remove ! later
     const poolsAmountDiff = !isInverted
-    ? baseVaultAccount.amount.div(minIncomeAmount)
-    : baseVaultAccount.amount.div(outcomeAmount)
+      ? baseVaultAccount.amount.div(minIncomeAmount)
+      : baseVaultAccount.amount.div(outcomeAmount)
 
     const priceImpact = 100 / (poolsAmountDiff.toNumber() + 1)
 
@@ -393,15 +393,18 @@ export class TokenSwap {
     const tokenClient = new TokenClient(connection)
     const farmingClient = new FarmingClient(connection)
 
-    const pools = await poolClient.getPools()
+    const [pools, v2Pools] = await Promise.all([
+      poolClient.getPools(),
+      poolClient.getV2Pools(),
+    ])
 
     return new TokenSwap(
-      pools,
+      [...pools, ...v2Pools],
       poolClient,
       tokenClient,
       farmingClient,
       connection,
-      wallet
+      wallet,
     )
   }
 
@@ -454,7 +457,7 @@ export class TokenSwap {
       throw new Error('No tickets, nothing to check')
     }
 
-    const queue = await this.farmingClient.getFarmingSnapshotsQueue()
+    const queue = await this.farmingClient.getFarmingSnapshotsQueue({})
 
     return stateVaults.map((sv) => {
       const rewardsPerTicket = tickets.map((ticket) => {
@@ -490,9 +493,11 @@ export class TokenSwap {
       throw new Error('Pool not found!')
     }
 
+    const programId = PoolClient.getPoolAddress(pool.poolVersion)
+
     const [poolSigner] = await PublicKey.findProgramAddress(
       [pool?.poolPublicKey.toBuffer()],
-      POOLS_PROGRAM_ADDRESS,
+      programId,
     )
 
 
@@ -540,6 +545,7 @@ export class TokenSwap {
                 farmingTicket: rpt.ticket.farmingTicketPublicKey,
                 poolPublicKey: pool.poolPublicKey,
                 farmingTokenVault: state.state.farmingTokenVault,
+                programId,
               })
             )
           }
@@ -568,9 +574,11 @@ export class TokenSwap {
 
   private async getWalletTokens(wallet: Wallet) {
     const cache = this.walletTokens.get(wallet.publicKey.toBase58())
+
     if (cache) {
       return cache
     }
+
     const walletTokensResponse = await this.connection.getParsedTokenAccountsByOwner(wallet.publicKey, {
       programId: TOKEN_PROGRAM_ID,
     })

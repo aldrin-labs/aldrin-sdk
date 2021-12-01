@@ -1,6 +1,6 @@
 import { PublicKey } from '@solana/web3.js'
 import BN from 'bn.js'
-import { Wallet } from '../../types'
+import { PoolVersion, Wallet } from '../../types'
 
 export interface PoolCommon {
   poolMint: PublicKey
@@ -30,19 +30,27 @@ export interface PoolResponse extends PoolCommon, WithFeesAccount {
     ownerWithdrawFeeNumerator: number
     ownerWithdrawFeeDenominator: number
   }
+  poolVersion: PoolVersion
+}
+
+export interface PoolV2Response extends PoolResponse {
+  curveType: number
+  curve: PublicKey
 }
 
 export interface GetPoolsParams {
   mint?: PublicKey
 }
 
-export type PoolRpcResponse = PoolResponse & WithPoolPK
+export type PoolRpcResponse = (PoolResponse | PoolV2Response) & WithPoolPK
 
 export interface WithPoolPK {
   poolPublicKey: PublicKey
 }
 
-export type LiquidityPool = PoolCommon & WithPoolPK
+export interface LiquidityPool extends PoolCommon, WithPoolPK {
+  poolVersion?: PoolVersion
+} 
 
 export interface BaseLiquidityParams {
   pool: LiquidityPool
@@ -65,9 +73,7 @@ export interface WithSlippage {
   slippage?: number
 }
 
-export interface DepositLiquidityParams extends BaseLiquidityParams, WithWallet, DepositLiquidityAmount, WithSlippage {
- 
-}
+export interface DepositLiquidityParams extends BaseLiquidityParams, WithWallet, DepositLiquidityAmount, WithSlippage {}
 
 export interface WithAuhority {
   poolSigner: PublicKey
@@ -77,6 +83,7 @@ export interface WithAuhority {
 export interface DepositLiquididtyInstructionParams extends BaseLiquidityParams, DepositLiquidityAmount, WithAuhority {
   creationSize: BN
   userPoolTokenAccount: PublicKey
+  programId: PublicKey
 }
 
 export interface WithdrawLiquidityParams extends WithWallet, WithSlippage {
@@ -95,4 +102,5 @@ export interface WithdrawLiquidityInstructionParams extends WithdrawLiquidityPar
   userPoolTokenAccount: PublicKey
   userBaseTokenAccount: PublicKey
   userQuoteTokenAccount: PublicKey
+  programId: PublicKey
 }

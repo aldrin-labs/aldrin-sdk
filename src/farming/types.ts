@@ -1,12 +1,19 @@
 import { PublicKey } from '@solana/web3.js'
 import BN from 'bn.js'
 import { WithPoolPK, WithWallet } from '../pools/types'
+import { PoolVersion } from '../types'
 
-export type GetFarmingStateParams = WithPoolPK
+interface WithPoolVersion {
+  poolVersion?: PoolVersion
+
+}
+export interface GetFarmingStateParams extends WithPoolPK, WithPoolVersion {
+}
 
 export interface GetFarmingTicketsParams {
   pool?: PublicKey
   userKey?: PublicKey
+  poolVersion?: PoolVersion
 }
 
 export interface FarmingState {
@@ -32,11 +39,12 @@ export interface StartFarmingCommons extends WithPoolPK {
   tokenAmount: BN
 }
 
-export interface StartFarmingParams extends StartFarmingCommons, WithWallet { }
+export interface StartFarmingParams extends StartFarmingCommons, WithWallet, WithPoolVersion { }
 
 export interface StartFarmingInstructionParams extends StartFarmingCommons {
   userKey: PublicKey
   farmingTicket: PublicKey
+  programId: PublicKey
 }
 
 export interface AttachedFarmingState {
@@ -65,13 +73,14 @@ export interface EndFarmingCommon extends WithPoolPK {
   userPoolTokenAccount: PublicKey
 }
 
-export interface EndFarmingParams extends EndFarmingCommon, WithWallet {
+export interface EndFarmingParams extends EndFarmingCommon, WithWallet, WithPoolVersion {
 
 }
 
 export interface EndFarmingInstructionParams extends EndFarmingCommon {
   userKey: PublicKey,
   poolSigner: PublicKey
+  programId: PublicKey
 }
 
 export interface FarmingSnapshot {
@@ -85,7 +94,7 @@ export interface FarmingSnapshot {
    * Total tokens (rewards) unlocked
    * */
   farmingTokens: BN
-  
+
   time: number
 }
 
@@ -109,14 +118,17 @@ export interface ClaimFarmedCommons extends WithPoolPK {
   farmingTokenVault: PublicKey
 }
 
-export interface ClaimFarmedParams extends ClaimFarmedCommons, WithWallet {
+export interface ClaimFarmedParams extends ClaimFarmedCommons, WithWallet, WithPoolVersion {
   userFarmingTokenAccount: PublicKey
   maxSnapshots: BN
 }
+
+export type GetFarmingSnapshotParams = WithPoolVersion
 
 export interface ClaimFarmedInstructionParams extends ClaimFarmedCommons {
   userFarmingTokenAccount: PublicKey
   poolSigner: PublicKey
   userKey: PublicKey
   maxSnapshots: BN
+  programId: PublicKey
 }

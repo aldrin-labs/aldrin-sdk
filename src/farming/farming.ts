@@ -8,7 +8,6 @@ import {
   END_FARMING_INSTRUCTION_LAYOUT,
   START_FARMING_INSTRUCTION_LAYOUT,
 } from '.';
-import { POOLS_PROGRAM_ADDRESS } from '..';
 import { account, sighash } from '../utils';
 import { EndFarmingInstructionParams, GetFarmingRewardParams, StartFarmingInstructionParams } from './types';
 import { getFarmingRewardsFromSnapshots } from './utils';
@@ -35,6 +34,7 @@ export class Farming {
       tokenAmount,
       lpTokenAccount,
       farmingTicket,
+      programId,
     } = params
 
     START_FARMING_INSTRUCTION_LAYOUT.encode(
@@ -59,7 +59,7 @@ export class Farming {
     ]
 
     return new TransactionInstruction({
-      programId: POOLS_PROGRAM_ADDRESS,
+      programId,
       keys,
       data,
     });
@@ -83,7 +83,7 @@ export class Farming {
       lpTokenFreezeVault,
       userPoolTokenAccount,
       userKey,
-
+      programId,
     } = params
 
     END_FARMING_INSTRUCTION_LAYOUT.encode(
@@ -108,7 +108,7 @@ export class Farming {
     ]
 
     return new TransactionInstruction({
-      programId: POOLS_PROGRAM_ADDRESS,
+      programId,
       keys,
       data,
     });
@@ -129,6 +129,7 @@ export class Farming {
       userKey,
       farmingTokenVault,
       userFarmingTokenAccount,
+      programId,
     } = params
 
     CLAIM_FARMED_INSTRUCTION_LAYOUT.encode(
@@ -155,7 +156,7 @@ export class Farming {
     ]
 
     return new TransactionInstruction({
-      programId: POOLS_PROGRAM_ADDRESS,
+      programId,
       keys,
       data,
     });
