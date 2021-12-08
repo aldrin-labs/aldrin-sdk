@@ -12,7 +12,7 @@
 
 ## Getting Started
 1. Install one of available [Solana wallets](https://docs.solana.com/wallet-guide)
-2. Install library with `npm install @aldrin/sdk` or `yarn add @aldrin/sdk` 
+2. Install library with `npm install @aldrin_exchange/sdk` or `yarn add @aldrin_exchange/sdk` 
 3. Check [Usage](#usage) section or take a look at [examples](https://github.com/aldrin-exchange/aldrin-sdk/tree/main/examples) and [API reference](https://github.com/aldrin-exchange/aldrin-sdk/tree/main/docs)
 
 ## Usage
