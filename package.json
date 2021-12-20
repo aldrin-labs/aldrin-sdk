@@ -1,6 +1,6 @@
 {
   "name": "@aldrin_exchange/sdk",
-  "version": "0.2.2",
+  "version": "0.3",
   "description": "",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
