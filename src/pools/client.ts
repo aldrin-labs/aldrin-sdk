@@ -1,6 +1,7 @@
 import { Connection, GetProgramAccountsFilter, PublicKey, Transaction } from '@solana/web3.js';
 import {
   DepositLiquidityParams, GetPoolsParams, PoolResponse, PoolRpcResponse,
+  PoolRpcV2Response,
   PoolV2Response,
   POOL_LAYOUT, POOL_V2_LAYOUT, SOLANA_RPC_ENDPOINT, WithdrawLiquidityParams,
 } from '.';
@@ -68,7 +69,7 @@ export class PoolClient {
    * @returns List of all pools for program
    */
 
-  async getV2Pools(filters: GetPoolsParams = {}): Promise<PoolRpcResponse[]> {
+  async getV2Pools(filters: GetPoolsParams = {}): Promise<PoolRpcV2Response[]> {
 
     const searchFilters: GetProgramAccountsFilter[] = [
       { dataSize: POOL_V2_LAYOUT.span },

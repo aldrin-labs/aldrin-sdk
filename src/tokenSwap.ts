@@ -1,10 +1,18 @@
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { AccountInfo, Connection, ParsedAccountData, PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
+import {
+  AccountInfo,
+  Connection,
+  ParsedAccountData,
+  PublicKey,
+  Transaction,
+  TransactionInstruction,
+} from '@solana/web3.js';
 import BN from 'bn.js';
 import { Farming, FarmingClient, TokenClient, TokenMintInfo } from '.';
 import {
   PoolClient,
   PoolRpcResponse,
+  PoolRpcV2Response,
   SIDE,
   SOLANA_RPC_ENDPOINT,
   SWAP_FEE_NUMERATOR,
@@ -14,6 +22,7 @@ import {
   TokenSwapParams,
   TokenSwapWithdrawLiquidityParams,
 } from './pools';
+import { swapAmounts } from './pools/curve';
 import { sendTransaction } from './transactions';
 import { Wallet } from './types';
 
@@ -353,7 +362,7 @@ export class TokenSwap {
     const { pool, isInverted } = poolSearch
 
 
-    const { baseTokenMint, baseTokenVault, quoteTokenMint, quoteTokenVault } = pool
+    const { baseTokenMint, baseTokenVault, quoteTokenMint, quoteTokenVault, poolVersion } = pool
 
 
     const [
@@ -367,6 +376,27 @@ export class TokenSwap {
       this.tokenClient.getTokenAccount(baseTokenVault),
       this.tokenClient.getTokenAccount(quoteTokenVault),
     ])
+
+    if (poolVersion === 2) {
+      const { curveType } = pool as PoolRpcV2Response
+
+      if (curveType === 1) {
+        const amountToSwap = quoteVaultAccount.amount.divn(2)
+        
+        const calculateAmounts = swapAmounts(
+          quoteVaultAccount.amount,
+          baseVaultAccount.amount,
+          amountToSwap
+        )
+
+        return calculateAmounts.destinationAmountSwapped
+          .mul(PRECISION_NOMINATOR)
+          .mul(baseMintInfo.decimalDenominator)
+          .div(quoteMintInfo.decimalDenominator)
+          .div(calculateAmounts.sourceAmountSwapped)
+          .toNumber() / PRECISION_NOMINATOR.toNumber()
+      }
+    }
 
 
     const price = quoteVaultAccount.amount

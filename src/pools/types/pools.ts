@@ -42,7 +42,8 @@ export interface GetPoolsParams {
   mint?: PublicKey
 }
 
-export type PoolRpcResponse = (PoolResponse | PoolV2Response) & WithPoolPK
+export type PoolRpcResponse = (PoolResponse) & WithPoolPK
+export type PoolRpcV2Response = (PoolV2Response) & WithPoolPK
 
 export interface WithPoolPK {
   poolPublicKey: PublicKey
