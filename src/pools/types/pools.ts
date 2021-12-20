@@ -31,11 +31,16 @@ export interface PoolResponse extends PoolCommon, WithFeesAccount {
     ownerWithdrawFeeDenominator: number
   }
   poolVersion: PoolVersion
+  curveType: number
 }
 
 export interface PoolV2Response extends PoolResponse {
-  curveType: number
   curve: PublicKey
+}
+
+export enum CURVE {
+  PRODUCT = 0,
+  STABLE = 1
 }
 
 export interface GetPoolsParams {

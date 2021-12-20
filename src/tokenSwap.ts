@@ -21,6 +21,7 @@ import {
   TokenSwapLoadParams,
   TokenSwapParams,
   TokenSwapWithdrawLiquidityParams,
+  CURVE,
 } from './pools';
 import { swapAmounts } from './pools/curve';
 import { sendTransaction } from './transactions';
@@ -93,7 +94,7 @@ export class TokenSwap {
 
     const { pool, isInverted } = poolSearch
 
-    const { baseTokenVault, quoteTokenVault } = pool
+    const { baseTokenVault, quoteTokenVault, curveType } = pool
 
 
     const [
@@ -141,23 +142,27 @@ export class TokenSwap {
       }
 
       const B = outcomeAmount
-      minIncomeAmount = X
-        .sub(
-          X.mul(Y)
-            .div(
-              Y.add(B)
-            )
-        )
+      minIncomeAmount = curveType === CURVE.STABLE
+        ? outcomeAmount
+        : X
+          .sub(
+            X.mul(Y)
+              .div(
+                Y.add(B)
+              )
+          )
     }
 
     if (!outcomeAmount) {
       const A = minIncomeAmount
-      outcomeAmount = X
-        .mul(Y)
-        .div(
-          X.sub(A)
-        )
-        .sub(Y)
+      outcomeAmount = curveType === CURVE.STABLE
+        ? minIncomeAmount
+        : X
+          .mul(Y)
+          .div(
+            X.sub(A)
+          )
+          .sub(Y)
     }
 
 
@@ -382,7 +387,7 @@ export class TokenSwap {
 
       if (curveType === 1) {
         const amountToSwap = quoteVaultAccount.amount.divn(2)
-        
+
         const calculateAmounts = swapAmounts(
           quoteVaultAccount.amount,
           baseVaultAccount.amount,

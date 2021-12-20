@@ -1,5 +1,6 @@
 import { Connection, GetProgramAccountsFilter, PublicKey, Transaction } from '@solana/web3.js';
 import {
+  CURVE,
   DepositLiquidityParams, GetPoolsParams, PoolResponse, PoolRpcResponse,
   PoolRpcV2Response,
   PoolV2Response,
@@ -59,6 +60,7 @@ export class PoolClient {
         ...account,
         poolPublicKey: pubkey,
         poolVersion: 1,
+        curveType: CURVE.PRODUCT,
       }
     })
   }
