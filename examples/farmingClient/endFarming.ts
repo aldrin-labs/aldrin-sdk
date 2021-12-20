@@ -54,3 +54,6 @@ async function endFarming() {
   })
 
 }
+
+
+endFarming()

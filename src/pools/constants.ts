@@ -64,16 +64,63 @@ const POOLS = {
     baseTokenVault: new PublicKey('CLt1DtCioiByTizqLhxLAXweXr2g9D4ZEAStibACBg4L'),
     quoteTokenVault: new PublicKey('2M1JTZsc71V6FhRNjCDSttcs17HewC4KNNNkkc81L3gB'),
   },
+  mSOL_UST: {
+    poolMint: new PublicKey('BE7eTJ8DB7xTu6sKsch4gWDCXbD48PLGesRLx7E1Qce4'),
+    poolPublicKey: new PublicKey('EnKhda5n5LYbZjPv7d7WChkSXzo5RgV8eSVVkGCXsQUn'),
+    baseTokenMint: new PublicKey('mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So'),
+    quoteTokenMint: new PublicKey('9vMJfxuKxXBoEa7rM12mYLMwTacLMLDJqHozw96WQL8i'),
+    baseTokenVault: new PublicKey('29jNBEn9VEvM5ppVLGThrGc7ExnT3WyNhYyqbizpyNFK'),
+    quoteTokenVault: new PublicKey('6RmiUpwLquyQWVMeYx4oktQvtCuUH48fzRMwbC5kUa4h'),
+  },
+  mSOL_MNGO: {
+    poolMint: new PublicKey('EotLYRsnRVqR3euN24P9PMXCqJv1WLsV8kJxR9o1y4U7'),
+    poolPublicKey: new PublicKey('CAHchWN1xoxNvXmqmmj6U834ip585rXZbh9NkvE9vTea'),
+    baseTokenMint: new PublicKey('mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So'),
+    quoteTokenMint: new PublicKey('MangoCzJ36AjZyKwVj3VnYU4GTonjfVEnJmvvWaxLac'),
+    baseTokenVault: new PublicKey('FE3PR8sbojxrxWoTzuLHhDX5hAXfPocS9wCruSJ2y7BF'),
+    quoteTokenVault: new PublicKey('CJzgYvbf2pv6HiTu13ymSVDSRmVQFoF8rkFYvwDNWVJL'),
+  },
 }
 
+
+const PERM_POOLS = {
+  SLX_USDC: {
+    poolMint: new PublicKey('E3XeF4QCTMMo8P5yrgqNMvoRJMyVPTNHhWkbRCgoeAfC'),
+    poolPublicKey: new PublicKey('Hv5F48Br7dbZvUpKFuyxxuaC4v95C1uyDGhdkFFCc9Gf'),
+    baseTokenMint: new PublicKey('AASdD9rAefJ4PP7iM89MYUsQEyCQwvBofhceZUGDh5HZ'),
+    quoteTokenMint: new PublicKey('EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'),
+    baseTokenVault: new PublicKey('BWwtpKxkKJSe4Vv9Ha6iGxdgWwxvy2k6qwooE6WjwUhG'),
+    quoteTokenVault: new PublicKey('EF9M6hDSSTZhwdSrpKvkHn33EafZfRtaFQ9rq6MfqALm'),
+  },
+  DATE_USDC: {
+    poolMint: new PublicKey('3gigDvmgCuz2gWRhr6iSxH1gCd1k4LpYoUsxEjLWJcLB'),
+    poolPublicKey: new PublicKey('F5MWosWE681D32N5QHbWWaJrXaMAD2PHhDsEr2Sac56X'),
+    baseTokenMint: new PublicKey('Ce3PSQfkxT5ua4r2JqCoWYrMwKWC5hEzwsrT9Hb7mAz9'),
+    quoteTokenMint: new PublicKey('EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'),
+    baseTokenVault: new PublicKey('A9FRb9MyAipfzEwkbF5euJ2dE7Bcj1GHBhdSdN8KBkoE'),
+    quoteTokenVault: new PublicKey('EVdVfqSEhumJmL3adAs4qCpEGGBGUoTdqG1krqMDboi4'),
+  },
+  OOGI_USDC: {
+    poolMint: new PublicKey('46EsyeSzs6tBoTRmFiGfDzGQe13LP337C7mMtdNMkgcU'),
+    poolPublicKey: new PublicKey('6sKC96Z35vCNcDmA3ZbBd9Syx5gnTJdyNKVEdzpBE5uX'),
+    baseTokenMint: new PublicKey('H7Qc9APCWWGDVxGD5fJHmLTmdEgT9GFatAKFNg6sHh8A'),
+    quoteTokenMint: new PublicKey('EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'),
+    baseTokenVault: new PublicKey('8fJUjr1o5i48R4URoQXDVbXmjrAUcRZWFkc2U2TMvgEd'),
+    quoteTokenVault: new PublicKey('AdgHaAavPxwjBVw966dZPA9h9MbkbYXAXViGiQRBXMNJ'),
+  },
+}
 
 type Keys = keyof typeof POOLS
 
 type PoolsMap = { [day in Keys]: PoolCommon & WithPoolPK  }
+type PermissionlessPoolsMap = { [day in keyof typeof PERM_POOLS]: PoolCommon & WithPoolPK  }
 
 export const AUTHORIZED_POOLS: PoolsMap = POOLS
+export const PERMISSIONLESS_POOLS: PermissionlessPoolsMap = PERM_POOLS
 
 
 export const PRE_VESTING_DENOMINATOR = new BN(3) // User receive 1/3 of reward if vesting not ended
+export const SWAP_FEE_NUMERATOR = new BN(3)
+export const SWAP_FEE_DENUMERATOR = new BN(1000)
 
 export const SOLANA_RPC_ENDPOINT = 'https://api.mainnet-beta.solana.com'

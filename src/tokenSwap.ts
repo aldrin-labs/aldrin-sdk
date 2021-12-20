@@ -1,17 +1,28 @@
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { AccountInfo, Connection, ParsedAccountData, PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
+import {
+  AccountInfo,
+  Connection,
+  ParsedAccountData,
+  PublicKey,
+  Transaction,
+  TransactionInstruction,
+} from '@solana/web3.js';
 import BN from 'bn.js';
-import { Farming, FarmingClient, POOLS_PROGRAM_ADDRESS, TokenClient, TokenMintInfo } from '.';
+import { Farming, FarmingClient, TokenClient, TokenMintInfo } from '.';
 import {
   PoolClient,
   PoolRpcResponse,
+  PoolRpcV2Response,
   SIDE,
   SOLANA_RPC_ENDPOINT,
+  SWAP_FEE_NUMERATOR,
+  SWAP_FEE_DENUMERATOR,
   TokenSwapAddlLiquidityParams, TokenSwapGetFarmedParams, TokenSwapGetPriceParams,
   TokenSwapLoadParams,
   TokenSwapParams,
   TokenSwapWithdrawLiquidityParams,
 } from './pools';
+import { swapAmounts } from './pools/curve';
 import { sendTransaction } from './transactions';
 import { Wallet } from './types';
 
@@ -173,6 +184,35 @@ export class TokenSwap {
 
   }
 
+  public async getSwapImpact(params: TokenSwapParams) {
+    const {
+      pool,
+      minIncomeAmount,
+      outcomeAmount,
+      isInverted,
+    } = await this.resolveSwapInputs(params)
+
+    const { baseTokenVault } = pool
+
+    const baseVaultAccount = await this.tokenClient.getTokenAccount(baseTokenVault);
+
+    // isInverted probably is not correct, remove ! later
+    const poolsAmountDiff = !isInverted
+      ? baseVaultAccount.amount.div(minIncomeAmount)
+      : baseVaultAccount.amount.div(outcomeAmount)
+
+    const priceImpact = 100 / (poolsAmountDiff.toNumber() + 1)
+
+    const fee = outcomeAmount.mul(SWAP_FEE_NUMERATOR).div(SWAP_FEE_DENUMERATOR)
+
+    return {
+      minIncomeAmount,
+      outcomeAmount,
+      priceImpact,
+      isInverted,
+      fee,
+    }
+  }
 
   /**
    * Add liquidity to Aldrin's AMM pool
@@ -322,7 +362,7 @@ export class TokenSwap {
     const { pool, isInverted } = poolSearch
 
 
-    const { baseTokenMint, baseTokenVault, quoteTokenMint, quoteTokenVault } = pool
+    const { baseTokenMint, baseTokenVault, quoteTokenMint, quoteTokenVault, poolVersion } = pool
 
 
     const [
@@ -336,6 +376,27 @@ export class TokenSwap {
       this.tokenClient.getTokenAccount(baseTokenVault),
       this.tokenClient.getTokenAccount(quoteTokenVault),
     ])
+
+    if (poolVersion === 2) {
+      const { curveType } = pool as PoolRpcV2Response
+
+      if (curveType === 1) {
+        const amountToSwap = quoteVaultAccount.amount.divn(2)
+        
+        const calculateAmounts = swapAmounts(
+          quoteVaultAccount.amount,
+          baseVaultAccount.amount,
+          amountToSwap
+        )
+
+        return calculateAmounts.destinationAmountSwapped
+          .mul(PRECISION_NOMINATOR)
+          .mul(baseMintInfo.decimalDenominator)
+          .div(quoteMintInfo.decimalDenominator)
+          .div(calculateAmounts.sourceAmountSwapped)
+          .toNumber() / PRECISION_NOMINATOR.toNumber()
+      }
+    }
 
 
     const price = quoteVaultAccount.amount
@@ -362,15 +423,18 @@ export class TokenSwap {
     const tokenClient = new TokenClient(connection)
     const farmingClient = new FarmingClient(connection)
 
-    const pools = await poolClient.getPools()
+    const [pools, v2Pools] = await Promise.all([
+      poolClient.getPools(),
+      poolClient.getV2Pools(),
+    ])
 
     return new TokenSwap(
-      pools,
+      [...pools, ...v2Pools],
       poolClient,
       tokenClient,
       farmingClient,
       connection,
-      wallet
+      wallet,
     )
   }
 
@@ -423,7 +487,7 @@ export class TokenSwap {
       throw new Error('No tickets, nothing to check')
     }
 
-    const queue = await this.farmingClient.getFarmingSnapshotsQueue()
+    const queue = await this.farmingClient.getFarmingSnapshotsQueue({})
 
     return stateVaults.map((sv) => {
       const rewardsPerTicket = tickets.map((ticket) => {
@@ -459,9 +523,11 @@ export class TokenSwap {
       throw new Error('Pool not found!')
     }
 
+    const programId = PoolClient.getPoolAddress(pool.poolVersion)
+
     const [poolSigner] = await PublicKey.findProgramAddress(
       [pool?.poolPublicKey.toBuffer()],
-      POOLS_PROGRAM_ADDRESS,
+      programId,
     )
 
 
@@ -509,6 +575,7 @@ export class TokenSwap {
                 farmingTicket: rpt.ticket.farmingTicketPublicKey,
                 poolPublicKey: pool.poolPublicKey,
                 farmingTokenVault: state.state.farmingTokenVault,
+                programId,
               })
             )
           }
@@ -537,9 +604,11 @@ export class TokenSwap {
 
   private async getWalletTokens(wallet: Wallet) {
     const cache = this.walletTokens.get(wallet.publicKey.toBase58())
+
     if (cache) {
       return cache
     }
+
     const walletTokensResponse = await this.connection.getParsedTokenAccountsByOwner(wallet.publicKey, {
       programId: TOKEN_PROGRAM_ID,
     })

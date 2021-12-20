@@ -3,7 +3,16 @@ import { blob, struct, Structure, u8 } from '@solana/buffer-layout';
 import { publicKey, rustEnum, uint64 } from '../layout/common';
 
 
-export const POOL_LAYOUT = struct([
+const FEES_LAYOUT = struct([
+  uint64('tradeFeeNumerator', true),
+  uint64('tradeFeeDenominator', true),
+  uint64('ownerTradeFeeNumerator', true),
+  uint64('ownerTradeFeeDenominator', true),
+  uint64('ownerWithdrawFeeNumerator', true),
+  uint64('ownerWithdrawFeeDenominator', true),
+], 'fees')
+
+const POOL_FIELDS_COMMON = [
   blob(8, 'padding'),
   publicKey('lpTokenFreezeVault'),
   publicKey('poolMint'),
@@ -18,16 +27,16 @@ export const POOL_LAYOUT = struct([
   publicKey('feeBaseAccount'),
   publicKey('feeQuoteAccount'),
   publicKey('feePoolTokenAccount'),
-  struct([
-    uint64('tradeFeeNumerator', true),
-    uint64('tradeFeeDenominator', true),
-    uint64('ownerTradeFeeNumerator', true),
-    uint64('ownerTradeFeeDenominator', true),
-    uint64('ownerWithdrawFeeNumerator', true),
-    uint64('ownerWithdrawFeeDenominator', true),
-  ], 'fees'),
-])
+  FEES_LAYOUT,
+]
 
+export const POOL_LAYOUT = struct(POOL_FIELDS_COMMON)
+
+export const POOL_V2_LAYOUT = struct([
+  ...POOL_FIELDS_COMMON,
+  u8('curveType'),
+  publicKey('curve'),
+])
 
 export const DEPOSIT_LIQUIDITY_INSTRUCTION_LAYOUT = struct([
   blob(8, 'instruction'),

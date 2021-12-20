@@ -1,10 +1,13 @@
 import { Connection, GetProgramAccountsFilter, PublicKey, Transaction } from '@solana/web3.js';
 import {
   DepositLiquidityParams, GetPoolsParams, PoolResponse, PoolRpcResponse,
-  POOL_LAYOUT, SOLANA_RPC_ENDPOINT, WithdrawLiquidityParams,
+  PoolRpcV2Response,
+  PoolV2Response,
+  POOL_LAYOUT, POOL_V2_LAYOUT, SOLANA_RPC_ENDPOINT, WithdrawLiquidityParams,
 } from '.';
-import { POOLS_PROGRAM_ADDRESS, TokenClient } from '..';
+import { POOLS_PROGRAM_ADDRESS, POOLS_V2_PROGRAM_ADDRESS, TokenClient } from '..';
 import { sendTransaction } from '../transactions';
+import { PoolVersion } from '../types';
 import { Pool } from './pool';
 import { SwapParams } from './types/swap';
 
@@ -19,9 +22,13 @@ export class PoolClient {
   constructor(private connection: Connection = new Connection(SOLANA_RPC_ENDPOINT)) {
   }
 
+  static getPoolAddress(poolVersion: PoolVersion) {
+    return poolVersion === 1 ? POOLS_PROGRAM_ADDRESS : POOLS_V2_PROGRAM_ADDRESS
+  }
+
 
   /**
-   * Get list of all pools for program
+   * Get list of all pools for v1 pools program
    * @param filters
    * @returns List of all pools for program
    */
@@ -51,6 +58,43 @@ export class PoolClient {
       return {
         ...account,
         poolPublicKey: pubkey,
+        poolVersion: 1,
+      }
+    })
+  }
+
+  /**
+   * Get list of all pools for v2 pools program
+   * @param filters
+   * @returns List of all pools for program
+   */
+
+  async getV2Pools(filters: GetPoolsParams = {}): Promise<PoolRpcV2Response[]> {
+
+    const searchFilters: GetProgramAccountsFilter[] = [
+      { dataSize: POOL_V2_LAYOUT.span },
+    ]
+
+    if (filters.mint) {
+      searchFilters.push(
+        { memcmp: { offset: POOL_V2_LAYOUT.offsetOf('poolMint') || 0, bytes: filters.mint.toBase58() } }
+      )
+    }
+
+    const accounts = await this.connection.getProgramAccounts(
+      POOLS_V2_PROGRAM_ADDRESS,
+      {
+        filters: searchFilters,
+      }
+    )
+
+    return accounts.map((p) => {
+      const { account: { data }, pubkey } = p
+      const account = POOL_V2_LAYOUT.decode(data) as PoolV2Response
+      return {
+        ...account,
+        poolPublicKey: pubkey,
+        poolVersion: 2,
       }
     })
   }
@@ -63,18 +107,22 @@ export class PoolClient {
   async depositLiquidity(params: DepositLiquidityParams): Promise<string> {
     const { pool, maxBaseTokenAmount, wallet, slippage = 0.01 } = params
     let { userPoolTokenAccount } = params
+
     const {
       poolPublicKey,
       poolMint,
       baseTokenVault,
+      poolVersion = 1,
     } = pool
 
 
     const transaction = new Transaction()
 
+    const programId = PoolClient.getPoolAddress(poolVersion)
+
     const [poolSigner] = await PublicKey.findProgramAddress(
       [poolPublicKey.toBuffer()],
-      POOLS_PROGRAM_ADDRESS
+      programId
     )
 
     const poolMintInfo = await this.tokenClient.getMintInfo(poolMint)
@@ -105,6 +153,7 @@ export class PoolClient {
       poolSigner,
       userPoolTokenAccount,
       creationSize,
+      programId,
     })
 
     transaction.add(instruction)
@@ -166,11 +215,14 @@ export class PoolClient {
       poolPublicKey,
       baseTokenMint,
       quoteTokenMint,
+      poolVersion = 1,
     } = pool
+
+    const programId = PoolClient.getPoolAddress(poolVersion)
 
     const [poolSigner] = await PublicKey.findProgramAddress(
       [poolPublicKey.toBuffer()],
-      POOLS_PROGRAM_ADDRESS
+      programId
     )
 
     const transaction = new Transaction()
@@ -220,6 +272,7 @@ export class PoolClient {
       quoteTokenReturnedMin,
       poolSigner,
       walletAuthority: wallet.publicKey,
+      programId,
     })
 
 
@@ -247,6 +300,7 @@ export class PoolClient {
         baseTokenMint,
         quoteTokenMint,
         poolPublicKey,
+        poolVersion = 1,
       },
       slippage = 0.001,
       wallet,
@@ -286,10 +340,11 @@ export class PoolClient {
       transaction.add(createAccountTransaction)
     }
 
+    const programId = PoolClient.getPoolAddress(poolVersion)
 
     const [poolSigner] = await PublicKey.findProgramAddress(
       [poolPublicKey.toBuffer()],
-      POOLS_PROGRAM_ADDRESS
+      programId
     )
 
 
@@ -301,6 +356,7 @@ export class PoolClient {
         walletAuthority: wallet.publicKey,
         userBaseTokenAccount,
         userQuoteTokenAccount,
+        poolVersion,
       })
     )
 

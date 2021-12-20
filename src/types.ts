@@ -12,3 +12,6 @@ export interface TokenSwapClaimFarmedParams {
   wallet?: Wallet
   poolMint: PublicKey
 }
+
+
+export type PoolVersion = 1 | 2

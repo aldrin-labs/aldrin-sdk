@@ -1,12 +1,11 @@
 
 import { Wallet } from '@project-serum/anchor';
 import { Connection, Keypair } from '@solana/web3.js';
-
-import os from 'os'
-import fs from 'fs'
-import * as bs58 from 'bs58'
-import BN from 'bn.js'
+import * as bs58 from 'bs58';
+import fs from 'fs';
+import os from 'os';
 import { FarmingClient, PoolClient, TokenClient } from '../src';
+
 
 const privateKey = fs.readFileSync(
   os.homedir() + '/.config/aldrin/privatekey',
@@ -35,4 +34,5 @@ export {
   connection,
   tokenClient,
   farmingClient,
-}
+};
+

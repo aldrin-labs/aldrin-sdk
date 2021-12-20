@@ -1,5 +1,4 @@
-import { Layout, blob, Structure, union, u8, struct, seq } from '@solana/buffer-layout';
-import { u64 } from '@solana/spl-token';
+import { blob, Layout, Structure, u8, union } from '@solana/buffer-layout';
 import { PublicKey } from '@solana/web3.js';
 import BN from 'bn.js';
 

@@ -1,7 +1,7 @@
 import { Connection, PublicKey } from '@solana/web3.js';
 import BN from 'bn.js';
 import { WithAuhority, WithWallet } from '.';
-import { Wallet } from '../../types';
+import { PoolVersion, Wallet } from '../../types';
 import { LiquidityPool } from './pools';
 
 export enum SIDE {
@@ -9,7 +9,11 @@ export enum SIDE {
   ASK = -1
 }
 
-type SwapPool = LiquidityPool & { feePoolTokenAccount: PublicKey }
+type SwapPool = LiquidityPool & {
+  feePoolTokenAccount: PublicKey
+  poolVersion?: PoolVersion
+  curve?: PublicKey
+}
 
 export interface SwapParams extends WithWallet {
   outcomeAmount: BN // Outcome for client - income for program 
@@ -24,6 +28,7 @@ export interface SwapParams extends WithWallet {
 export interface SwapInstructionParams extends SwapParams, WithAuhority {
   userBaseTokenAccount: PublicKey
   userQuoteTokenAccount: PublicKey
+  poolVersion: PoolVersion
 }
 
 export interface TokenSwapMints {

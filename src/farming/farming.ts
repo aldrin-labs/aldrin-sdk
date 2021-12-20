@@ -3,13 +3,11 @@ import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { SYSVAR_CLOCK_PUBKEY, SYSVAR_RENT_PUBKEY, TransactionInstruction } from '@solana/web3.js';
 import BN from 'bn.js';
 import {
-  DEFAULT_FARMING_TICKET_END_TIME,
+  ClaimFarmedInstructionParams,
+  CLAIM_FARMED_INSTRUCTION_LAYOUT,
   END_FARMING_INSTRUCTION_LAYOUT,
   START_FARMING_INSTRUCTION_LAYOUT,
-  CLAIM_FARMED_INSTRUCTION_LAYOUT,
-  ClaimFarmedInstructionParams,
 } from '.';
-import { POOLS_PROGRAM_ADDRESS } from '..';
 import { account, sighash } from '../utils';
 import { EndFarmingInstructionParams, GetFarmingRewardParams, StartFarmingInstructionParams } from './types';
 import { getFarmingRewardsFromSnapshots } from './utils';
@@ -36,6 +34,7 @@ export class Farming {
       tokenAmount,
       lpTokenAccount,
       farmingTicket,
+      programId,
     } = params
 
     START_FARMING_INSTRUCTION_LAYOUT.encode(
@@ -60,7 +59,7 @@ export class Farming {
     ]
 
     return new TransactionInstruction({
-      programId: POOLS_PROGRAM_ADDRESS,
+      programId,
       keys,
       data,
     });
@@ -84,7 +83,7 @@ export class Farming {
       lpTokenFreezeVault,
       userPoolTokenAccount,
       userKey,
-
+      programId,
     } = params
 
     END_FARMING_INSTRUCTION_LAYOUT.encode(
@@ -109,7 +108,7 @@ export class Farming {
     ]
 
     return new TransactionInstruction({
-      programId: POOLS_PROGRAM_ADDRESS,
+      programId,
       keys,
       data,
     });
@@ -130,6 +129,7 @@ export class Farming {
       userKey,
       farmingTokenVault,
       userFarmingTokenAccount,
+      programId,
     } = params
 
     CLAIM_FARMED_INSTRUCTION_LAYOUT.encode(
@@ -156,7 +156,7 @@ export class Farming {
     ]
 
     return new TransactionInstruction({
-      programId: POOLS_PROGRAM_ADDRESS,
+      programId,
       keys,
       data,
     });
