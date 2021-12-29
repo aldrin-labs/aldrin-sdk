@@ -1,55 +1,41 @@
-import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import {
-  AccountInfo,
-  Connection,
-  ParsedAccountData,
-  PublicKey,
+  Connection, PublicKey,
   Transaction,
   TransactionInstruction,
 } from '@solana/web3.js';
 import BN from 'bn.js';
-import { Farming, FarmingClient, TokenClient, TokenMintInfo } from '.';
+import { Farming, FarmingClient, PRECISION_NOMINATOR, TokenClient } from '.';
 import {
-  PoolClient,
+  CURVE, PoolClient,
   PoolRpcResponse,
   PoolRpcV2Response,
   SIDE,
-  SOLANA_RPC_ENDPOINT,
-  SWAP_FEE_NUMERATOR,
-  SWAP_FEE_DENUMERATOR,
-  TokenSwapAddlLiquidityParams, TokenSwapGetFarmedParams, TokenSwapGetPriceParams,
+  SOLANA_RPC_ENDPOINT, SWAP_FEE_DENUMERATOR, SWAP_FEE_NUMERATOR, TokenSwapAddlLiquidityParams, TokenSwapGetFarmedParams, TokenSwapGetPriceParams,
   TokenSwapLoadParams,
   TokenSwapParams,
   TokenSwapWithdrawLiquidityParams,
-  CURVE,
 } from './pools';
 import { swapAmounts } from './pools/curve';
+import { SwapBase } from './swapBase';
 import { sendTransaction } from './transactions';
 import { Wallet } from './types';
 
 
-const PRECISION_NOMINATOR = new BN(1_000_000) // BN precision
 /**
  * High-level API for Aldrin AMM Pools 
  */
-export class TokenSwap {
-  private mintInfos = new Map<string, TokenMintInfo>()
-  private walletTokens = new Map<
-    string,
-    Array<{
-      pubkey: PublicKey;
-      account: AccountInfo<ParsedAccountData>;
-    }>
-  >();
+export class TokenSwap extends SwapBase {
 
   constructor(
     private pools: PoolRpcResponse[],
     private poolClient: PoolClient,
-    private tokenClient: TokenClient,
+    protected tokenClient: TokenClient,
     private farmingClient: FarmingClient,
-    private connection = new Connection(SOLANA_RPC_ENDPOINT),
+    protected connection = new Connection(SOLANA_RPC_ENDPOINT),
     private wallet: Wallet | null = null
   ) {
+
+    super(tokenClient, connection)
 
   }
 
@@ -443,17 +429,6 @@ export class TokenSwap {
     )
   }
 
-  private async getMintInfo(mint: PublicKey): Promise<TokenMintInfo> {
-    const existing = this.mintInfos.get(mint.toBase58())
-    if (existing) {
-      return existing
-    }
-
-    const info = await this.tokenClient.getMintInfo(mint)
-    this.mintInfos.set(mint.toBase58(), info)
-
-    return info
-  }
 
   async getFarmed(params: TokenSwapGetFarmedParams) {
     const { poolMint, wallet = this.wallet } = params
@@ -607,21 +582,4 @@ export class TokenSwap {
     )
   }
 
-  private async getWalletTokens(wallet: Wallet) {
-    const cache = this.walletTokens.get(wallet.publicKey.toBase58())
-
-    if (cache) {
-      return cache
-    }
-
-    const walletTokensResponse = await this.connection.getParsedTokenAccountsByOwner(wallet.publicKey, {
-      programId: TOKEN_PROGRAM_ID,
-    })
-
-    const walletTokens = walletTokensResponse.value
-    this.walletTokens.set(wallet.publicKey.toBase58(), walletTokens)
-
-    return walletTokens
-
-  }
 }

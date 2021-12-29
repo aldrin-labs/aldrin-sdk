@@ -1,22 +1,15 @@
-import { Connection, Signer, Transaction } from '@solana/web3.js'
+import { Connection, RpcResponseAndContext, Signer, SimulatedTransactionResponse, Transaction } from '@solana/web3.js'
+import { SendTransactionParams } from '.'
 import { Wallet } from '../types'
 import { log } from '../utils'
 
-export interface SendTransactionParams {
-  transaction: Transaction
-  wallet: Wallet
-  connection: Connection
-  timeout?: number
-  partialSigners?: Signer[]
-}
 
-
-export async function sendTransaction({
+export async function simulateTransaction({
   transaction,
   wallet,
   connection,
   partialSigners,
-}: SendTransactionParams): Promise<string> {
+}: SendTransactionParams): Promise<RpcResponseAndContext<SimulatedTransactionResponse>> {
   transaction.recentBlockhash = (
     await connection.getRecentBlockhash('max')
   ).blockhash
@@ -35,14 +28,7 @@ export async function sendTransaction({
 
   const transactionFromWallet = await wallet.signTransaction(transaction)
 
-  const rawTransaction = transactionFromWallet.serialize()
+  return await connection.simulateTransaction(transactionFromWallet, partialSigners, true)
 
-  const txid = await connection.sendRawTransaction(rawTransaction, {
-    skipPreflight: true,
-  })
-
-  log('Transaction sent: ', txid)
-
-  return txid
 
 }
