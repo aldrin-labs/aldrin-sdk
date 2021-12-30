@@ -2,7 +2,7 @@ import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { SYSVAR_CLOCK_PUBKEY, TransactionInstruction } from '@solana/web3.js';
 import { GetTwammAvailableTokensParams, GET_AVAILABLE_TOKENS_LAYOUT, TwammExecuteSwapParams } from '.';
 import { TWAMM_PROGRAM_ADDRESS } from '..';
-import { account, sighash } from '../utils';
+import { account, instructionDiscriminator } from '../utils';
 
 /**
  * TWAMM instructions & help utils
@@ -21,7 +21,7 @@ export class TwAmm {
 
     GET_AVAILABLE_TOKENS_LAYOUT.encode(
       {
-        instruction: sighash('get_available_tokens_for_sale'),
+        instruction: instructionDiscriminator('get_available_tokens_for_sale'),
       },
       data,
     );
@@ -56,7 +56,7 @@ export class TwAmm {
 
     GET_AVAILABLE_TOKENS_LAYOUT.encode(
       {
-        instruction: sighash('execute_swap_token'),
+        instruction: instructionDiscriminator('execute_swap_token'),
       },
       data,
     );

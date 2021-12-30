@@ -10,7 +10,7 @@ import {
   WITHDRAW_LIQUIDITY_INSTRUCTION_LAYOUT,
 } from '.';
 import { POOLS_PROGRAM_ADDRESS, POOLS_V2_PROGRAM_ADDRESS } from '..';
-import { account, sighash } from '../utils';
+import { account, instructionDiscriminator } from '../utils';
 import { SIDE, SwapInstructionParams } from './types/swap';
 
 
@@ -32,7 +32,7 @@ export class Pool {
 
     DEPOSIT_LIQUIDITY_INSTRUCTION_LAYOUT.encode(
       {
-        instruction: sighash('create_basket'),
+        instruction: instructionDiscriminator('create_basket'),
         creationSize,
         maxBaseTokenAmount,
         maxQuoteTokenAmount,
@@ -94,7 +94,7 @@ export class Pool {
 
     WITHDRAW_LIQUIDITY_INSTRUCTION_LAYOUT.encode(
       {
-        instruction: sighash('redeem_basket'),
+        instruction: instructionDiscriminator('redeem_basket'),
         redemptionSize: poolTokenAmount,
         baseTokenReturnedMin,
         quoteTokenReturnedMin,
@@ -149,7 +149,7 @@ export class Pool {
 
     SWAP_INSTRUCTION_LAYOUT.encode(
       {
-        instruction: sighash('swap'),
+        instruction: instructionDiscriminator('swap'),
         tokens: outcomeAmount,
         minTokens: minIncomeAmount,
         side: side === SIDE.ASK ? Side.Ask : Side.Bid,

@@ -8,7 +8,7 @@ import {
   END_FARMING_INSTRUCTION_LAYOUT,
   START_FARMING_INSTRUCTION_LAYOUT,
 } from '.';
-import { account, sighash } from '../utils';
+import { account, instructionDiscriminator } from '../utils';
 import { EndFarmingInstructionParams, GetFarmingRewardParams, StartFarmingInstructionParams } from './types';
 import { getFarmingRewardsFromSnapshots } from './utils';
 
@@ -39,7 +39,7 @@ export class Farming {
 
     START_FARMING_INSTRUCTION_LAYOUT.encode(
       {
-        instruction: sighash('start_farming'),
+        instruction: instructionDiscriminator('start_farming'),
         tokenAmount,
       },
       data,
@@ -88,7 +88,7 @@ export class Farming {
 
     END_FARMING_INSTRUCTION_LAYOUT.encode(
       {
-        instruction: sighash('end_farming'),
+        instruction: instructionDiscriminator('end_farming'),
       },
       data,
     );
@@ -134,7 +134,7 @@ export class Farming {
 
     CLAIM_FARMED_INSTRUCTION_LAYOUT.encode(
       {
-        instruction: sighash('withdraw_farmed'),
+        instruction: instructionDiscriminator('withdraw_farmed'),
         maxSnapshots: params.maxSnapshots,
       },
       data,

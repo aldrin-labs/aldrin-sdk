@@ -442,7 +442,7 @@ export class TokenSwap extends SwapBase {
     if (!pool) {
       throw new Error('Pool not found!')
     }
-    const states = await this.farmingClient.getFarmingState({ poolPublicKey: pool.poolPublicKey })
+    const states = await this.farmingClient.getFarmingState({ poolPublicKey: pool.poolPublicKey, poolVersion: pool.poolVersion })
 
     const activeStates = states.filter((s) => !s.tokensTotal.eq(s.tokensUnlocked)) // Skip finished staking states
 
@@ -569,10 +569,9 @@ export class TokenSwap extends SwapBase {
       })
     )
 
-    console.log('Transactions: ', transactions)
-
-    return Promise.all(transactions
-      .flatMap((_) => _)
+    return Promise.all(
+      transactions
+      .flat()
       .map((_) => new Transaction().add(_))
       .map(async (transaction) => sendTransaction({
         transaction,
