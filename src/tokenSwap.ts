@@ -10,7 +10,7 @@ import {
   PoolRpcResponse,
   PoolRpcV2Response,
   SIDE,
-  SOLANA_RPC_ENDPOINT, SWAP_FEE_DENUMERATOR, SWAP_FEE_NUMERATOR, TokenSwapAddlLiquidityParams, TokenSwapGetFarmedParams, TokenSwapGetPriceParams,
+  SOLANA_RPC_ENDPOINT, SWAP_FEE_DENOMINATOR, SWAP_FEE_NUMERATOR, TokenSwapAddlLiquidityParams, TokenSwapGetFarmedParams, TokenSwapGetPriceParams,
   TokenSwapLoadParams,
   TokenSwapParams,
   TokenSwapWithdrawLiquidityParams,
@@ -194,7 +194,7 @@ export class TokenSwap extends SwapBase {
 
     const priceImpact = 100 / (poolsAmountDiff.toNumber() + 1)
 
-    const fee = outcomeAmount.mul(SWAP_FEE_NUMERATOR).div(SWAP_FEE_DENUMERATOR)
+    const fee = outcomeAmount.mul(SWAP_FEE_NUMERATOR).div(SWAP_FEE_DENOMINATOR)
 
     return {
       minIncomeAmount,

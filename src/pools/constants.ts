@@ -177,8 +177,13 @@ export const AUTHORIZED_POOLS: PoolsMap = POOLS
 export const PERMISSIONLESS_POOLS: PermissionlessPoolsMap = PERM_POOLS
 
 
+export const PRE_VESTING_NUMERATOR = new BN(1) // User receive 1/3 of reward if vesting not ended
 export const PRE_VESTING_DENOMINATOR = new BN(3) // User receive 1/3 of reward if vesting not ended
+
+export const VESTING_NUMERATOR = new BN(2) // User receive another 2/3 of reward if vesting  ended
+export const VESTING_DENOMINATOR = new BN(3) // User receive another 2/3 of reward if vesting not ended
+
 export const SWAP_FEE_NUMERATOR = new BN(3)
-export const SWAP_FEE_DENUMERATOR = new BN(1000)
+export const SWAP_FEE_DENOMINATOR = new BN(1000)
 
 export const SOLANA_RPC_ENDPOINT = 'https://api.mainnet-beta.solana.com'
