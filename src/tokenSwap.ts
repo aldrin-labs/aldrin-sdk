@@ -467,7 +467,7 @@ export class TokenSwap {
     if (!pool) {
       throw new Error('Pool not found!')
     }
-    const states = await this.farmingClient.getFarmingState({ poolPublicKey: pool.poolPublicKey })
+    const states = await this.farmingClient.getFarmingState({ poolPublicKey: pool.poolPublicKey, poolVersion: pool.poolVersion  })
 
     const activeStates = states.filter((s) => !s.tokensTotal.eq(s.tokensUnlocked)) // Skip finished staking states
 
