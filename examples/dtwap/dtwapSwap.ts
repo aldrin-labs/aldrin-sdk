@@ -2,7 +2,7 @@ import { TOKEN_PROGRAM_ID } from '@solana/spl-token'
 import { PublicKey, Transaction } from '@solana/web3.js'
 import BN from 'bn.js'
 import { Pool, SIDE, TokenSwap, TwAmm, DTwapSwap } from '../../src'
-import { sendTransaction } from '../../src/transactions'
+import { createTokenAccountTransaction, sendTransaction } from '../../src/transactions'
 import { wallet, connection } from '../common'
 
 const CONFIG = {
@@ -54,16 +54,22 @@ async function doSwap() {
   const bestSell = sellPrices[0]
   const bestBuy = buyPrices[0]
 
-  if (!bestBuy || !bestSell) {
-    console.warn('No side: buy', bestBuy, ' sell: ', bestSell)
+  if (!bestBuy && !bestSell) {
+    console.warn('No orders: buy', bestBuy, ' sell: ', bestSell)
     return
   }
 
-  const sellPrice = 1 / bestSell.price
+  const buyDif = bestBuy ? Math.log(poolPrice / bestBuy.price) * 100 : 0
+  const sellDiff = bestSell ? Math.log((1 / bestSell.price) / poolPrice) * 100 : 0
 
-  const priceDiff = Math.log(sellPrice / bestBuy.price) * 100
+  const buyOrder = buyDif > CONFIG.priceDiff ? bestBuy : undefined
+  const sellOrder = sellDiff > CONFIG.priceDiff ? bestSell : undefined
 
-  if (priceDiff > CONFIG.priceDiff) {
+  // We always have funds in quote (USDC), so calculate base diff to swap back
+  const poolAmount = (bestBuy?.available.amountTo || new BN(0)).sub((bestSell?.available.amountFrom || new BN(0)))
+
+
+  if (!poolAmount.eqn(0)) {
     const myTokens = await connection.getParsedTokenAccountsByOwner(wallet.publicKey, {
       programId: TOKEN_PROGRAM_ID,
     })
@@ -75,79 +81,95 @@ async function doSwap() {
     const quoteMint = CONFIG.quote.toBase58()
 
 
-    const userBaseTokenAccount = walletTokens.find((wt) => wt.account.data.parsed.info.mint === baseMint)
+    let userBaseTokenAccount = walletTokens.find((wt) => wt.account.data.parsed.info.mint === baseMint)?.pubkey
+
+
+    const transaction = new Transaction()
+
+    if (!userBaseTokenAccount) {
+      const resp = await createTokenAccountTransaction({
+        wallet,
+        mint: new PublicKey(baseMint),
+      })
+
+      userBaseTokenAccount = resp.newAccountPubkey
+      transaction.add(resp.transaction)
+    }
     const userQuoteTokenAccount = walletTokens.find((wt) => wt.account.data.parsed.info.mint === quoteMint)
 
-    if (userBaseTokenAccount && userQuoteTokenAccount) {
-      console.log('Buy SOL price: ',
-        bestBuy.order.orderArray.toString(),
-        bestSell.order.orderArray.toString(),
-        bestBuy.price, bestBuy.available.amountFrom.toString(),
-        bestBuy.available.amountTo.toString(),
-        ', Sell sol price: ',
-        sellPrice,
-        bestSell.available.amountFrom.toString(),
-        bestSell.available.amountTo.toString(),
-        ', diff, %: ',
-        priceDiff,
+    if (!userQuoteTokenAccount) {
+      console.warn('No quote account: mint ', quoteMint)
+      return false
+    }
+
+    console.log('Price diffs: ',
+      buyDif,
+      sellDiff,
+    )
+
+    if (!buyOrder && !sellOrder) {
+      console.log('No orders to arbitrage, wait...')
+      return false
+    }
+
+    console.log('Do swap: ', buyOrder?.available.amountTo.toString(), poolAmount.toString(), sellOrder?.available.amountFrom.toString())
+
+    if (buyOrder) {
+      transaction.add(
+        TwAmm.executeSwapInstruction({
+          wallet,
+          userFrom: userQuoteTokenAccount.pubkey,
+          userTo: userBaseTokenAccount,
+          pairSettings: CONFIG.pairSettings,
+          pyth: CONFIG.pyth,
+          orderArray: buyOrder.order.orderArray,
+          signer: buyOrder.order.signer,
+          twammFromTokenVault: buyOrder.order.twammFromTokenVault,
+          twammToTokenVault: buyOrder.order.twammToTokenVault,
+        })
       )
-      // We always have funds in quote (USDC), so calculate base diff to swap back
-      const baseDiff = bestBuy.available.amountTo.sub(bestSell.available.amountFrom)
-
-
-      const transaction = new Transaction()
-        .add(
-          TwAmm.executeSwapInstruction({
-            wallet,
-            userFrom: userQuoteTokenAccount.pubkey,
-            userTo: userBaseTokenAccount.pubkey,
-            pairSettings: CONFIG.pairSettings,
-            pyth: CONFIG.pyth,
-            orderArray: bestBuy.order.orderArray,
-            signer: bestBuy.order.signer,
-            twammFromTokenVault: bestBuy.order.twammFromTokenVault,
-            twammToTokenVault: bestBuy.order.twammToTokenVault,
-          })
-        )
-        .add(
-          Pool.swapInstruction({
-            userBaseTokenAccount: userBaseTokenAccount.pubkey,
-            userQuoteTokenAccount: userQuoteTokenAccount.pubkey,
-            poolVersion: pool.pool.poolVersion,
-            pool: pool.pool,
-            outcomeAmount: baseDiff.abs(),
-            minIncomeAmount: new BN(0), // TODO: Add slippage/checks/etc
-            side: baseDiff.gtn(0) ? SIDE.ASK : SIDE.BID,
-            wallet,
-            walletAuthority: wallet.publicKey,
-            poolSigner: pool.pool.poolSigner,
-          })
-        )
-        .add(
-          TwAmm.executeSwapInstruction({
-            wallet,
-            userFrom: userBaseTokenAccount.pubkey,
-            userTo: userQuoteTokenAccount.pubkey,
-            pairSettings: CONFIG.pairSettings,
-            pyth: CONFIG.pyth,
-            orderArray: bestSell.order.orderArray,
-            signer: bestSell.order.signer,
-            twammFromTokenVault: bestSell.order.twammFromTokenVault,
-            twammToTokenVault: bestSell.order.twammToTokenVault,
-          })
-        )
-
-      const txId = await sendTransaction({ transaction, connection, wallet })
-      console.log('Arb tx sent: ', txId)
-
-      return txId
-    } else {
-      console.warn('No account for base or quote: ', userBaseTokenAccount, userQuoteTokenAccount)
     }
 
 
+    transaction.add(
+      Pool.swapInstruction({
+        userBaseTokenAccount: userBaseTokenAccount,
+        userQuoteTokenAccount: userQuoteTokenAccount.pubkey,
+        poolVersion: pool.pool.poolVersion,
+        pool: pool.pool,
+        outcomeAmount: poolAmount.abs(),
+        minIncomeAmount: new BN(0), // TODO: Add slippage/checks/etc
+        side: poolAmount.gtn(0) ? SIDE.ASK : SIDE.BID,
+        wallet,
+        walletAuthority: wallet.publicKey,
+        poolSigner: pool.pool.poolSigner,
+      })
+    )
+
+    if (sellOrder) {
+      transaction.add(
+        TwAmm.executeSwapInstruction({
+          wallet,
+          userFrom: userBaseTokenAccount,
+          userTo: userQuoteTokenAccount.pubkey,
+          pairSettings: CONFIG.pairSettings,
+          pyth: CONFIG.pyth,
+          orderArray: sellOrder.order.orderArray,
+          signer: sellOrder.order.signer,
+          twammFromTokenVault: sellOrder.order.twammFromTokenVault,
+          twammToTokenVault: sellOrder.order.twammToTokenVault,
+        })
+      )
+    }
+
+    const txId = await sendTransaction({ transaction, connection, wallet })
+    console.log('Arb tx sent: ', txId)
+
+    return txId
+
+
   } else {
-    console.log('Price diff less than threshold: ', priceDiff)
+    console.log('Price diff less than threshold: ', buyDif, sellDiff)
   }
 
   console.log('Nothing to do here, wait 1min')
