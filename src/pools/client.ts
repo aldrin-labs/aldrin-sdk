@@ -1,4 +1,5 @@
 import { Connection, GetProgramAccountsFilter, PublicKey, Transaction } from '@solana/web3.js';
+import base58 from 'bs58';
 import {
   CURVE,
   DepositLiquidityParams, GetPoolsParams, PoolResponse, PoolRpcResponse,
@@ -9,6 +10,7 @@ import {
 import { POOLS_PROGRAM_ADDRESS, POOLS_V2_PROGRAM_ADDRESS, TokenClient } from '..';
 import { sendTransaction } from '../transactions';
 import { PoolVersion } from '../types';
+import { accountDiscriminator } from '../utils';
 import { Pool } from './pool';
 import { SwapParams } from './types/swap';
 
@@ -38,6 +40,11 @@ export class PoolClient {
 
     const searchFilters: GetProgramAccountsFilter[] = [
       { dataSize: POOL_LAYOUT.span },
+      {
+        memcmp: {
+          offset: 0, bytes: base58.encode(await accountDiscriminator('Pool')),
+        },
+      },
     ]
 
     if (filters.mint) {
@@ -75,6 +82,11 @@ export class PoolClient {
 
     const searchFilters: GetProgramAccountsFilter[] = [
       { dataSize: POOL_V2_LAYOUT.span },
+      {
+        memcmp: {
+          offset: 0, bytes: base58.encode(await accountDiscriminator('Pool')),
+        },
+      },
     ]
 
     if (filters.mint) {

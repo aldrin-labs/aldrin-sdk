@@ -1,10 +1,9 @@
-
-import { Wallet } from '@project-serum/anchor';
 import { Connection, Keypair } from '@solana/web3.js';
 import * as bs58 from 'bs58';
 import fs from 'fs';
 import os from 'os';
-import { FarmingClient, PoolClient, TokenClient } from '../src';
+import { FarmingClient, PoolClient, TokenClient, DTwapClient } from '../src';
+import { Wallet } from './wallet';
 
 
 const privateKey = fs.readFileSync(
@@ -14,11 +13,12 @@ const privateKey = fs.readFileSync(
   }
 )
 
-
 const decoded = bs58.decode(privateKey)
 
 const payer = Keypair.fromSecretKey(new Uint8Array(decoded))
 
+
+// const wallet = new NodeWallet(payer)
 const wallet = new Wallet(payer)
 
 
@@ -27,12 +27,14 @@ const connection = new Connection('https://api.mainnet-beta.solana.com');
 const poolClient = new PoolClient(connection)
 const farmingClient = new FarmingClient(connection)
 const tokenClient = new TokenClient(connection)
+const dTwapClient = new DTwapClient(connection)
 
 export {
   wallet,
   poolClient,
-  connection,
   tokenClient,
   farmingClient,
+  dTwapClient,
+  connection,
 };
 

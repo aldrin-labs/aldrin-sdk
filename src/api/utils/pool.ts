@@ -31,7 +31,7 @@ export const poolResponseToModel = (
   const totalTvlUsd = baseTvl.add(quoteTvl)
 
   const lpPrice = new BN(response.lpTokenFreezeVaultBalance).div(totalTvlUsd)
-  console.log('lpPrice: ', response.parsedName, response.tvl.tokenA, response.tvl.tokenB, lpPrice.toString(), totalTvlUsd.toString(), response.lpTokenFreezeVaultBalance)
+
   return {
     poolPublicKey,
     poolMint: new PublicKey(response.poolTokenMint),
@@ -42,7 +42,7 @@ export const poolResponseToModel = (
     name: response.parsedName,
     lpApr24h: response.apy24h,
     supply: new BN(response.supply),
-    farmingStates: response.farming.map((f) => toFarmingStateInfo(f, poolPublicKey)),
+    farmingStates: (response.farming || []).map((f) => toFarmingStateInfo(f, poolPublicKey)),
     tvl: {
       base: baseTvl,
       quote: quoteTvl,

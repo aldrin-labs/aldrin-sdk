@@ -39,7 +39,7 @@ export interface PoolInfoResponse {
   tvl: PoolTvl
   apy24h: number // percent
   supply: number // TODO: rewrite with BN
-  farming: PoolFarmingResponse[]
+  farming: PoolFarmingResponse[] | null
 }
 
 export interface GetPoolsInfoResponse {

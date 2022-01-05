@@ -1,4 +1,4 @@
-import { blob, Layout, Structure, u8, union } from '@solana/buffer-layout';
+import { blob, Layout, Structure, u8, union, Boolean, u32, struct, seq, offset } from '@solana/buffer-layout';
 import { PublicKey } from '@solana/web3.js';
 import BN from 'bn.js';
 
@@ -34,12 +34,14 @@ export const publicKey = (property: string) => new PublicKeyLayout(property)
 class U64Layout extends Layout {
   private layout: Layout
   private toNumber: boolean
+  private signed: boolean
 
-  constructor(property: string, toNumber: boolean) {
+  constructor(property: string, signed: boolean, toNumber: boolean) {
     const layout = blob(8)
     super(layout.span, property)
     this.layout = layout
     this.toNumber = toNumber
+    this.signed = signed
   }
 
   getSpan(b: Uint8Array, offset?: number) {
@@ -47,7 +49,10 @@ class U64Layout extends Layout {
   }
 
   decode(b: Uint8Array, offset?: number): BN | number {
-    const bn = new BN(this.layout.decode(b, offset), 10, 'le');
+    let bn = new BN(this.layout.decode(b, offset), 10, 'le');
+    if (this.signed) {
+      bn = bn.fromTwos(this.span * 8).clone();
+    }
     if (this.toNumber) {
       return bn.toNumber()
     }
@@ -62,16 +67,45 @@ class U64Layout extends Layout {
 /**
  * Layout for a 64bit unsigned value
  */
-export const uint64 = (property: string, toNumber = false) => new U64Layout(property, toNumber)
+export const uint64 = (property: string, toNumber = false) => new U64Layout(property, false, toNumber)
+export const int64 = (property: string, toNumber = false) => new U64Layout(property, true, toNumber)
 
 
 export const rustEnum = (
   variants: Structure[],
   property: string,
 ) => {
-  const unionLayout = union(u8(), u8(), property);
+  const unionLayout = union(u8(), blob(0), property);
+
   variants.forEach((variant, index) =>
     unionLayout.addVariant(index, variant, variant.property || ''),
   );
   return unionLayout;
 }
+
+
+class BoolLayout extends Layout {
+  private layout: Layout
+
+  constructor(property: string) {
+    const layout = blob(1)
+    super(layout.span, property)
+    this.layout = layout
+  }
+
+  getSpan(b: Uint8Array, offset?: number) {
+    return this.layout.getSpan(b, offset)
+  }
+
+  decode(b: Uint8Array, offset?: number): boolean {
+    const value = this.layout.decode(b, offset)
+    return !!value[0]
+  }
+
+  encode(src: boolean, b: Uint8Array, offset: number): number {
+    return this.layout.encode(src ? 1 : 0, b, offset);
+  }
+}
+
+
+export const bool = (property: string) => new BoolLayout(property)
