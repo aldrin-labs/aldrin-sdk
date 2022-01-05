@@ -39,7 +39,7 @@ export class TokenSwap extends SwapBase {
 
   }
 
-  findPool(mintFrom: PublicKey, mintTo: PublicKey) {
+  findPool(mintFrom: PublicKey, mintTo: PublicKey): { pool: PoolRpcResponse, isInverted: boolean } | null {
     const pool = this.pools.find((p) =>
       (p.baseTokenMint.equals(mintFrom) && p.quoteTokenMint.equals(mintTo)) ||
       (p.baseTokenMint.equals(mintTo) && p.quoteTokenMint.equals(mintFrom))
@@ -571,13 +571,13 @@ export class TokenSwap extends SwapBase {
 
     return Promise.all(
       transactions
-      .flat()
-      .map((_) => new Transaction().add(_))
-      .map(async (transaction) => sendTransaction({
-        transaction,
-        wallet,
-        connection: this.connection,
-      }))
+        .flat()
+        .map((_) => new Transaction().add(_))
+        .map(async (transaction) => sendTransaction({
+          transaction,
+          wallet,
+          connection: this.connection,
+        }))
     )
   }
 

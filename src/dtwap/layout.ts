@@ -1,9 +1,8 @@
 
-import { i64, vec } from '@project-serum/borsh';
-import { struct, Structure, u8, seq, blob, u32 } from '@solana/buffer-layout';
-import { publicKey, rustEnum, uint64, bool, int64 } from '../layout/common';
+import { blob, seq, struct, Structure, u32, u8 } from '@solana/buffer-layout';
+import { bool, int64, publicKey, rustEnum, uint64 } from '../layout/common';
 
-export const TWAMM_ORDER = struct([
+export const DTWAP_ORDER = struct([
   bool('isInitialized'),
   uint64('amount'),
   uint64('startTime', true),
@@ -23,7 +22,7 @@ const SIDE = rustEnum([
   new Structure([], 'ask'),
 ], 'side')
 
-export const TWAMM_ORDER_ARRAY = struct([
+export const DTWAP_ORDER_ARRAY = struct([
   blob(8, 'padding'),
   publicKey('twammFromTokenVault'),
   publicKey('twammToTokenVault'),
@@ -32,17 +31,17 @@ export const TWAMM_ORDER_ARRAY = struct([
   publicKey('feeAccount'),
   publicKey('pairSettings'),
   SIDE,
-  seq(TWAMM_ORDER, 30, 'orders'),
+  seq(DTWAP_ORDER, 30, 'orders'),
 ])
 
-const TWAMM_FEE = struct([
+const DTWAP_FEE = struct([
   uint64('placingFeeNumerator'),
   uint64('placingFeeDenominator'),
   uint64('cancellingFeeNumerator'),
   uint64('cancellingFeeDenominator'),
 ], 'fees')
 
-export const TWAMM_PAIR_SETTINGS = struct([
+export const DTWAP_PAIR_SETTINGS = struct([
   blob(8, 'padding'),
   publicKey('baseTokenMint'),
   publicKey('quoteTokenMint'),
@@ -53,7 +52,7 @@ export const TWAMM_PAIR_SETTINGS = struct([
   publicKey('pyth'),
   uint64('discountNumerator'),
   uint64('discountDenominator'),
-  TWAMM_FEE,
+  DTWAP_FEE,
   uint64('minimumTokens'),
   u8('baseMintDecimals'),
   u8('quoteMintDecimals'),
@@ -63,7 +62,7 @@ export const GET_AVAILABLE_TOKENS_LAYOUT = struct([
   blob(8, 'instruction'),
 ])
 
-export const TWAMM_AVAILABLE_TOKENS = struct([
+export const DTWAP_AVAILABLE_TOKENS = struct([
   u32('length'),
   int64('amountTo'),
   int64('amountFrom'),

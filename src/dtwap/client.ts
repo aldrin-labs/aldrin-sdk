@@ -1,33 +1,33 @@
 import { Connection, GetProgramAccountsFilter, Transaction } from '@solana/web3.js';
-import { TwAmmPair } from './types';
-import { SOLANA_RPC_ENDPOINT, TWAMM_PROGRAM_ADDRESS } from '..';
-import { TWAMM_PAIR_SETTINGS, TWAMM_ORDER_ARRAY } from './layout'
+import { DTwapPair } from './types';
+import { SOLANA_RPC_ENDPOINT, DTWAP_PROGRAM_ADDRESS } from '..';
+import { DTWAP_PAIR_SETTINGS, DTWAP_ORDER_ARRAY } from './layout'
 import {
-  GetTwammAvailableTokensParams,
-  GetTwAmmOrders,
-  GetTwammResponse,
+  GetDTwapAvailableTokensParams,
+  GetDTwapOrders,
+  GetDTwapResponse,
   TwAmm,
-  TwammExecuteSwapParams,
-  TwAmmOrderArayParsed,
-  TwAmmOrderArayResponse,
-  TWAMM_AVAILABLE_TOKENS,
+  DTwapExecuteSwapParams,
+  DTwapOrderArayParsed,
+  DTwapOrderArayResponse,
+  DTWAP_AVAILABLE_TOKENS,
 } from '.';
 import { sendTransaction, simulateTransaction } from '../transactions';
 import BN from 'bn.js';
 import { SIDE } from '../types';
 
 
-export class TwAmmClient {
+export class DTwapClient {
   constructor(private connection: Connection = new Connection(SOLANA_RPC_ENDPOINT)) {
   }
 
-  async getPairs(): Promise<TwAmmPair[]> {
+  async getPairs(): Promise<DTwapPair[]> {
     const searchFilters: GetProgramAccountsFilter[] = [
-      { dataSize: TWAMM_PAIR_SETTINGS.span },
+      { dataSize: DTWAP_PAIR_SETTINGS.span },
     ]
 
     const accounts = await this.connection.getProgramAccounts(
-      TWAMM_PROGRAM_ADDRESS,
+      DTWAP_PROGRAM_ADDRESS,
       {
         filters: searchFilters,
       }
@@ -36,7 +36,7 @@ export class TwAmmClient {
 
     return accounts.map((p) => {
       const { account: { data }, pubkey } = p
-      const account = TWAMM_PAIR_SETTINGS.decode(data) as TwAmmPair
+      const account = DTWAP_PAIR_SETTINGS.decode(data) as DTwapPair
       return {
         ...account,
         pairSettings: pubkey,
@@ -44,14 +44,14 @@ export class TwAmmClient {
     })
   }
 
-  async getOrders(params: GetTwAmmOrders = {}): Promise<TwAmmOrderArayResponse[]> {
+  async getOrders(params: GetDTwapOrders = {}): Promise<DTwapOrderArayResponse[]> {
     const { userKey, pairSettings } = params
     const searchFilters: GetProgramAccountsFilter[] = [
-      { dataSize: TWAMM_ORDER_ARRAY.span },
+      { dataSize: DTWAP_ORDER_ARRAY.span },
     ]
 
     if (pairSettings) {
-      const offset = TWAMM_ORDER_ARRAY.offsetOf('pairSettings')
+      const offset = DTWAP_ORDER_ARRAY.offsetOf('pairSettings')
       if (offset === undefined) {
         throw new Error('No offset for pairSettings')
       }
@@ -64,7 +64,7 @@ export class TwAmmClient {
     }
 
     const accounts = await this.connection.getProgramAccounts(
-      TWAMM_PROGRAM_ADDRESS,
+      DTWAP_PROGRAM_ADDRESS,
       {
         filters: searchFilters,
       }
@@ -72,7 +72,7 @@ export class TwAmmClient {
 
     return accounts.map((p) => {
       const { account: { data }, pubkey } = p
-      const account = TWAMM_ORDER_ARRAY.decode(data) as TwAmmOrderArayParsed
+      const account = DTWAP_ORDER_ARRAY.decode(data) as DTwapOrderArayParsed
       return {
         ...account,
         side: account.side.ask ? SIDE.ASK : SIDE.BID,
@@ -84,7 +84,7 @@ export class TwAmmClient {
     })
   }
 
-  async getAvailableTokens(params: GetTwammAvailableTokensParams): Promise<GetTwammResponse> {
+  async getAvailableTokens(params: GetDTwapAvailableTokensParams): Promise<GetDTwapResponse> {
     const transaction = new Transaction().add(TwAmm.getAvailableTokensInstruction(params))
     const simulation = await simulateTransaction({
       transaction,
@@ -102,7 +102,7 @@ export class TwAmmClient {
         'base64',
       );
 
-      return TWAMM_AVAILABLE_TOKENS.decode(data) as GetTwammResponse
+      return DTWAP_AVAILABLE_TOKENS.decode(data) as GetDTwapResponse
     }
     return { amountFrom: new BN(0), amountTo: new BN(0)  }
   }
@@ -112,7 +112,7 @@ export class TwAmmClient {
    * @param params 
    * @returns Transaction Id
    */
-  async executeSwap(params: TwammExecuteSwapParams): Promise<string> {
+  async executeSwap(params: DTwapExecuteSwapParams): Promise<string> {
     const transaction = new Transaction().add(TwAmm.executeSwapInstruction(params))
     return sendTransaction({ transaction, wallet: params.wallet, connection: this.connection })
   }

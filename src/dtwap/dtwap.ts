@@ -1,7 +1,7 @@
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { SYSVAR_CLOCK_PUBKEY, TransactionInstruction } from '@solana/web3.js';
-import { GetTwammAvailableTokensParams, GET_AVAILABLE_TOKENS_LAYOUT, TwammExecuteSwapParams } from '.';
-import { TWAMM_PROGRAM_ADDRESS } from '..';
+import { GetDTwapAvailableTokensParams, GET_AVAILABLE_TOKENS_LAYOUT, DTwapExecuteSwapParams } from '.';
+import { DTWAP_PROGRAM_ADDRESS } from '..';
 import { account, instructionDiscriminator } from '../utils';
 
 /**
@@ -14,7 +14,7 @@ export class TwAmm {
     * @param params 
      * @returns 
      */
-  static getAvailableTokensInstruction(params: GetTwammAvailableTokensParams) {
+  static getAvailableTokensInstruction(params: GetDTwapAvailableTokensParams) {
 
     const data = Buffer.alloc(GET_AVAILABLE_TOKENS_LAYOUT.span)
     const { pairSettings, pyth, orderArray } = params
@@ -34,13 +34,13 @@ export class TwAmm {
     ]
 
     return new TransactionInstruction({
-      programId: TWAMM_PROGRAM_ADDRESS,
+      programId: DTWAP_PROGRAM_ADDRESS,
       keys,
       data,
     });
   }
 
-  static executeSwapInstruction(params: TwammExecuteSwapParams) {
+  static executeSwapInstruction(params: DTwapExecuteSwapParams) {
     const data = Buffer.alloc(GET_AVAILABLE_TOKENS_LAYOUT.span)
     const {
       pairSettings,
@@ -76,7 +76,7 @@ export class TwAmm {
     ]
 
     return new TransactionInstruction({
-      programId: TWAMM_PROGRAM_ADDRESS,
+      programId: DTWAP_PROGRAM_ADDRESS,
       keys,
       data,
     });

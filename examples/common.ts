@@ -2,7 +2,7 @@ import { Connection, Keypair } from '@solana/web3.js';
 import * as bs58 from 'bs58';
 import fs from 'fs';
 import os from 'os';
-import { FarmingClient, PoolClient, TokenClient, TwAmmClient } from '../src';
+import { FarmingClient, PoolClient, TokenClient, DTwapClient } from '../src';
 import { Wallet } from './wallet';
 
 
@@ -27,14 +27,14 @@ const connection = new Connection('https://api.mainnet-beta.solana.com');
 const poolClient = new PoolClient(connection)
 const farmingClient = new FarmingClient(connection)
 const tokenClient = new TokenClient(connection)
-const twammClient = new TwAmmClient(connection)
+const dTwapClient = new DTwapClient(connection)
 
 export {
   wallet,
   poolClient,
   tokenClient,
   farmingClient,
-  twammClient,
+  dTwapClient,
   connection,
 };
 

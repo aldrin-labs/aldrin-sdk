@@ -1,14 +1,14 @@
 import { Connection, PublicKey } from '@solana/web3.js';
 import BN from 'bn.js';
-import { PRECISION_NOMINATOR, SOLANA_RPC_ENDPOINT, TokenClient, TokenSwapGetPriceParams, TokenSwapLoadParams, TwAmmClient, TwAmmPair } from '.';
+import { PRECISION_NOMINATOR, SOLANA_RPC_ENDPOINT, TokenClient, TokenSwapGetPriceParams, TokenSwapLoadParams, DTwapClient, DTwapPair } from '.';
 import { SwapBase } from './swapBase';
 import { SIDE, Wallet } from './types';
 
-export class TwAmmSwap extends SwapBase {
+export class DTwapSwap extends SwapBase {
 
   constructor(
-    private pairs: TwAmmPair[],
-    private twammClient: TwAmmClient,
+    private pairs: DTwapPair[],
+    private dtwapClient: DTwapClient,
     protected tokenClient: TokenClient,
     protected connection = new Connection(SOLANA_RPC_ENDPOINT),
     private wallet: Wallet | null = null
@@ -27,7 +27,7 @@ export class TwAmmSwap extends SwapBase {
       throw new Error('Pool not found')
     }
     const { pair, isInverted } = p
-    const orders = await this.twammClient.getOrders({
+    const orders = await this.dtwapClient.getOrders({
       pairSettings: pair.pairSettings,
     })
 
@@ -44,7 +44,7 @@ export class TwAmmSwap extends SwapBase {
       ordersForSide.map(async (order) => {
         return {
           order,
-          available: await this.twammClient.getAvailableTokens({
+          available: await this.dtwapClient.getAvailableTokens({
             pairSettings: pair.pairSettings,
             pyth: pair.pyth,
             orderArray: order.orderArray,
@@ -54,6 +54,7 @@ export class TwAmmSwap extends SwapBase {
 
       })
     )
+
 
     const pricesWithAmount = allAmounts
       .filter((orderWithAvailable) => orderWithAvailable.available.amountFrom.gtn(0))
@@ -71,6 +72,8 @@ export class TwAmmSwap extends SwapBase {
       })
       .sort((a, b) => a.price - b.price)
 
+
+    console.log('allAmounts: ', allAmounts)
 
     return pricesWithAmount
   }
@@ -99,14 +102,14 @@ export class TwAmmSwap extends SwapBase {
   static async initialize(params: TokenSwapLoadParams = {}) {
     const { connection = new Connection(SOLANA_RPC_ENDPOINT), wallet } = params
 
-    const twammClient = new TwAmmClient(connection)
+    const dtwapClient = new DTwapClient(connection)
     const tokenClient = new TokenClient(connection)
 
-    const pairs = await twammClient.getPairs()
+    const pairs = await dtwapClient.getPairs()
 
-    return new TwAmmSwap(
+    return new DTwapSwap(
       pairs,
-      twammClient,
+      dtwapClient,
       tokenClient,
       connection,
       wallet

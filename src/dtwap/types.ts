@@ -4,7 +4,7 @@ import { SIDE, WithWallet } from '..';
 import { u64 } from '../utils';
 
 
-export type TwAmmFees = {
+export type DTwapFees = {
   placingFeeNumerator: u64
   placingFeeDenominator: u64
   cancellingFeeNumerator: u64
@@ -12,7 +12,7 @@ export type TwAmmFees = {
 }
 
 
-export type TwAmmPair = {
+export type DTwapPair = {
   baseTokenMint: PublicKey
   quoteTokenMint: PublicKey
   authority: PublicKey
@@ -25,11 +25,11 @@ export type TwAmmPair = {
   minimumTokens: u64
   baseMintDecimals: number
   quoteMintDecimals: number
-  fees: TwAmmFees
+  fees: DTwapFees
   pairSettings: PublicKey // Pair account
 }
 
-export type TwAmmOrder = {
+export type DTwapOrder = {
   isInitialized: boolean
   amount: u64
   startTime: number
@@ -44,7 +44,7 @@ export type TwAmmOrder = {
   authority: PublicKey
 }
 
-export type TwAmmOrderArrayBase = {
+export type DTwapOrderArrayBase = {
   twammFromTokenVault: PublicKey
   twammToTokenVault: PublicKey
   signer: PublicKey
@@ -52,35 +52,35 @@ export type TwAmmOrderArrayBase = {
   pairSettings: PublicKey
   signerNonce: BN
   
-  orders: TwAmmOrder[]
+  orders: DTwapOrder[]
   orderArray: PublicKey
 }
 
-export type TwAmmOrderArayParsed = TwAmmOrderArrayBase & {
+export type DTwapOrderArayParsed = DTwapOrderArrayBase & {
   side: { bid?: Record<string, never>, ask?: Record<string, never> } 
 }
 
-export type TwAmmOrderArayResponse = TwAmmOrderArrayBase & {
+export type DTwapOrderArayResponse = DTwapOrderArrayBase & {
   side: SIDE
 }
 
-export type GetTwAmmOrders = {
+export type GetDTwapOrders = {
   pairSettings?: PublicKey
   userKey?: PublicKey
 }
 
-export type GetTwammAvailableTokensParams = WithWallet & {
+export type GetDTwapAvailableTokensParams = WithWallet & {
   pairSettings: PublicKey
   orderArray: PublicKey
   pyth: PublicKey
 }
 
-export type GetTwammResponse = {
+export type GetDTwapResponse = {
   amountFrom: BN
   amountTo: BN
 }
 
-export type TwammExecuteSwapParams =  WithWallet & {
+export type DTwapExecuteSwapParams =  WithWallet & {
   pairSettings: PublicKey
   orderArray: PublicKey
   signer: PublicKey
