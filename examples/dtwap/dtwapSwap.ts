@@ -10,7 +10,7 @@ const CONFIG = {
   quote: new PublicKey('EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'), // USDC
   pairSettings: new PublicKey('5rG2fwqq8aw1mHSTHJE7bHXmitqapkxsg9u9SdqML7Pa'),
   pyth: new PublicKey('H6ARHf6YXhGYeQfUzQNGk6rDNnLBQKrenN712K4AQJEG'),
-  priceDiff: 0.5, // Percentage between best (for arbitrage, worst for maker) bid & ask
+  priceDiff: 0.5, // Percentage between best (for arbitrage, worst for maker) price & pool price (without price impact)
 }
 
 async function doSwap() {
