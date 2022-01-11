@@ -4,7 +4,7 @@ import {
   FARMING_STATE_LAYOUT,
   FARMING_TICKET_LAYOUT, GetFarmingSnapshotParams, SNAPSHOT_QUEUE_LAYOUT,
 } from '.';
-import { PoolClient, SOLANA_RPC_ENDPOINT, TokenClient } from '..';
+import { PoolClient, POOLS_PROGRAM_ADDRESS, POOLS_V2_PROGRAM_ADDRESS, SOLANA_RPC_ENDPOINT, TokenClient } from '..';
 import { createInstruction, sendTransaction } from '../transactions';
 import { Farming } from './farming';
 import { EndFarmingParams, FarmingSnapshotQueue, FarmingState, FarmingTicket, GetFarmingStateParams, GetFarmingTicketsParams, StartFarmingParams } from './types';
@@ -30,14 +30,20 @@ export class FarmingClient {
   async getFarmingState(
     params: GetFarmingStateParams
   ): Promise<FarmingState[]> {
-    const programId = PoolClient.getPoolAddress(params.poolVersion || 1)
-    const states = await this.connection.getProgramAccounts(programId, {
-      commitment: 'finalized',
-      filters: [
-        { dataSize: FARMING_STATE_LAYOUT.span },
-        { memcmp: { offset: FARMING_STATE_LAYOUT.offsetOf('pool') || 0, bytes: params.poolPublicKey.toBase58() } },
-      ],
-    })
+    const programIds = params.poolVersion ?
+      [PoolClient.getPoolAddress(params.poolVersion)] :
+      [POOLS_PROGRAM_ADDRESS, POOLS_V2_PROGRAM_ADDRESS]
+
+
+    const states = (await Promise.all(
+      programIds.map((programId) => this.connection.getProgramAccounts(programId, {
+        commitment: 'finalized',
+        filters: [
+          { dataSize: FARMING_STATE_LAYOUT.span },
+          { memcmp: { offset: FARMING_STATE_LAYOUT.offsetOf('pool') || 0, bytes: params.poolPublicKey.toBase58() } },
+        ],
+      }))
+    )).flat()
 
     return states.map((s) => {
       const snapshot = FARMING_STATE_LAYOUT.decode(s.account.data) as FarmingState
@@ -57,7 +63,9 @@ export class FarmingClient {
    */
 
   async getFarmingTickets(params: GetFarmingTicketsParams = {}): Promise<FarmingTicket[]> {
-    const programId = PoolClient.getPoolAddress(params.poolVersion || 1)
+    const programIds = params.poolVersion ?
+      [PoolClient.getPoolAddress(params.poolVersion)] :
+      [POOLS_PROGRAM_ADDRESS, POOLS_V2_PROGRAM_ADDRESS]
 
     const filters: GetProgramAccountsFilter[] = [
       { dataSize: FARMING_TICKET_LAYOUT.span },
@@ -71,9 +79,12 @@ export class FarmingClient {
       filters.push({ memcmp: { offset: FARMING_TICKET_LAYOUT.offsetOf('userKey') || 0, bytes: params.userKey.toBase58() } })
     }
 
-    const tickets = await this.connection.getProgramAccounts(programId, {
-      filters,
-    })
+    const tickets = (await Promise.all(
+      programIds.map((programId) => this.connection.getProgramAccounts(programId, {
+        filters,
+      })
+      )
+    )).flat()
 
     return tickets.map((t) => {
       const data = FARMING_TICKET_LAYOUT.decode(t.account.data) as FarmingTicket
