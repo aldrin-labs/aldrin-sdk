@@ -16,6 +16,12 @@ export interface GetFarmingTicketsParams {
   poolVersion?: PoolVersion
 }
 
+export interface GetFarmingCalcParams {
+  farmingState?: PublicKey
+  userKey?: PublicKey
+  poolVersion?: PoolVersion
+}
+
 export interface FarmingState {
   tokensUnlocked: BN
   tokensPerPeriod: BN
@@ -63,6 +69,14 @@ export interface FarmingTicket {
   nextAttached: BN
   statesAttached: AttachedFarmingState[]
   farmingTicketPublicKey: PublicKey
+}
+
+export interface FarmingCalc {
+  farmingState: PublicKey
+  userKey: PublicKey
+  initializer: PublicKey
+  farmingCalcPublicKey: PublicKey
+  tokenAmount: BN
 }
 
 export interface EndFarmingCommon extends WithPoolPK {
@@ -115,20 +129,38 @@ export interface ClaimFarmedCommons extends WithPoolPK {
   farmingState: PublicKey
   farmingSnapshots: PublicKey
   farmingTicket: PublicKey
-  farmingTokenVault: PublicKey
 }
 
 export interface ClaimFarmedParams extends ClaimFarmedCommons, WithWallet, WithPoolVersion {
   userFarmingTokenAccount: PublicKey
   maxSnapshots: BN
+  farmingTokenVault: PublicKey
+  farmingCalc: PublicKey 
 }
 
 export type GetFarmingSnapshotParams = WithPoolVersion
 
-export interface ClaimFarmedInstructionParams extends ClaimFarmedCommons {
-  userFarmingTokenAccount: PublicKey
-  poolSigner: PublicKey
-  userKey: PublicKey
+export interface CalculateFarmedInstruction extends ClaimFarmedCommons {
   maxSnapshots: BN
+  programId: PublicKey
+  farmingCalc: PublicKey
+}
+
+export interface ClaimFarmedInstructionParams extends WithPoolPK {
+  farmingState: PublicKey
+  farmingCalc: PublicKey 
+  farmingTokenVault: PublicKey 
+  poolSigner: PublicKey 
+  userFarmingTokenAccount: PublicKey 
+  userKey: PublicKey 
+  programId: PublicKey
+}
+
+export interface CreateCalcInstructionParams {
+  farmingTicket: PublicKey 
+  userKey: PublicKey 
+  farmingState: PublicKey 
+  initializer: PublicKey 
+  farmingCalc: PublicKey 
   programId: PublicKey
 }

@@ -40,11 +40,22 @@ export const FARMING_TICKET_LAYOUT = struct([
     10, 'statesAttached'),
 ])
 
+export const FARMING_CALC_LAYOUT = struct([
+  blob(8, 'padding'),
+  publicKey('farmingState'),
+  publicKey('userKey'),
+  publicKey('initializer'),
+  uint64('tokenAmount'),
+])
+
 export const END_FARMING_INSTRUCTION_LAYOUT = struct([
   blob(8, 'instruction'),
 ])
 
-export const CLAIM_FARMED_INSTRUCTION_LAYOUT = struct([
+export const CREATE_CALC_INSTRUCTION_LAYOUT = END_FARMING_INSTRUCTION_LAYOUT
+export const WITHDRAW_FARMED_INSTRUCTION_LAYOUT = END_FARMING_INSTRUCTION_LAYOUT
+
+export const CALCULATE_FARMED_INSTRUCTION = struct([
   blob(8, 'instruction'),
   uint64('maxSnapshots'),
 ])

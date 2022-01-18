@@ -1,11 +1,13 @@
 import { Connection, GetProgramAccountsFilter, Keypair, PublicKey, Transaction } from '@solana/web3.js';
 import {
   ClaimFarmedParams,
+  FarmingCalc,
+  FARMING_CALC_LAYOUT,
   FARMING_STATE_LAYOUT,
-  FARMING_TICKET_LAYOUT, GetFarmingSnapshotParams, SNAPSHOT_QUEUE_LAYOUT,
+  FARMING_TICKET_LAYOUT, GetFarmingCalcParams, GetFarmingSnapshotParams, SNAPSHOT_QUEUE_LAYOUT,
 } from '.';
 import { PoolClient, SOLANA_RPC_ENDPOINT, TokenClient } from '..';
-import { createInstruction, sendTransaction } from '../transactions';
+import { createAccountInstruction, sendTransaction } from '../transactions';
 import { Farming } from './farming';
 import { EndFarmingParams, FarmingSnapshotQueue, FarmingState, FarmingTicket, GetFarmingStateParams, GetFarmingTicketsParams, StartFarmingParams } from './types';
 
@@ -83,6 +85,39 @@ export class FarmingClient {
       }
     })
   }
+  /**
+   * Get farming calc accounts for pool/user
+   * @param params 
+   * @returns 
+   */
+
+  async getFarmingCalcAccounts(params: GetFarmingCalcParams = {}): Promise<FarmingCalc[]> {
+    const programId = PoolClient.getPoolAddress(params.poolVersion || 1)
+
+    const filters: GetProgramAccountsFilter[] = [
+      { dataSize: FARMING_CALC_LAYOUT.span },
+    ]
+
+    if (params.farmingState) {
+      filters.push({ memcmp: { offset: FARMING_CALC_LAYOUT.offsetOf('farmingState') || 0, bytes: params.farmingState.toBase58() } })
+    }
+
+    if (params.userKey) {
+      filters.push({ memcmp: { offset: FARMING_CALC_LAYOUT.offsetOf('userKey') || 0, bytes: params.userKey.toBase58() } })
+    }
+
+    const farmingCalcs = await this.connection.getProgramAccounts(programId, {
+      filters,
+    })
+
+    return farmingCalcs.map((ca) => {
+      const data = FARMING_CALC_LAYOUT.decode(ca.account.data) as FarmingCalc
+      return {
+        ...data,
+        farmingCalcPublicKey: ca.pubkey,
+      }
+    })
+  }
 
   /**
    * Start farming, creates Farming Ticket
@@ -96,7 +131,7 @@ export class FarmingClient {
     const { wallet } = params
     const farmingTicket = Keypair.generate()
 
-    const farmingTicketInstruction = await createInstruction({
+    const farmingTicketInstruction = await createAccountInstruction({
       size: FARMING_TICKET_LAYOUT.span,
       connection: this.connection,
       wallet,
@@ -111,11 +146,50 @@ export class FarmingClient {
       programId,
     })
 
+
     const transaction = new Transaction()
 
     transaction.add(farmingTicketInstruction)
     transaction.add(startFarmingTransaction)
 
+    const states = await this.getFarmingState({
+      poolVersion: params.poolVersion,
+      poolPublicKey: params.poolPublicKey,
+    })
+
+    const calcForUser = (await this.getFarmingCalcAccounts({
+      userKey: wallet.publicKey,
+      poolVersion: params.poolVersion,
+    })).map((ca) => ca.farmingState.toBase58())
+
+    const statesWithoutCalc = states
+    .filter((state) => !state.tokensUnlocked.eq(state.tokensTotal)) // Has locked tokens -> state not finished yet    
+    .filter((state) => !calcForUser.includes(state.farmingStatePublicKey.toString()))
+
+    const createCalcInstructions = await Promise.all(statesWithoutCalc.map(async (fs) => {
+      const farmingCalc = Keypair.generate()
+      const farmingCalcInstruction = await createAccountInstruction({
+        size: FARMING_CALC_LAYOUT.span,
+        connection: this.connection,
+        wallet,
+        programId,
+        newAccountPubkey: farmingCalc.publicKey,
+      })
+
+      const calcInstruction = Farming.createCalcAccountInstruction({
+        farmingCalc: farmingCalc.publicKey,
+        farmingTicket: farmingTicket.publicKey,
+        userKey: wallet.publicKey,
+        farmingState: fs.farmingStatePublicKey,
+        initializer: wallet.publicKey,
+        programId,
+      })
+
+      return [farmingCalcInstruction, calcInstruction]
+    }))
+
+    transaction.add(...createCalcInstructions.flat())
+    
     return sendTransaction({
       transaction,
       wallet,
@@ -175,7 +249,7 @@ export class FarmingClient {
     const transaction = new Transaction()
 
     transaction.add(
-      Farming.claimFarmedInstruction({
+      Farming.withdrawFarmedInstruction({
         ...params,
         poolSigner,
         userKey: wallet.publicKey,

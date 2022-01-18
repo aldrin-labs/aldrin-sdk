@@ -186,4 +186,5 @@ export const VESTING_DENOMINATOR = new BN(3) // User receive another 2/3 of rewa
 export const SWAP_FEE_NUMERATOR = new BN(3)
 export const SWAP_FEE_DENOMINATOR = new BN(1000)
 
-export const SOLANA_RPC_ENDPOINT = 'https://api.mainnet-beta.solana.com'
+// export const SOLANA_RPC_ENDPOINT = 'https://api.mainnet-beta.solana.com'
+export const SOLANA_RPC_ENDPOINT = 'https://api-cryptocurrencies-ai.rpcpool.com'
