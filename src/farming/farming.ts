@@ -199,6 +199,10 @@ export class Farming {
   }
 
 
+  /**
+   * Create withdrawFarmed instruction
+   */
+
   static withdrawFarmedInstruction(params: ClaimFarmedInstructionParams): TransactionInstruction {
     const {
       poolPublicKey, farmingCalc, farmingState, farmingTokenVault, poolSigner, userFarmingTokenAccount,

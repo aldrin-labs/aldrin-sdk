@@ -22,7 +22,6 @@ const payer = Keypair.fromSecretKey(new Uint8Array(decoded))
 const wallet = new Wallet(payer)
 
 
-// const connection = new Connection('https://api.mainnet-beta.solana.com');
 const connection = new Connection(SOLANA_RPC_ENDPOINT);
 
 const poolClient = new PoolClient(connection)

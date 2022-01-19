@@ -15,7 +15,6 @@ export async function checkFarmed() {
   farmed.forEach((f) => {
     console.log(`Reward for farming: mint ${f.tokenInfo.mint.toBase58()}, amount: ${f.calcAccount?.tokenAmount.toString()}`)
   })
-  // console.log('farmed: ', farmed)
 }
 
 checkFarmed()

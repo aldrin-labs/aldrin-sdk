@@ -18,7 +18,6 @@ import { EndFarmingParams, FarmingSnapshotQueue, FarmingState, FarmingTicket, Ge
 export class FarmingClient {
 
 
-  private tokenClient = new TokenClient(this.connection)
   constructor(private connection: Connection = new Connection(SOLANA_RPC_ENDPOINT)) {
   }
 
@@ -85,9 +84,11 @@ export class FarmingClient {
       }
     })
   }
+
+
   /**
-   * Get farming calc accounts for pool/user
-   * @param params 
+   * Get farming calc accounts for farming and/or user
+   * @param params Search params (farming state, user)
    * @returns 
    */
 
