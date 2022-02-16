@@ -108,6 +108,31 @@ export async function withdrawLiquidity() {
 }
 ```
 
+### Check farming rewards
+
+```js
+import { AUTHORIZED_POOLS, TokenSwap } from '../../src';
+import { wallet } from '../common';
+
+
+export async function checkFarmed() {
+  const tokenSwap = await TokenSwap.initialize()
+
+  const farmed = await tokenSwap.getFarmed({
+    wallet,
+    poolMint: AUTHORIZED_POOLS.SOL_USDC.poolMint,
+  })
+
+
+  farmed.forEach((f) => {
+    console.log(`Reward for farming: mint ${f.tokenInfo.mint.toBase58()}, amount: ${f.calcAccount.tokenAmount.toString()}`)
+  })
+}
+
+checkFarmed()
+
+```
+
 You can find more complex examples by [link](https://github.com/aldrin-exchange/aldrin-sdk/tree/main/examples).
 
 

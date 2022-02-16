@@ -3,10 +3,14 @@ import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { SYSVAR_CLOCK_PUBKEY, SYSVAR_RENT_PUBKEY, TransactionInstruction } from '@solana/web3.js';
 import BN from 'bn.js';
 import {
-  ClaimFarmedInstructionParams,
-  CLAIM_FARMED_INSTRUCTION_LAYOUT,
+  CalculateFarmedInstruction,
+  CALCULATE_FARMED_INSTRUCTION,
+  CreateCalcInstructionParams,
+  CREATE_CALC_INSTRUCTION_LAYOUT,
   END_FARMING_INSTRUCTION_LAYOUT,
   START_FARMING_INSTRUCTION_LAYOUT,
+  ClaimFarmedInstructionParams,
+  WITHDRAW_FARMED_INSTRUCTION_LAYOUT,
 } from '.';
 import { account, instructionDiscriminator } from '../utils';
 import { EndFarmingInstructionParams, GetFarmingRewardParams, StartFarmingInstructionParams } from './types';
@@ -114,27 +118,65 @@ export class Farming {
     });
   }
 
+
   /**
-   * Create claimFarmed instruction
+   * Create calc account instruction
+   * @param params 
+   * @returns 
    */
 
-  static claimFarmedInstruction(params: ClaimFarmedInstructionParams): TransactionInstruction {
-    const data = Buffer.alloc(CLAIM_FARMED_INSTRUCTION_LAYOUT.span)
+  static createCalcAccountInstruction(params: CreateCalcInstructionParams): TransactionInstruction {
+    const data = Buffer.alloc(CREATE_CALC_INSTRUCTION_LAYOUT.span)
+    CREATE_CALC_INSTRUCTION_LAYOUT.encode(
+      {
+        instruction: instructionDiscriminator('initialize_farming_calc'),
+      },
+      data,
+    );
     const {
-      poolPublicKey,
-      poolSigner,
-      farmingState,
-      farmingSnapshots,
+      farmingCalc,
       farmingTicket,
       userKey,
-      farmingTokenVault,
-      userFarmingTokenAccount,
+      farmingState,
+      initializer,
       programId,
     } = params
 
-    CLAIM_FARMED_INSTRUCTION_LAYOUT.encode(
+    const keys = [
+      account(farmingCalc, true),
+      account(farmingTicket),
+      account(userKey),
+      account(farmingState),
+      account(initializer, false, true),
+      account(SYSVAR_RENT_PUBKEY),
+    ]
+
+    return new TransactionInstruction({
+      programId,
+      keys,
+      data,
+    });
+
+  }
+
+  /**
+   * Create calculateFarmed instruction
+   */
+
+  static calculateFarmedInstruction(params: CalculateFarmedInstruction): TransactionInstruction {
+    const data = Buffer.alloc(CALCULATE_FARMED_INSTRUCTION.span)
+    const {
+      poolPublicKey,
+      farmingState,
+      farmingSnapshots,
+      farmingTicket,
+      farmingCalc,
+      programId,
+    } = params
+
+    CALCULATE_FARMED_INSTRUCTION.encode(
       {
-        instruction: instructionDiscriminator('withdraw_farmed'),
+        instruction: instructionDiscriminator('calculate_farmed'),
         maxSnapshots: params.maxSnapshots,
       },
       data,
@@ -144,15 +186,46 @@ export class Farming {
       account(poolPublicKey),
       account(farmingState),
       account(farmingSnapshots),
+      account(farmingCalc, true),
       account(farmingTicket, true),
+      account(SYSVAR_CLOCK_PUBKEY),
+    ]
+
+    return new TransactionInstruction({
+      programId,
+      keys,
+      data,
+    });
+  }
+
+
+  /**
+   * Create withdrawFarmed instruction
+   */
+
+  static withdrawFarmedInstruction(params: ClaimFarmedInstructionParams): TransactionInstruction {
+    const {
+      poolPublicKey, farmingCalc, farmingState, farmingTokenVault, poolSigner, userFarmingTokenAccount,
+      userKey, programId,
+    } = params
+    const data = Buffer.alloc(WITHDRAW_FARMED_INSTRUCTION_LAYOUT.span)
+    WITHDRAW_FARMED_INSTRUCTION_LAYOUT.encode(
+      {
+        instruction: instructionDiscriminator('withdraw_farmed'),
+      },
+      data,
+    );
+
+    const keys = [
+      account(poolPublicKey),
+      account(farmingState),
+      account(farmingCalc, true),
       account(farmingTokenVault, true),
       account(poolSigner),
       account(userFarmingTokenAccount, true),
       account(userKey, false, true),
-      account(userKey, true),
       account(TOKEN_PROGRAM_ID),
       account(SYSVAR_CLOCK_PUBKEY),
-      account(SYSVAR_RENT_PUBKEY),
     ]
 
     return new TransactionInstruction({

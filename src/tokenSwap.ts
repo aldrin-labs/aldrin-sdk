@@ -442,14 +442,22 @@ export class TokenSwap extends SwapBase {
     if (!pool) {
       throw new Error('Pool not found!')
     }
+
+    const tickets = await this.farmingClient.getFarmingTickets({ userKey: wallet.publicKey, pool: pool.poolPublicKey })
+
+    if (tickets.length === 0) {
+      throw new Error('No tickets, nothing to check')
+    }
+
+
     const states = await this.farmingClient.getFarmingState({ poolPublicKey: pool.poolPublicKey, poolVersion: pool.poolVersion })
 
-    const activeStates = states.filter((s) => !s.tokensTotal.eq(s.tokensUnlocked)) // Skip finished staking states
-
+    const stateKeys = states.map((state) => state.farmingStatePublicKey.toBase58())
+   
 
     // Resolve rewards
     const stateVaults = await Promise.all(
-      activeStates.map(async (state) => {
+      states.map(async (state) => {
 
         const tokenInfo = await this.tokenClient.getTokenAccount(state.farmingTokenVault)
 
@@ -460,31 +468,17 @@ export class TokenSwap extends SwapBase {
       })
     )
 
+    const calcAccounts = await this.farmingClient.getFarmingCalcAccounts({
+      poolVersion: pool.poolVersion,
+      userKey: wallet.publicKey,
+    })
 
-    const tickets = await this.farmingClient.getFarmingTickets({ userKey: wallet.publicKey, pool: pool.poolPublicKey })
-
-    if (tickets.length === 0) {
-      throw new Error('No tickets, nothing to check')
-    }
-
-    const queue = await this.farmingClient.getFarmingSnapshotsQueue({})
+    const calcAccountsForStates = calcAccounts.filter((ca) => stateKeys.includes(ca.farmingState.toBase58()))
 
     return stateVaults.map((sv) => {
-      const rewardsPerTicket = tickets.map((ticket) => {
-
-        const rewards = Farming.calculateFarmingRewards({
-          ticket,
-          queue,
-          state: sv.state, // Calculate for each state separately, sometimes there are few reward pools
-        })
-
-        return { ...rewards, ticket }
-      })
-
-      const rewardsAmount = rewardsPerTicket.reduce((acc, _) => acc.add(_.unclaimedTokens), new BN(0))
-
-      return { ...sv, rewardsPerTicket, rewardsAmount }
-    })
+      const calcAccount = calcAccountsForStates.find((ca) => ca.farmingState.equals(sv.state.farmingStatePublicKey))
+      return { ...sv, calcAccount }
+    }).filter((sv) => sv.calcAccount?.tokenAmount.gtn(0))
 
   }
 
@@ -536,34 +530,21 @@ export class TokenSwap extends SwapBase {
           instructions.push(...createAccountTransaction.instructions)
         }
 
+        if (state.calcAccount) {
+          const withdrawInstruction = Farming.withdrawFarmedInstruction({
+            farmingState: state.state.farmingStatePublicKey,
+            farmingCalc: state.calcAccount.farmingCalcPublicKey,
+            farmingTokenVault: state.state.farmingTokenVault,
+            userFarmingTokenAccount: userFarmingTokenAccount as PublicKey,
+            userKey: wallet.publicKey,
+            poolPublicKey: pool.poolPublicKey,
+            poolSigner,
+            programId,
+          })
 
-        const ticketInstructions = state.rewardsPerTicket.flatMap((rpt) => {
-          const result: TransactionInstruction[] = []
-          let unclaimed = rpt.unclaimedSnapshots
+          instructions.push(withdrawInstruction)
+        }
 
-          while (unclaimed > 0) {
-            const maxSnapshots = Math.min(unclaimed, 22) // TODO: 25
-            unclaimed -= 22
-            result.push(
-              Farming.claimFarmedInstruction({
-                maxSnapshots: new BN(maxSnapshots),
-                userKey: wallet.publicKey,
-                userFarmingTokenAccount: userFarmingTokenAccount as PublicKey, // TODO:?
-                poolSigner,
-                farmingState: state.state.farmingStatePublicKey,
-                farmingSnapshots: state.state.farmingSnapshots,
-                farmingTicket: rpt.ticket.farmingTicketPublicKey,
-                poolPublicKey: pool.poolPublicKey,
-                farmingTokenVault: state.state.farmingTokenVault,
-                programId,
-              })
-            )
-          }
-
-          return result
-        })
-
-        instructions.push(...ticketInstructions)
 
         return instructions
       })
