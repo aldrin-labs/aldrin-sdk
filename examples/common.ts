@@ -6,7 +6,8 @@ import { FarmingClient, PoolClient, TokenClient, DTwapClient, SOLANA_RPC_ENDPOIN
 import { Wallet } from './wallet';
 
 
-const privateKey = fs.readFileSync(
+const privateKey = process.env.PRIVATE_KEY ||
+ fs.readFileSync(
   os.homedir() + '/.config/aldrin/privatekey',
   {
     encoding: 'utf-8',
