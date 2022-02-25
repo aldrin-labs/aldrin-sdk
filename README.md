@@ -17,6 +17,32 @@
 
 ## Usage
 
+```mermaid
+flowchart TD
+    iwant(I want...)
+    earn(Integrate farming)
+    trade(Trade with bot)
+    show(Fetch pools info)
+    tokenSwap{{TokenSwap}}
+    ammPoolsApi{{AldrinApiPoolsClient}}
+    pools{{PoolClient}}
+    farming{{FarmingClient}}
+    dtwap{{DTwapClient}}
+    iwant-->earn
+    iwant-->trade
+    iwant-->show
+    show-->ammPoolsApi
+    show-->pools
+    trade-->pools
+    trade-->tokenSwap
+    trade-->dtwap
+    earn-->tokenSwap
+    earn-->farming
+    farming-->|Depends on|pools
+
+```
+
+## Examples
 ***
 
 ### Trade (swap tokens)
