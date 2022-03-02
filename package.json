@@ -46,6 +46,7 @@
   "author": "Aldrin dev team <support@aldrin.com>",
   "license": "Apache",
   "dependencies": {
+    "@orca-so/stablecurve": "^1.0.6",
     "@solana/buffer-layout": "^3.0.0",
     "@solana/spl-token": "0.1.8",
     "graphql": "^16.0.1",
