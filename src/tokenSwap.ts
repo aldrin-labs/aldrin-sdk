@@ -3,7 +3,7 @@ import {
   Transaction,
   TransactionInstruction,
 } from '@solana/web3.js';
-import BN from 'bn.js';
+import { computeOutputAmount } from '@orca-so/stablecurve'
 import { Farming, FarmingClient, PRECISION_NOMINATOR, TokenClient } from '.';
 import {
   CURVE, PoolClient,
@@ -15,10 +15,10 @@ import {
   TokenSwapParams,
   TokenSwapWithdrawLiquidityParams,
 } from './pools';
-import { swapAmounts } from './pools/curve';
 import { SwapBase } from './swapBase';
 import { sendTransaction } from './transactions';
 import { Wallet } from './types';
+import BN from 'bn.js';
 
 
 /**
@@ -372,20 +372,25 @@ export class TokenSwap extends SwapBase {
       const { curveType } = pool as PoolRpcV2Response
 
       if (curveType === 1) {
-        const amountToSwap = quoteVaultAccount.amount.divn(2)
+        const amountToSwap = isInverted ? baseVaultAccount.amount.divn(2) :  quoteVaultAccount.amount.divn(2)
+        const poolInputAmount = isInverted ? quoteVaultAccount.amount : baseVaultAccount.amount
+        const poolOutputAmount = isInverted ? baseVaultAccount.amount : quoteVaultAccount.amount
 
-        const calculateAmounts = swapAmounts(
-          quoteVaultAccount.amount,
-          baseVaultAccount.amount,
-          amountToSwap
+
+        const outputAmount = computeOutputAmount(
+          amountToSwap,
+          poolInputAmount,
+          poolOutputAmount,
+          new BN(170), // Fixed
         )
 
-        return calculateAmounts.destinationAmountSwapped
+
+        return parseFloat(outputAmount
           .mul(PRECISION_NOMINATOR)
           .mul(baseMintInfo.decimalDenominator)
           .div(quoteMintInfo.decimalDenominator)
-          .div(calculateAmounts.sourceAmountSwapped)
-          .toNumber() / PRECISION_NOMINATOR.toNumber()
+          .toString()) / parseFloat(amountToSwap.toString()) / PRECISION_NOMINATOR.toNumber()
+
       }
     }
 
@@ -453,7 +458,7 @@ export class TokenSwap extends SwapBase {
     const states = await this.farmingClient.getFarmingState({ poolPublicKey: pool.poolPublicKey, poolVersion: pool.poolVersion })
 
     const stateKeys = states.map((state) => state.farmingStatePublicKey.toBase58())
-   
+
 
     // Resolve rewards
     const stateVaults = await Promise.all(
