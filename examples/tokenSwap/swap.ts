@@ -1,14 +1,14 @@
 import { PublicKey } from '@solana/web3.js';
 import BN from 'bn.js';
-import { TokenSwap } from '../../src';
+import { SOL_MINT, TokenSwap } from '../../src';
 import { wallet } from '../common';
 
 
 export async function useTokenSwap() {
   const tokenSwap = await TokenSwap.initialize()
 
-  const tokenA = new PublicKey('A1BsqP5rH3HXhoFK6xLK6EFv9KsUzgR1UwBQhzMW9D2m')
-  const tokenB = new PublicKey('8wxoc2AnVsT6aLXDyA2G9PKfpx8mVT1Q5pPgvQLpCEVM')
+  const tokenA = new PublicKey('EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v')
+  const tokenB = SOL_MINT
   // const rin = new PublicKey('E5ndSkaB17Dm7CsD22dvcjfrYSDLCxFcMd6z8ddCk5wp')
   // const usdc = new PublicKey('EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v')
   // const srm = new PublicKey('SRMuApVNdxXokk5GT7XD5cUUgXMBCoAz2LHeuAoKWRt')
@@ -41,10 +41,11 @@ export async function useTokenSwap() {
 
   const txId = await tokenSwap.swap({
     wallet: wallet,
-    minIncomeAmount: new BN(1_000_000_000), // 1 RIN
-    // outcomeAmount: new BN(5_000_000) // 5 USDC
-    mintFrom: tokenA,
-    mintTo: tokenB,
+    // minIncomeAmount: new BN(1_000_000), // 1 RIN
+    outcomeAmount: new BN(50_000_000), // 5 USDC
+    mintFrom: tokenB,
+    mintTo: tokenA,
+    slippage: 0.1,
   })
 
   console.log('Buy 1 tokenA for tokenB success, txId: ', txId)

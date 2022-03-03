@@ -7,6 +7,8 @@ export const Side = {
   Ask: { ask: {} },
 }
 
+export const SOL_MINT = new PublicKey('So11111111111111111111111111111111111111112')
+
 const POOLS = {
   RIN_USDC: {
     poolMint: new PublicKey('Gathk79qZfJ4G36M7hiL3Ef1P5SDt7Xhm2C1vPhtWkrw'),

@@ -1,5 +1,5 @@
 import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { Connection, PublicKey, Transaction } from '@solana/web3.js';
+import { Connection, PublicKey, SystemProgram, Transaction } from '@solana/web3.js';
 import BN from 'bn.js';
 import { TokenAccountInfo } from '.';
 import { SPL_ACCOUNT_LAYOUT, SPL_TOKEN_LAYOUT } from './layout';
@@ -51,6 +51,7 @@ export class TokenClient {
     const {
       owner,
       mint,
+      amount,
     } = params
 
     const ata = await Token.getAssociatedTokenAddress(
@@ -59,6 +60,17 @@ export class TokenClient {
       mint,
       owner
     )
+
+    const transaction = new Transaction()
+    if (amount) {
+      transaction.add(
+        SystemProgram.transfer({
+          fromPubkey: owner,
+          toPubkey: ata,
+          lamports: amount,
+        })
+      )
+    }
 
     const instruction = Token.createAssociatedTokenAccountInstruction(
       ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -69,7 +81,7 @@ export class TokenClient {
       owner
     )
 
-    const transaction = new Transaction()
+
     transaction.add(instruction)
 
     return {

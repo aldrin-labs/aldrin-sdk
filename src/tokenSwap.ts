@@ -56,7 +56,7 @@ export class TokenSwap extends SwapBase {
 
   async swap(params: TokenSwapParams) {
     const resolvedInputs = await this.resolveSwapInputs(params)
-    return this.poolClient.swap(resolvedInputs)
+    return this.poolClient.swap({...resolvedInputs, slippage: params.slippage})
   }
 
   /**
