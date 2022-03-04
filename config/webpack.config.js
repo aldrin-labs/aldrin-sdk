@@ -29,6 +29,8 @@ module.exports = {
     fallback: {
       http: false,
       https: false,
+      url: false,
+      assert: false,
     },
   },
 }
