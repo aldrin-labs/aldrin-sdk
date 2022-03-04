@@ -1,15 +1,15 @@
-import { Connection, GetProgramAccountsFilter, PublicKey, Transaction } from '@solana/web3.js';
+import { Connection, GetProgramAccountsFilter, PublicKey, SystemProgram, Transaction } from '@solana/web3.js';
 import base58 from 'bs58';
 import {
   CURVE,
   DepositLiquidityParams, GetPoolsParams, PoolResponse, PoolRpcResponse,
   PoolRpcV2Response,
   PoolV2Response,
-  POOL_LAYOUT, POOL_V2_LAYOUT, SOLANA_RPC_ENDPOINT, WithdrawLiquidityParams,
+  POOL_LAYOUT, POOL_V2_LAYOUT, Side, SOLANA_RPC_ENDPOINT, SOL_MINT, WithdrawLiquidityParams,
 } from '.';
 import { POOLS_PROGRAM_ADDRESS, POOLS_V2_PROGRAM_ADDRESS, TokenClient } from '..';
 import { sendTransaction } from '../transactions';
-import { PoolVersion } from '../types';
+import { PoolVersion, SIDE } from '../types';
 import { accountDiscriminator } from '../utils';
 import { Pool } from './pool';
 import { SwapParams } from './types/swap';
@@ -19,6 +19,8 @@ import { SwapParams } from './types/swap';
  * Aldrin AMM Pool client
  */
 
+
+const TOKEN_ACCOUNT_RENT_LAMPORTS = 2_040_000
 export class PoolClient {
 
   private tokenClient = new TokenClient(this.connection)
@@ -317,13 +319,16 @@ export class PoolClient {
         poolVersion = 1,
       },
       slippage = 0.001,
+      side,
       wallet,
+      outcomeAmount,
     } = params
 
     let {
       userBaseTokenAccount,
       userQuoteTokenAccount,
     } = params
+  
 
     const transaction = new Transaction()
     // create pool token account for user if not exist
@@ -334,6 +339,7 @@ export class PoolClient {
       } = await TokenClient.createTokenAccountTransaction({
         owner: wallet.publicKey,
         mint: baseTokenMint,
+        amount:  side === SIDE.ASK ? parseInt(outcomeAmount.toString(), 10)  + TOKEN_ACCOUNT_RENT_LAMPORTS : undefined,
       })
 
       userBaseTokenAccount = newAccountPubkey
@@ -348,11 +354,13 @@ export class PoolClient {
       } = await TokenClient.createTokenAccountTransaction({
         owner: wallet.publicKey,
         mint: quoteTokenMint,
+        amount:  side === SIDE.BID ? parseInt(outcomeAmount.toString(), 10)  + TOKEN_ACCOUNT_RENT_LAMPORTS : undefined,
       })
 
       userQuoteTokenAccount = newAccountPubkey
       transaction.add(createAccountTransaction)
     }
+
 
     const programId = PoolClient.getPoolAddress(poolVersion)
 
@@ -365,7 +373,7 @@ export class PoolClient {
     transaction.add(
       Pool.swapInstruction({
         ...params,
-        minIncomeAmount: params.minIncomeAmount.muln(1 - slippage),
+        minIncomeAmount: params.minIncomeAmount.muln(1000 - slippage * 1000).divn(1000),
         poolSigner,
         walletAuthority: wallet.publicKey,
         userBaseTokenAccount,
