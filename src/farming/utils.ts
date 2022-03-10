@@ -1,5 +1,5 @@
 import BN from 'bn.js'
-import { PRE_VESTING_DENOMINATOR } from '../pools'
+import { PRE_VESTING_DENOMINATOR, PRE_VESTING_NUMERATOR, VESTING_DENOMINATOR, VESTING_NUMERATOR } from '../pools'
 import { AttachedFarmingState, FarmingSnapshot, FarmingState, FarmingTicket } from './types'
 
 export const getFarmingRewardsFromSnapshots = ({
@@ -19,33 +19,41 @@ export const getFarmingRewardsFromSnapshots = ({
     unclaimedSnapshots: 0,
   }
 
-  const lastClaimTime = stateAttached?.lastVestedWithdrawTime || 0
-  const dateFrom = BN.max(ticket.startTime, new BN(lastClaimTime)) // Select last claim or ticket start
+  const lastClaimTime = stateAttached?.lastWithdrawTime || ticket.startTime.toNumber()
+  const lastVestedClaimTime = stateAttached?.lastVestedWithdrawTime || ticket.startTime.toNumber()
 
   const rewardsState = snapshots
     .reduce(
       (acc, snapshot) => {
         const { tokensUnlocked, amount, unclaimedSnapshots } = acc
 
-        const st = new BN(snapshot.time)
+        const snapshotTime = new BN(snapshot.time)
 
-        if (dateFrom.gte(st) || ticket.endTime.lte(st)) { // Filter by date
+        if (ticket.startTime.gte(snapshotTime) || ticket.endTime.lte(snapshotTime)) { // Filter by date
           return { ...acc, tokensUnlocked: snapshot.farmingTokens }
         }
 
         const poolReward = snapshot.farmingTokens.sub(tokensUnlocked)
 
-        const ticketReward = poolReward
+        const ticketMaxReward = poolReward
           .mul(ticket.tokensFrozen)
           .div(snapshot.tokensFrozen)
+
 
         const currentTime = Date.now() / 1000
 
 
         // Decrease reward on vesting period
-        const vestingDenominator = currentTime >= (snapshot.time + state.vestingPeriod) ? new BN(1) : PRE_VESTING_DENOMINATOR
+        const preVestingReward = lastClaimTime < snapshot.time
+          ? ticketMaxReward.mul(PRE_VESTING_NUMERATOR).div(PRE_VESTING_DENOMINATOR)
+          : new BN(0)
 
-        const finalReward = ticketReward.div(vestingDenominator)
+        const vestingReward = lastVestedClaimTime < snapshot.time && snapshot.time + state.vestingPeriod > currentTime
+          ? ticketMaxReward.mul(VESTING_NUMERATOR).div(VESTING_DENOMINATOR)
+          : new BN(0)
+
+
+        const finalReward = preVestingReward.add(vestingReward)
 
         return {
           tokensUnlocked: snapshot.farmingTokens,

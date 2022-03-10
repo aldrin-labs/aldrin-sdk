@@ -1,44 +1,7 @@
 {
-  "version": "0.0.0",
-  "name": "mm_farming_pool",
+  "version": "1.1.0",
+  "name": "mm_farming_pool_v1",
   "instructions": [
-    {
-      "name": "initializeConstProductCurve",
-      "accounts": [
-        {
-          "name": "curve",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "rent",
-          "isMut": false,
-          "isSigner": false
-        }
-      ],
-      "args": []
-    },
-    {
-      "name": "initializeStableCurve",
-      "accounts": [
-        {
-          "name": "curve",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "rent",
-          "isMut": false,
-          "isSigner": false
-        }
-      ],
-      "args": [
-        {
-          "name": "amp",
-          "type": "u64"
-        }
-      ]
-    },
     {
       "name": "initialize",
       "accounts": [
@@ -98,11 +61,6 @@
           "isSigner": false
         },
         {
-          "name": "curve",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "tokenProgram",
           "isMut": false,
           "isSigner": false
@@ -116,10 +74,6 @@
       "args": [
         {
           "name": "signerNonce",
-          "type": "u8"
-        },
-        {
-          "name": "curveType",
           "type": "u8"
         }
       ]
@@ -423,11 +377,6 @@
           "isSigner": false
         },
         {
-          "name": "curve",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "tokenProgram",
           "isMut": false,
           "isSigner": false
@@ -589,7 +538,69 @@
       ]
     },
     {
-      "name": "withdrawFarmed",
+      "name": "initializeFarmingCalc",
+      "accounts": [
+        {
+          "name": "farmingCalc",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "farmingTicket",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "userKey",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "farmingState",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "initializer",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "closeFarmingCalc",
+      "accounts": [
+        {
+          "name": "farmingCalc",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "farmingTicket",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "signer",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "initializer",
+          "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "calculateFarmed",
       "accounts": [
         {
           "name": "pool",
@@ -607,7 +618,43 @@
           "isSigner": false
         },
         {
+          "name": "farmingCalc",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
           "name": "farmingTicket",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "clock",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "maxSnapshots",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "withdrawFarmed",
+      "accounts": [
+        {
+          "name": "pool",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "farmingState",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "farmingCalc",
           "isMut": true,
           "isSigner": false
         },
@@ -632,11 +679,6 @@
           "isSigner": true
         },
         {
-          "name": "userSolAccount",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
           "name": "tokenProgram",
           "isMut": false,
           "isSigner": false
@@ -645,19 +687,9 @@
           "name": "clock",
           "isMut": false,
           "isSigner": false
-        },
-        {
-          "name": "rent",
-          "isMut": false,
-          "isSigner": false
         }
       ],
-      "args": [
-        {
-          "name": "maxSnapshots",
-          "type": "u64"
-        }
-      ]
+      "args": []
     },
     {
       "name": "checkFarmed",
@@ -927,38 +959,6 @@
             "type": {
               "defined": "Fees"
             }
-          },
-          {
-            "name": "curveType",
-            "type": "u8"
-          },
-          {
-            "name": "curve",
-            "type": "publicKey"
-          }
-        ]
-      }
-    },
-    {
-      "name": "ProductCurve",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "noValue",
-            "type": "u8"
-          }
-        ]
-      }
-    },
-    {
-      "name": "StableCurve",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "amp",
-            "type": "u64"
           }
         ]
       }
@@ -1084,6 +1084,30 @@
           }
         ]
       }
+    },
+    {
+      "name": "FarmingCalc",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "farmingState",
+            "type": "publicKey"
+          },
+          {
+            "name": "userKey",
+            "type": "publicKey"
+          },
+          {
+            "name": "initializer",
+            "type": "publicKey"
+          },
+          {
+            "name": "tokenAmount",
+            "type": "u64"
+          }
+        ]
+      }
     }
   ],
   "types": [
@@ -1181,68 +1205,55 @@
   "errors": [
     {
       "code": 300,
-      "name": "SlippageExceeded",
-      "msg": "Slippage exceeded"
+      "name": "SlippageExceeded"
     },
     {
       "code": 301,
-      "name": "TokenLimitExceeded",
-      "msg": "Token limit reached"
+      "name": "TokenLimitExceeded"
     },
     {
       "code": 302,
-      "name": "CalculationError",
-      "msg": "Calculation error"
+      "name": "CalculationError"
     },
     {
       "code": 303,
-      "name": "ZeroResultingTokens",
-      "msg": "Swap size is too small"
+      "name": "ZeroResultingTokens"
     },
     {
       "code": 304,
-      "name": "BasketTooSmall",
-      "msg": "Returned basket's size is too small"
+      "name": "WithdrawingMoreThanTicketAllows"
     },
     {
       "code": 305,
-      "name": "ConversionFailure",
-      "msg": "Error when converting token types"
+      "name": "PoolIsEmpty"
     },
     {
       "code": 306,
-      "name": "BasketSerializationError",
-      "msg": "Cannot serialize basket"
+      "name": "ConversionFailure"
     },
     {
       "code": 307,
-      "name": "InvalidFee",
-      "msg": "Invalid fee structure"
+      "name": "BasketSerializationError"
     },
     {
       "code": 308,
-      "name": "TokensAlreadyUnfrozen",
-      "msg": "Tokens already unfrozen"
+      "name": "InvalidFee"
     },
     {
       "code": 309,
-      "name": "NotAuthorized",
-      "msg": "Authorization failed"
+      "name": "TokensAlreadyUnfrozen"
     },
     {
       "code": 310,
-      "name": "TicketFarmsLimitReached",
-      "msg": "Cannot add more farming to the provided ticket"
+      "name": "NotAuthorized"
     },
     {
       "code": 311,
-      "name": "SnapshotLimitReached",
-      "msg": "Snapshot queue is full"
+      "name": "TicketFarmsLimitReached"
     },
     {
       "code": 312,
-      "name": "WrongCurve",
-      "msg": "Provided curve is not valid for the given type"
+      "name": "SnapshotLimitReached"
     },
     {
       "code": 313,
@@ -1252,7 +1263,7 @@
     {
       "code": 314,
       "name": "MinimumUnfreezeTimeNotPassed",
-      "msg": "Cannot unfreeze before one period from the last action with provided ticket"
+      "msg": "Cannot unfreeze before one period from the last action with ticket passed"
     },
     {
       "code": 315,
@@ -1276,8 +1287,17 @@
     },
     {
       "code": 319,
-      "name": "AttachedStatesLimitReached",
-      "msg": "The maximum amount of farmings for one ticket reached"
+      "name": "AttachedStatesLimitReached"
+    },
+    {
+      "code": 320,
+      "name": "NonZeroOutstandingBalance",
+      "msg": "Cannot close farming calc while it's not empty"
+    },
+    {
+      "code": 321,
+      "name": "NoNewSnapshotsProcessed",
+      "msg": "No new snapshots can be processed for this ticket for this farming"
     }
   ]
 }

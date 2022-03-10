@@ -27,7 +27,7 @@ export async function sendTransaction({
     throw new Error(`No publicKey for wallet: ${wallet}`)
   }
 
-  transaction.feePayer = wallet.payer.publicKey
+  transaction.feePayer = wallet.publicKey
 
   if (partialSigners) {
     transaction.partialSign(...partialSigners)

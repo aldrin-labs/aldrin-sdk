@@ -8,14 +8,13 @@ export async function checkFarmed() {
 
   const farmed = await tokenSwap.getFarmed({
     wallet,
-    poolMint: AUTHORIZED_POOLS.mSOL_USDC.poolMint,
+    poolMint: AUTHORIZED_POOLS.SOL_USDC.poolMint,
   })
 
 
   farmed.forEach((f) => {
-    console.log(`Reward for farming: mint ${f.tokenInfo.mint.toBase58()}, amount: ${f.rewardsAmount.toNumber()}`)
+    console.log(`Reward for farming: mint ${f.tokenInfo.mint.toBase58()}, amount: ${f.calcAccount?.tokenAmount.toString()}`)
   })
-  // console.log('farmed: ', farmed)
 }
 
 checkFarmed()

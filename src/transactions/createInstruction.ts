@@ -8,7 +8,7 @@ interface CreateInstructionParams {
   programId: PublicKey
   newAccountPubkey: PublicKey
 }
-export const createInstruction = async (params: CreateInstructionParams): Promise<TransactionInstruction> => {
+export const createAccountInstruction = async (params: CreateInstructionParams): Promise<TransactionInstruction> => {
   const {
     wallet,
     size,

@@ -41,6 +41,7 @@ export interface TokenAccountInfo {
 export interface CreateAccountParams {
   owner: PublicKey
   mint: PublicKey
+  amount?: number
 }
 
 export interface CreateAccountResponse {

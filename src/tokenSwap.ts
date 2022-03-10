@@ -1,59 +1,45 @@
-import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import {
-  AccountInfo,
-  Connection,
-  ParsedAccountData,
-  PublicKey,
+  Connection, PublicKey,
   Transaction,
   TransactionInstruction,
 } from '@solana/web3.js';
-import BN from 'bn.js';
-import { Farming, FarmingClient, TokenClient, TokenMintInfo } from '.';
+import { computeOutputAmount } from '@orca-so/stablecurve'
+import { Farming, FarmingClient, PRECISION_NOMINATOR, TokenClient } from '.';
 import {
-  PoolClient,
+  CURVE, PoolClient,
   PoolRpcResponse,
   PoolRpcV2Response,
   SIDE,
-  SOLANA_RPC_ENDPOINT,
-  SWAP_FEE_NUMERATOR,
-  SWAP_FEE_DENUMERATOR,
-  TokenSwapAddlLiquidityParams, TokenSwapGetFarmedParams, TokenSwapGetPriceParams,
+  SOLANA_RPC_ENDPOINT, SWAP_FEE_DENOMINATOR, SWAP_FEE_NUMERATOR, TokenSwapAddlLiquidityParams, TokenSwapGetFarmedParams, TokenSwapGetPriceParams,
   TokenSwapLoadParams,
   TokenSwapParams,
   TokenSwapWithdrawLiquidityParams,
-  CURVE,
 } from './pools';
-import { swapAmounts } from './pools/curve';
+import { SwapBase } from './swapBase';
 import { sendTransaction } from './transactions';
 import { Wallet } from './types';
+import BN from 'bn.js';
 
 
-const PRECISION_NOMINATOR = new BN(1_000_000) // BN precision
 /**
  * High-level API for Aldrin AMM Pools 
  */
-export class TokenSwap {
-  private mintInfos = new Map<string, TokenMintInfo>()
-  private walletTokens = new Map<
-    string,
-    Array<{
-      pubkey: PublicKey;
-      account: AccountInfo<ParsedAccountData>;
-    }>
-  >();
+export class TokenSwap extends SwapBase {
 
   constructor(
     private pools: PoolRpcResponse[],
     private poolClient: PoolClient,
-    private tokenClient: TokenClient,
+    protected tokenClient: TokenClient,
     private farmingClient: FarmingClient,
-    private connection = new Connection(SOLANA_RPC_ENDPOINT),
+    protected connection = new Connection(SOLANA_RPC_ENDPOINT),
     private wallet: Wallet | null = null
   ) {
 
+    super(tokenClient, connection)
+
   }
 
-  findPool(mintFrom: PublicKey, mintTo: PublicKey) {
+  findPool(mintFrom: PublicKey, mintTo: PublicKey): { pool: PoolRpcResponse, isInverted: boolean } | null {
     const pool = this.pools.find((p) =>
       (p.baseTokenMint.equals(mintFrom) && p.quoteTokenMint.equals(mintTo)) ||
       (p.baseTokenMint.equals(mintTo) && p.quoteTokenMint.equals(mintFrom))
@@ -70,7 +56,7 @@ export class TokenSwap {
 
   async swap(params: TokenSwapParams) {
     const resolvedInputs = await this.resolveSwapInputs(params)
-    return this.poolClient.swap(resolvedInputs)
+    return this.poolClient.swap({...resolvedInputs, slippage: params.slippage})
   }
 
   /**
@@ -208,7 +194,7 @@ export class TokenSwap {
 
     const priceImpact = 100 / (poolsAmountDiff.toNumber() + 1)
 
-    const fee = outcomeAmount.mul(SWAP_FEE_NUMERATOR).div(SWAP_FEE_DENUMERATOR)
+    const fee = outcomeAmount.mul(SWAP_FEE_NUMERATOR).div(SWAP_FEE_DENOMINATOR)
 
     return {
       minIncomeAmount,
@@ -386,20 +372,25 @@ export class TokenSwap {
       const { curveType } = pool as PoolRpcV2Response
 
       if (curveType === 1) {
-        const amountToSwap = quoteVaultAccount.amount.divn(2)
+        const amountToSwap = isInverted ? baseVaultAccount.amount.divn(2) :  quoteVaultAccount.amount.divn(2)
+        const poolInputAmount = isInverted ? quoteVaultAccount.amount : baseVaultAccount.amount
+        const poolOutputAmount = isInverted ? baseVaultAccount.amount : quoteVaultAccount.amount
 
-        const calculateAmounts = swapAmounts(
-          quoteVaultAccount.amount,
-          baseVaultAccount.amount,
-          amountToSwap
+
+        const outputAmount = computeOutputAmount(
+          amountToSwap,
+          poolInputAmount,
+          poolOutputAmount,
+          new BN(170), // Fixed
         )
 
-        return calculateAmounts.destinationAmountSwapped
+
+        return parseFloat(outputAmount
           .mul(PRECISION_NOMINATOR)
           .mul(baseMintInfo.decimalDenominator)
           .div(quoteMintInfo.decimalDenominator)
-          .div(calculateAmounts.sourceAmountSwapped)
-          .toNumber() / PRECISION_NOMINATOR.toNumber()
+          .toString()) / parseFloat(amountToSwap.toString()) / PRECISION_NOMINATOR.toNumber()
+
       }
     }
 
@@ -443,17 +434,6 @@ export class TokenSwap {
     )
   }
 
-  private async getMintInfo(mint: PublicKey): Promise<TokenMintInfo> {
-    const existing = this.mintInfos.get(mint.toBase58())
-    if (existing) {
-      return existing
-    }
-
-    const info = await this.tokenClient.getMintInfo(mint)
-    this.mintInfos.set(mint.toBase58(), info)
-
-    return info
-  }
 
   async getFarmed(params: TokenSwapGetFarmedParams) {
     const { poolMint, wallet = this.wallet } = params
@@ -467,14 +447,22 @@ export class TokenSwap {
     if (!pool) {
       throw new Error('Pool not found!')
     }
-    const states = await this.farmingClient.getFarmingState({ poolPublicKey: pool.poolPublicKey, poolVersion: pool.poolVersion  })
 
-    const activeStates = states.filter((s) => !s.tokensTotal.eq(s.tokensUnlocked)) // Skip finished staking states
+    const tickets = await this.farmingClient.getFarmingTickets({ userKey: wallet.publicKey, pool: pool.poolPublicKey })
+
+    if (tickets.length === 0) {
+      throw new Error('No tickets, nothing to check')
+    }
+
+
+    const states = await this.farmingClient.getFarmingState({ poolPublicKey: pool.poolPublicKey, poolVersion: pool.poolVersion })
+
+    const stateKeys = states.map((state) => state.farmingStatePublicKey.toBase58())
 
 
     // Resolve rewards
     const stateVaults = await Promise.all(
-      activeStates.map(async (state) => {
+      states.map(async (state) => {
 
         const tokenInfo = await this.tokenClient.getTokenAccount(state.farmingTokenVault)
 
@@ -485,31 +473,17 @@ export class TokenSwap {
       })
     )
 
+    const calcAccounts = await this.farmingClient.getFarmingCalcAccounts({
+      poolVersion: pool.poolVersion,
+      userKey: wallet.publicKey,
+    })
 
-    const tickets = await this.farmingClient.getFarmingTickets({ userKey: wallet.publicKey, pool: pool.poolPublicKey })
-
-    if (tickets.length === 0) {
-      throw new Error('No tickets, nothing to check')
-    }
-
-    const queue = await this.farmingClient.getFarmingSnapshotsQueue({})
+    const calcAccountsForStates = calcAccounts.filter((ca) => stateKeys.includes(ca.farmingState.toBase58()))
 
     return stateVaults.map((sv) => {
-      const rewardsPerTicket = tickets.map((ticket) => {
-
-        const rewards = Farming.calculateFarmingRewards({
-          ticket,
-          queue,
-          state: sv.state, // Calculate for each state separately, sometimes there are few reward pools
-        })
-
-        return { ...rewards, ticket }
-      })
-
-      const rewardsAmount = rewardsPerTicket.reduce((acc, _) => acc.add(_.unclaimedTokens), new BN(0))
-
-      return { ...sv, rewardsPerTicket, rewardsAmount }
-    })
+      const calcAccount = calcAccountsForStates.find((ca) => ca.farmingState.equals(sv.state.farmingStatePublicKey))
+      return { ...sv, calcAccount }
+    }).filter((sv) => sv.calcAccount?.tokenAmount.gtn(0))
 
   }
 
@@ -561,67 +535,36 @@ export class TokenSwap {
           instructions.push(...createAccountTransaction.instructions)
         }
 
+        if (state.calcAccount) {
+          const withdrawInstruction = Farming.withdrawFarmedInstruction({
+            farmingState: state.state.farmingStatePublicKey,
+            farmingCalc: state.calcAccount.farmingCalcPublicKey,
+            farmingTokenVault: state.state.farmingTokenVault,
+            userFarmingTokenAccount: userFarmingTokenAccount as PublicKey,
+            userKey: wallet.publicKey,
+            poolPublicKey: pool.poolPublicKey,
+            poolSigner,
+            programId,
+          })
 
-        const ticketInstructions = state.rewardsPerTicket.flatMap((rpt) => {
-          const result: TransactionInstruction[] = []
-          let unclaimed = rpt.unclaimedSnapshots
+          instructions.push(withdrawInstruction)
+        }
 
-          while (unclaimed > 0) {
-            const maxSnapshots = Math.min(unclaimed, 22) // TODO: 25
-            unclaimed -= 22
-            result.push(
-              Farming.claimFarmedInstruction({
-                maxSnapshots: new BN(maxSnapshots),
-                userKey: wallet.publicKey,
-                userFarmingTokenAccount: userFarmingTokenAccount as PublicKey, // TODO:?
-                poolSigner,
-                farmingState: state.state.farmingStatePublicKey,
-                farmingSnapshots: state.state.farmingSnapshots,
-                farmingTicket: rpt.ticket.farmingTicketPublicKey,
-                poolPublicKey: pool.poolPublicKey,
-                farmingTokenVault: state.state.farmingTokenVault,
-                programId,
-              })
-            )
-          }
-
-          return result
-        })
-
-        instructions.push(...ticketInstructions)
 
         return instructions
       })
     )
 
-    console.log('Transactions: ', transactions)
-
-    return Promise.all(transactions
-      .flatMap((_) => _)
-      .map((_) => new Transaction().add(_))
-      .map(async (transaction) => sendTransaction({
-        transaction,
-        wallet,
-        connection: this.connection,
-      }))
+    return Promise.all(
+      transactions
+        .flat()
+        .map((_) => new Transaction().add(_))
+        .map(async (transaction) => sendTransaction({
+          transaction,
+          wallet,
+          connection: this.connection,
+        }))
     )
   }
 
-  private async getWalletTokens(wallet: Wallet) {
-    const cache = this.walletTokens.get(wallet.publicKey.toBase58())
-
-    if (cache) {
-      return cache
-    }
-
-    const walletTokensResponse = await this.connection.getParsedTokenAccountsByOwner(wallet.publicKey, {
-      programId: TOKEN_PROGRAM_ID,
-    })
-
-    const walletTokens = walletTokensResponse.value
-    this.walletTokens.set(wallet.publicKey.toBase58(), walletTokens)
-
-    return walletTokens
-
-  }
 }
