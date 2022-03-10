@@ -1,6 +1,6 @@
 import { PublicKey } from '@solana/web3.js';
 import BN from 'bn.js';
-import { SOL_MINT, TokenSwap } from '../../src';
+import { SOL_MINT, TokenSwap } from '../../src'; // or "@aldrin-exchange/sdk"
 import { wallet } from '../common';
 
 

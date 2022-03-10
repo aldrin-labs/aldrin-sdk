@@ -1,5 +1,5 @@
 import BN from 'bn.js';
-import { AUTHORIZED_POOLS, TokenSwap } from '../../src';
+import { AUTHORIZED_POOLS, TokenSwap } from '../../src'; // or "@aldrin-exchange/sdk"
 import { wallet } from '../common';
 
 export async function depositLiquidity() {

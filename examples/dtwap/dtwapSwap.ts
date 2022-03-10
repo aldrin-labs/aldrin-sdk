@@ -1,8 +1,7 @@
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token'
 import { PublicKey, Transaction } from '@solana/web3.js'
 import BN from 'bn.js'
-import { Pool, SIDE, TokenSwap, TwAmm, DTwapSwap } from '../../src'
-import { createTokenAccountTransaction, sendTransaction } from '../../src/transactions'
+import { Pool, SIDE, TokenSwap, TwAmm, DTwapSwap, createTokenAccountTransaction, sendTransaction } from '../../src' // or "@aldrin-exchange/sdk"
 import { wallet, connection } from '../common'
 
 const CONFIG = {
