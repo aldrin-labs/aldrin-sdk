@@ -1,5 +1,5 @@
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token'
-import { AUTHORIZED_POOLS } from '../../src'
+import { AUTHORIZED_POOLS } from '../../src' // or "@aldrin-exchange/sdk"
 import { connection, farmingClient, poolClient, wallet } from '../common'
 
 async function endFarming() {

@@ -2,7 +2,7 @@ import { Connection, Keypair } from '@solana/web3.js';
 import * as bs58 from 'bs58';
 import fs from 'fs';
 import os from 'os';
-import { FarmingClient, PoolClient, TokenClient, DTwapClient, SOLANA_RPC_ENDPOINT } from '../src';
+import { FarmingClient, PoolClient, TokenClient, DTwapClient, SOLANA_RPC_ENDPOINT } from '../src';  // or "@aldrin-exchange/sdk" 
 import { Wallet } from './wallet';
 
 

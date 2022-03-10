@@ -1,4 +1,4 @@
-import { AldrinApiPoolsClient } from '../../src';
+import { AldrinApiPoolsClient } from '../../src'; // or "@aldrin-exchange/sdk"
 
 export async function getTotalVolumeLocked() {
   const client = new AldrinApiPoolsClient()

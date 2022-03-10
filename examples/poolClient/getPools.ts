@@ -1,4 +1,4 @@
-import { AUTHORIZED_POOLS, PERMISSIONLESS_POOLS } from '../../src'
+import { AUTHORIZED_POOLS, PERMISSIONLESS_POOLS } from '../../src' // or "@aldrin-exchange/sdk"
 import { poolClient } from '../common'
 
 export async function getPools() {

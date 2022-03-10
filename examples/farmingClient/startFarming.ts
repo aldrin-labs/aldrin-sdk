@@ -1,6 +1,6 @@
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token'
 import BN from 'bn.js'
-import { AUTHORIZED_POOLS } from '../../src'
+import { AUTHORIZED_POOLS } from '../../src' // or "@aldrin-exchange/sdk"
 import { connection, farmingClient, poolClient, wallet } from '../common'
 
 export async function startFarming() {

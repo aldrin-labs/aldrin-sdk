@@ -1,4 +1,4 @@
-import { AUTHORIZED_POOLS, DEFAULT_FARMING_TICKET_END_TIME } from '../../src'
+import { AUTHORIZED_POOLS, DEFAULT_FARMING_TICKET_END_TIME } from '../../src' // or "@aldrin-exchange/sdk"
 import { farmingClient } from '../common'
 
 async function getPoolLiquidityProviders() {
