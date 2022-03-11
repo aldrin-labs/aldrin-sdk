@@ -1,4 +1,4 @@
-import TOKEN_LIST from './tokenlist.json'
+import { TOKEN_LIST } from './tokenlist'
 export * from './client'
 export * from './types'
 
