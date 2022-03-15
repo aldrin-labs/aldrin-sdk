@@ -1,7 +1,7 @@
 import { Connection, PublicKey } from '@solana/web3.js';
 import BN from 'bn.js';
 import { WithAuhority, WithWallet } from '.';
-import { PoolVersion, Wallet } from '../../types';
+import { PoolVersion, Wallet, WithReferral } from '../../types';
 import { LiquidityPool } from './pools';
 
 export enum SIDE {
@@ -23,6 +23,7 @@ export interface SwapParams extends WithWallet {
   side: SIDE
   pool: SwapPool
   slippage?: number // Optional, 0.01 (1%) by default
+  referralParams?: WithReferral
 }
 
 export interface SwapInstructionParams extends SwapParams, WithAuhority {
@@ -51,6 +52,7 @@ export type TokenSwapParams = TokenSwapSwapParamsInner & OptionalAmounts
 export interface TokenSwapLoadParams {
   connection?: Connection
   wallet?: Wallet
+  referralParams?: WithReferral
 }
 
 export type OptionalDepositAmounts = {

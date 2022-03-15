@@ -12,6 +12,12 @@ export interface TokenSwapClaimFarmedParams {
   poolMint: PublicKey
 }
 
+export interface WithReferral {
+  referralAccount: PublicKey
+  referralPercent: number
+  createTokenAccounts?: boolean // Allow to create token accounts (take additional rental fee)
+}
+
 
 export type PoolVersion = 1 | 2
 

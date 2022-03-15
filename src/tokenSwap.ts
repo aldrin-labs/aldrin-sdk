@@ -17,8 +17,8 @@ import {
 } from './pools';
 import { SwapBase } from './swapBase';
 import { sendTransaction } from './transactions';
-import { Wallet } from './types';
 import BN from 'bn.js';
+import { Wallet, WithReferral } from './types';
 
 
 /**
@@ -32,7 +32,8 @@ export class TokenSwap extends SwapBase {
     protected tokenClient: TokenClient,
     private farmingClient: FarmingClient,
     protected connection = new Connection(SOLANA_RPC_ENDPOINT),
-    private wallet: Wallet | null = null
+    private wallet: Wallet | null = null,
+    private referralParams: WithReferral | undefined = undefined 
   ) {
 
     super(tokenClient, connection)
@@ -56,7 +57,7 @@ export class TokenSwap extends SwapBase {
 
   async swap(params: TokenSwapParams) {
     const resolvedInputs = await this.resolveSwapInputs(params)
-    return this.poolClient.swap({...resolvedInputs, slippage: params.slippage})
+    return this.poolClient.swap({...resolvedInputs, slippage: params.slippage, referralParams: this.referralParams})
   }
 
   /**
@@ -431,6 +432,7 @@ export class TokenSwap extends SwapBase {
       farmingClient,
       connection,
       wallet,
+      params.referralParams,
     )
   }
 

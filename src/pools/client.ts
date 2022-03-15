@@ -1,16 +1,17 @@
-import { Connection, GetProgramAccountsFilter, PublicKey, SystemProgram, Transaction } from '@solana/web3.js';
+import { Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { Connection, GetProgramAccountsFilter, PublicKey, Transaction } from '@solana/web3.js';
 import base58 from 'bs58';
 import {
   CURVE,
   DepositLiquidityParams, GetPoolsParams, PoolResponse, PoolRpcResponse,
   PoolRpcV2Response,
   PoolV2Response,
-  POOL_LAYOUT, POOL_V2_LAYOUT, Side, SOLANA_RPC_ENDPOINT, SOL_MINT, WithdrawLiquidityParams,
+  POOL_LAYOUT, POOL_V2_LAYOUT, SOLANA_RPC_ENDPOINT, WithdrawLiquidityParams,
 } from '.';
-import { POOLS_PROGRAM_ADDRESS, POOLS_V2_PROGRAM_ADDRESS, TokenClient } from '..';
+import { POOLS_PROGRAM_ADDRESS, POOLS_V2_PROGRAM_ADDRESS, PRECISION_NOMINATOR, TokenClient } from '..';
 import { sendTransaction } from '../transactions';
 import { PoolVersion, SIDE } from '../types';
-import { accountDiscriminator } from '../utils';
+import { accountDiscriminator, u64 } from '../utils';
 import { Pool } from './pool';
 import { SwapParams } from './types/swap';
 
@@ -318,6 +319,7 @@ export class PoolClient {
         poolPublicKey,
         poolVersion = 1,
       },
+      referralParams,
       slippage = 0.001,
       side,
       wallet,
@@ -328,7 +330,7 @@ export class PoolClient {
       userBaseTokenAccount,
       userQuoteTokenAccount,
     } = params
-  
+
 
     const transaction = new Transaction()
     // create pool token account for user if not exist
@@ -339,7 +341,7 @@ export class PoolClient {
       } = await TokenClient.createTokenAccountTransaction({
         owner: wallet.publicKey,
         mint: baseTokenMint,
-        amount:  side === SIDE.ASK ? parseInt(outcomeAmount.toString(), 10)  + TOKEN_ACCOUNT_RENT_LAMPORTS : undefined,
+        amount: side === SIDE.ASK ? parseInt(outcomeAmount.toString(), 10) + TOKEN_ACCOUNT_RENT_LAMPORTS : undefined,
       })
 
       userBaseTokenAccount = newAccountPubkey
@@ -354,7 +356,7 @@ export class PoolClient {
       } = await TokenClient.createTokenAccountTransaction({
         owner: wallet.publicKey,
         mint: quoteTokenMint,
-        amount:  side === SIDE.BID ? parseInt(outcomeAmount.toString(), 10)  + TOKEN_ACCOUNT_RENT_LAMPORTS : undefined,
+        amount: side === SIDE.BID ? parseInt(outcomeAmount.toString(), 10) + TOKEN_ACCOUNT_RENT_LAMPORTS : undefined,
       })
 
       userQuoteTokenAccount = newAccountPubkey
@@ -369,11 +371,12 @@ export class PoolClient {
       programId
     )
 
+    const minIncomeAmount = params.minIncomeAmount.muln(1000 - slippage * 1000).divn(1000)
 
     transaction.add(
       Pool.swapInstruction({
         ...params,
-        minIncomeAmount: params.minIncomeAmount.muln(1000 - slippage * 1000).divn(1000),
+        minIncomeAmount,
         poolSigner,
         walletAuthority: wallet.publicKey,
         userBaseTokenAccount,
@@ -381,6 +384,50 @@ export class PoolClient {
         poolVersion,
       })
     )
+
+    if (referralParams) { // Take fee from income amount
+      const refFeeAmount = new u64(minIncomeAmount.mul(PRECISION_NOMINATOR.muln(referralParams.referralPercent).divn(100)).div(PRECISION_NOMINATOR))
+    
+
+      const incomeMint = (side === SIDE.ASK ? params.pool.quoteTokenMint : params.pool.baseTokenMint).toString()
+      const takeFeesFromAccount = side === SIDE.ASK ? userQuoteTokenAccount : userBaseTokenAccount
+
+      const walletTokensResponse = await this.connection.getParsedTokenAccountsByOwner(referralParams.referralAccount, {
+        programId: TOKEN_PROGRAM_ID,
+      })
+      const walletTokens = walletTokensResponse.value
+      let feesDestination = walletTokens.find((wt) => wt.account.data.parsed.info.mint === incomeMint)?.pubkey
+
+      if (!feesDestination && referralParams.createTokenAccounts) {
+        const {
+          transaction: createAccountTransaction,
+          newAccountPubkey,
+        } = await TokenClient.createTokenAccountTransaction({
+          owner: referralParams.referralAccount,
+          mint: new PublicKey(incomeMint),
+          payer: wallet.publicKey,
+        })
+
+        transaction.add(createAccountTransaction)
+
+        feesDestination = newAccountPubkey
+
+      }
+
+      if (!feesDestination) {
+        throw new Error('No token account for referral wallet!')
+      }
+      transaction.add(
+        Token.createTransferInstruction(
+          TOKEN_PROGRAM_ID,
+          takeFeesFromAccount,
+          feesDestination,
+          wallet.publicKey,
+          [],
+          parseInt(refFeeAmount.toString(), 10),
+        )
+      )
+    }
 
     return sendTransaction({
       wallet: wallet,
