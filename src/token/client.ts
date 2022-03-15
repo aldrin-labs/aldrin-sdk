@@ -52,6 +52,7 @@ export class TokenClient {
       owner,
       mint,
       amount,
+      payer,
     } = params
 
     const ata = await Token.getAssociatedTokenAddress(
@@ -78,7 +79,7 @@ export class TokenClient {
       mint,
       ata,
       owner,
-      owner
+      payer || owner
     )
 
 
