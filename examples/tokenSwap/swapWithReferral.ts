@@ -3,12 +3,12 @@ import BN from 'bn.js';
 import { TokenSwap, AUTHORIZED_POOLS } from '../../src'; // or "@aldrin-exchange/sdk"
 import { wallet } from '../common';
 
-
+// yarn ts-node examples/tokenSwap/swapWithReferral.ts
 export async function useTokenSwapWithreferral() {
   const tokenSwap = await TokenSwap.initialize({
     referralParams: {
       referralAccount: new PublicKey('GKP7eGo1WXYMRXQCyxo8fGLK8xhMx3yk89GVFsJRau9X'),
-      referralPercent: 1, // not more than 1%, might be less bcz of the curve
+      referralPercent: 1, // not more than 1%, might be less bcz of the curve & fees
       createTokenAccounts: true,
     },
   })
