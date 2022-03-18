@@ -8,7 +8,7 @@ export async function useTokenSwapWithreferral() {
   const tokenSwap = await TokenSwap.initialize({
     referralParams: {
       referralAccount: new PublicKey('GKP7eGo1WXYMRXQCyxo8fGLK8xhMx3yk89GVFsJRau9X'),
-      referralPercent: 1, // not more than 1%, might be less bcz of the curve & fees
+      referralPercent: 1, // this value is estimated value of the fees, for that particular "1" it would be not more than 1%, might be less bcz of the curve & fees
       createTokenAccounts: true,
     },
   })
