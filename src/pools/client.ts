@@ -1,5 +1,5 @@
 import { Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { Connection, GetProgramAccountsFilter, PublicKey, Transaction } from '@solana/web3.js';
+import { Connection, GetProgramAccountsFilter, PublicKey, SystemProgram, Transaction } from '@solana/web3.js';
 import base58 from 'bs58';
 import {
   CURVE,
@@ -385,50 +385,6 @@ export class PoolClient {
       })
     )
 
-    if (referralParams) { // Take fee from income amount
-      const refFeeAmount = new u64(minIncomeAmount.mul(PRECISION_NOMINATOR.muln(referralParams.referralPercent).divn(100)).div(PRECISION_NOMINATOR))
-    
-
-      const incomeMint = (side === SIDE.ASK ? params.pool.quoteTokenMint : params.pool.baseTokenMint).toString()
-      const takeFeesFromAccount = side === SIDE.ASK ? userQuoteTokenAccount : userBaseTokenAccount
-
-      const walletTokensResponse = await this.connection.getParsedTokenAccountsByOwner(referralParams.referralAccount, {
-        programId: TOKEN_PROGRAM_ID,
-      })
-      const walletTokens = walletTokensResponse.value
-      let feesDestination = walletTokens.find((wt) => wt.account.data.parsed.info.mint === incomeMint)?.pubkey
-
-      if (!feesDestination && referralParams.createTokenAccounts) {
-        const {
-          transaction: createAccountTransaction,
-          newAccountPubkey,
-        } = await TokenClient.createTokenAccountTransaction({
-          owner: referralParams.referralAccount,
-          mint: new PublicKey(incomeMint),
-          payer: wallet.publicKey,
-        })
-
-        transaction.add(createAccountTransaction)
-
-        feesDestination = newAccountPubkey
-
-      }
-
-      if (!feesDestination) {
-        throw new Error('No token account for referral wallet!')
-      }
-      transaction.add(
-        Token.createTransferInstruction(
-          TOKEN_PROGRAM_ID,
-          takeFeesFromAccount,
-          feesDestination,
-          wallet.publicKey,
-          [],
-          parseInt(refFeeAmount.toString(), 10),
-        )
-      )
-    }
-
     if (baseTokenMint.equals(SOL_MINT)) {
       transaction.add(
         Token.createCloseAccountInstruction(
@@ -452,6 +408,63 @@ export class PoolClient {
         )
       )
     }
+
+    if (referralParams) { // Take fee from income amount
+      const refFeeAmount = new u64(minIncomeAmount.mul(PRECISION_NOMINATOR.muln(referralParams.referralPercent).divn(100)).div(PRECISION_NOMINATOR))
+
+
+      const incomeMint = (side === SIDE.ASK ? params.pool.quoteTokenMint : params.pool.baseTokenMint).toString()
+      const takeFeesFromAccount = side === SIDE.ASK ? userQuoteTokenAccount : userBaseTokenAccount
+
+      const walletTokensResponse = await this.connection.getParsedTokenAccountsByOwner(referralParams.referralAccount, {
+        programId: TOKEN_PROGRAM_ID,
+      })
+      const walletTokens = walletTokensResponse.value
+      let feesDestination = incomeMint === SOL_MINT.toString() ? referralParams.referralAccount : walletTokens.find((wt) => wt.account.data.parsed.info.mint === incomeMint)?.pubkey
+
+      if (!feesDestination && referralParams.createTokenAccounts) {
+        const {
+          transaction: createAccountTransaction,
+          newAccountPubkey,
+        } = await TokenClient.createTokenAccountTransaction({
+          owner: referralParams.referralAccount,
+          mint: new PublicKey(incomeMint),
+          payer: wallet.publicKey,
+        })
+
+        transaction.add(createAccountTransaction)
+
+        feesDestination = newAccountPubkey
+
+      }
+
+      if (!feesDestination) {
+        throw new Error('No token account for referral wallet!')
+      }
+      
+      if (incomeMint === SOL_MINT.toString()) {
+        transaction.add(
+          SystemProgram.transfer({
+            fromPubkey: wallet.publicKey,
+            toPubkey: feesDestination,
+            lamports: parseInt(refFeeAmount.toString(), 10),
+          })
+        )
+      } else {
+        transaction.add(
+          Token.createTransferInstruction(
+            TOKEN_PROGRAM_ID,
+            takeFeesFromAccount,
+            feesDestination,
+            wallet.publicKey,
+            [],
+            parseInt(refFeeAmount.toString(), 10),
+          )
+        )
+      }
+
+    }
+
 
     return sendTransaction({
       wallet: wallet,

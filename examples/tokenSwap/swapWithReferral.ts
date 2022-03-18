@@ -32,10 +32,10 @@ export async function useTokenSwapWithreferral() {
 
   const txId = await tokenSwap.swap({
     wallet: wallet,
-    outcomeAmount: new BN(1_000_000_000), // RIN, this is what would be send from the wallet
+    outcomeAmount: new BN(10_000_000), // RIN, this is what would be send from the wallet
     // minIncomeAmount: new BN(500_000), // USDC, this is what would we be recieved to the wallet
-    mintFrom: tokenA,
-    mintTo: tokenB,
+    mintFrom: tokenB,
+    mintTo: tokenA,
     slippage: 0.1,
   })
 
