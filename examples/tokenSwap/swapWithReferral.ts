@@ -13,8 +13,8 @@ export async function useTokenSwapWithreferral() {
     },
   })
 
-  const tokenA = AUTHORIZED_POOLS.RIN_SOL.baseTokenMint
-  const tokenB = AUTHORIZED_POOLS.RIN_SOL.quoteTokenMint
+  const tokenA = AUTHORIZED_POOLS.RIN_USDC.baseTokenMint
+  const tokenB = AUTHORIZED_POOLS.RIN_USDC.quoteTokenMint
 
   const rinPrice = await tokenSwap.getPrice({ mintFrom: tokenA, mintTo: tokenB })
   const usdRinPrice = await tokenSwap.getPrice({ mintFrom: tokenB, mintTo: tokenA })
@@ -32,10 +32,10 @@ export async function useTokenSwapWithreferral() {
 
   const txId = await tokenSwap.swap({
     wallet: wallet,
-    outcomeAmount: new BN(10_000_000), // RIN, this is what would be send from the wallet
+    outcomeAmount: new BN(1_000_000_000), // RIN, this is what would be send from the wallet
     // minIncomeAmount: new BN(500_000), // USDC, this is what would we be recieved to the wallet
-    mintFrom: tokenB,
-    mintTo: tokenA,
+    mintFrom: tokenA,
+    mintTo: tokenB,
     slippage: 0.1,
   })
 
