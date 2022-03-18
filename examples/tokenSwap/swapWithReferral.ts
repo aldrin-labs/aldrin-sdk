@@ -7,8 +7,8 @@ import { wallet } from '../common';
 export async function useTokenSwapWithreferral() {
   const tokenSwap = await TokenSwap.initialize({
     referralParams: {
-      referralAccount: new PublicKey('5tmZPaJueZjSnAjXcgQN5bWL3HPvDctw9a7Pn41oHUqA'),
-      referralPercent: 1,
+      referralAccount: new PublicKey('GKP7eGo1WXYMRXQCyxo8fGLK8xhMx3yk89GVFsJRau9X'),
+      referralPercent: 1, // not more than 1%, might be less bcz of the curve
       createTokenAccounts: true,
     },
   })
@@ -17,12 +17,9 @@ export async function useTokenSwapWithreferral() {
   const tokenB = AUTHORIZED_POOLS.RIN_USDC.quoteTokenMint
 
   const rinPrice = await tokenSwap.getPrice({ mintFrom: tokenA, mintTo: tokenB })
-
-  console.log('RIN/SOL price:  ', rinPrice)
-
   const usdRinPrice = await tokenSwap.getPrice({ mintFrom: tokenB, mintTo: tokenA })
-
-  console.log('SOL/RIN price:  ', usdRinPrice)
+  console.log('RIN/USDC price:  ', rinPrice)
+  console.log('USDC/RIN price:  ', usdRinPrice)
 
   const swapImpact = await tokenSwap.getSwapImpact({
     wallet,
@@ -35,8 +32,8 @@ export async function useTokenSwapWithreferral() {
 
   const txId = await tokenSwap.swap({
     wallet: wallet,
-    // minIncomeAmount: new BN(1_000_000), // 1 RIN
-    outcomeAmount: new BN(50_000_000), // 5 USDC
+    outcomeAmount: new BN(1_000_000_000), // RIN, this is what would be send from the wallet
+    // minIncomeAmount: new BN(500_000), // USDC, this is what would we be recieved to the wallet
     mintFrom: tokenA,
     mintTo: tokenB,
     slippage: 0.1,
