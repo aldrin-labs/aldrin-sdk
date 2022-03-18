@@ -13,8 +13,8 @@ export async function useTokenSwapWithreferral() {
     },
   })
 
-  const tokenA = AUTHORIZED_POOLS.RIN_USDC.baseTokenMint
-  const tokenB = AUTHORIZED_POOLS.RIN_USDC.quoteTokenMint
+  const tokenA = AUTHORIZED_POOLS.RIN_SOL.baseTokenMint
+  const tokenB = AUTHORIZED_POOLS.RIN_SOL.quoteTokenMint
 
   const rinPrice = await tokenSwap.getPrice({ mintFrom: tokenA, mintTo: tokenB })
   const usdRinPrice = await tokenSwap.getPrice({ mintFrom: tokenB, mintTo: tokenA })

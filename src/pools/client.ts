@@ -6,7 +6,7 @@ import {
   DepositLiquidityParams, GetPoolsParams, PoolResponse, PoolRpcResponse,
   PoolRpcV2Response,
   PoolV2Response,
-  POOL_LAYOUT, POOL_V2_LAYOUT, SOLANA_RPC_ENDPOINT, WithdrawLiquidityParams,
+  POOL_LAYOUT, POOL_V2_LAYOUT, SOLANA_RPC_ENDPOINT, SOL_MINT, WithdrawLiquidityParams,
 } from '.';
 import { POOLS_PROGRAM_ADDRESS, POOLS_V2_PROGRAM_ADDRESS, PRECISION_NOMINATOR, TokenClient } from '..';
 import { sendTransaction } from '../transactions';
@@ -425,6 +425,30 @@ export class PoolClient {
           wallet.publicKey,
           [],
           parseInt(refFeeAmount.toString(), 10),
+        )
+      )
+    }
+
+    if (baseTokenMint.equals(SOL_MINT)) {
+      transaction.add(
+        Token.createCloseAccountInstruction(
+          TOKEN_PROGRAM_ID,
+          userBaseTokenAccount,
+          wallet.publicKey,
+          wallet.publicKey,
+          [],
+        )
+      )
+    }
+
+    if (quoteTokenMint.equals(SOL_MINT)) {
+      transaction.add(
+        Token.createCloseAccountInstruction(
+          TOKEN_PROGRAM_ID,
+          userQuoteTokenAccount,
+          wallet.publicKey,
+          wallet.publicKey,
+          [],
         )
       )
     }
