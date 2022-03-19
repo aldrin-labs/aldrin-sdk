@@ -1,12 +1,12 @@
 import { Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { Connection, GetProgramAccountsFilter, PublicKey, Transaction } from '@solana/web3.js';
+import { Connection, GetProgramAccountsFilter, PublicKey, SystemProgram, Transaction } from '@solana/web3.js';
 import base58 from 'bs58';
 import {
   CURVE,
   DepositLiquidityParams, GetPoolsParams, PoolResponse, PoolRpcResponse,
   PoolRpcV2Response,
   PoolV2Response,
-  POOL_LAYOUT, POOL_V2_LAYOUT, SOLANA_RPC_ENDPOINT, WithdrawLiquidityParams,
+  POOL_LAYOUT, POOL_V2_LAYOUT, SOLANA_RPC_ENDPOINT, SOL_MINT, WithdrawLiquidityParams,
 } from '.';
 import { POOLS_PROGRAM_ADDRESS, POOLS_V2_PROGRAM_ADDRESS, PRECISION_NOMINATOR, TokenClient } from '..';
 import { sendTransaction } from '../transactions';
@@ -385,9 +385,33 @@ export class PoolClient {
       })
     )
 
+    if (baseTokenMint.equals(SOL_MINT)) {
+      transaction.add(
+        Token.createCloseAccountInstruction(
+          TOKEN_PROGRAM_ID,
+          userBaseTokenAccount,
+          wallet.publicKey,
+          wallet.publicKey,
+          [],
+        )
+      )
+    }
+
+    if (quoteTokenMint.equals(SOL_MINT)) {
+      transaction.add(
+        Token.createCloseAccountInstruction(
+          TOKEN_PROGRAM_ID,
+          userQuoteTokenAccount,
+          wallet.publicKey,
+          wallet.publicKey,
+          [],
+        )
+      )
+    }
+
     if (referralParams) { // Take fee from income amount
       const refFeeAmount = new u64(minIncomeAmount.mul(PRECISION_NOMINATOR.muln(referralParams.referralPercent).divn(100)).div(PRECISION_NOMINATOR))
-    
+
 
       const incomeMint = (side === SIDE.ASK ? params.pool.quoteTokenMint : params.pool.baseTokenMint).toString()
       const takeFeesFromAccount = side === SIDE.ASK ? userQuoteTokenAccount : userBaseTokenAccount
@@ -396,7 +420,7 @@ export class PoolClient {
         programId: TOKEN_PROGRAM_ID,
       })
       const walletTokens = walletTokensResponse.value
-      let feesDestination = walletTokens.find((wt) => wt.account.data.parsed.info.mint === incomeMint)?.pubkey
+      let feesDestination = incomeMint === SOL_MINT.toString() ? referralParams.referralAccount : walletTokens.find((wt) => wt.account.data.parsed.info.mint === incomeMint)?.pubkey
 
       if (!feesDestination && referralParams.createTokenAccounts) {
         const {
@@ -417,17 +441,30 @@ export class PoolClient {
       if (!feesDestination) {
         throw new Error('No token account for referral wallet!')
       }
-      transaction.add(
-        Token.createTransferInstruction(
-          TOKEN_PROGRAM_ID,
-          takeFeesFromAccount,
-          feesDestination,
-          wallet.publicKey,
-          [],
-          parseInt(refFeeAmount.toString(), 10),
+      
+      if (incomeMint === SOL_MINT.toString()) {
+        transaction.add(
+          SystemProgram.transfer({
+            fromPubkey: wallet.publicKey,
+            toPubkey: feesDestination,
+            lamports: parseInt(refFeeAmount.toString(), 10),
+          })
         )
-      )
+      } else {
+        transaction.add(
+          Token.createTransferInstruction(
+            TOKEN_PROGRAM_ID,
+            takeFeesFromAccount,
+            feesDestination,
+            wallet.publicKey,
+            [],
+            parseInt(refFeeAmount.toString(), 10),
+          )
+        )
+      }
+
     }
+
 
     return sendTransaction({
       wallet: wallet,
