@@ -1,0 +1,563 @@
+{
+  "version": "0.1.0",
+  "name": "plutonians_staking",
+  "instructions": [
+    {
+      "name": "initPool",
+      "accounts": [
+        {
+          "name": "owner",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "stakingPool",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "stakeTokenMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rewardTokenMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "stakeTokenaccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "rewardTokenaccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "bumpPool",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "addStakingTier",
+      "accounts": [
+        {
+          "name": "caller",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "stakingPool",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "stakingTier",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "stakeTokenMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rewardTokenMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "apr",
+          "type": "u64"
+        },
+        {
+          "name": "lockDuration",
+          "type": "i64"
+        },
+        {
+          "name": "bumpStakingPool",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "addStakingTierNftReward",
+      "accounts": [
+        {
+          "name": "owner",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "stakingPool",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "stakingTier",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "nftRewardGroup",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "nftName",
+          "type": "string"
+        },
+        {
+          "name": "qty",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "deposit",
+      "accounts": [
+        {
+          "name": "user",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "userStakingAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "userStakeTokenaccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "poolStakeTokenaccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "stakingPool",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "stakingTier",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        },
+        {
+          "name": "bumpUserStakingAccount",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "withdraw",
+      "accounts": [
+        {
+          "name": "user",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "userStakingAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "userRecvStakeTokenaccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "userRecvRewardTokenaccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "stakingPool",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "stakingTier",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "poolSigner",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "poolStakeTokenaccount",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "poolRewardTokenaccount",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "swapPool",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "swapPoolSigner",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "swapPoolMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "swapBaseTokenVault",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "swapQuoteTokenVault",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "swapFeePoolWallet",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "ammProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "bumpUserStakingAccount",
+          "type": "u8"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "StakingPool",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "owner",
+            "type": "publicKey"
+          },
+          {
+            "name": "poolSigner",
+            "type": "publicKey"
+          },
+          {
+            "name": "bumpPoolSigner",
+            "type": "u8"
+          },
+          {
+            "name": "stakeTokenMint",
+            "type": "publicKey"
+          },
+          {
+            "name": "rewardTokenMint",
+            "type": "publicKey"
+          },
+          {
+            "name": "stakeTokenaccount",
+            "type": "publicKey"
+          },
+          {
+            "name": "rewardTokenaccount",
+            "type": "publicKey"
+          },
+          {
+            "name": "tiers",
+            "type": {
+              "vec": "publicKey"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "StakingTier",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "pool",
+            "type": "publicKey"
+          },
+          {
+            "name": "apr",
+            "type": "u64"
+          },
+          {
+            "name": "lockDuration",
+            "type": "i64"
+          },
+          {
+            "name": "nftRewardGroups",
+            "type": {
+              "vec": "publicKey"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "NftRewardGroup",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "quantity",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "UserStakingAccount",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "user",
+            "type": "publicKey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "stakingTier",
+            "type": "publicKey"
+          },
+          {
+            "name": "depositedAt",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "NftMetadata",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "tokenMint",
+            "type": "publicKey"
+          }
+        ]
+      }
+    }
+  ],
+  "types": [
+    {
+      "name": "Side",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Ask"
+          }
+        ]
+      }
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "StakingTiersArrayFull",
+      "msg": "Staking pool tiers array full"
+    },
+    {
+      "code": 6001,
+      "name": "Unauthorized",
+      "msg": "Unauthorized"
+    },
+    {
+      "code": 6002,
+      "name": "RewardCalcMath",
+      "msg": "reward calculation math err (overflow or underflow)"
+    },
+    {
+      "code": 6003,
+      "name": "TierPoolMismatch",
+      "msg": "tier-pool mismatch"
+    },
+    {
+      "code": 6004,
+      "name": "UnexpectedUserStakingAccount",
+      "msg": "Unexpected UserStakingAccount"
+    },
+    {
+      "code": 6005,
+      "name": "WrongUserStakingAccountUser",
+      "msg": "Wrong user in UserStakingAccount"
+    },
+    {
+      "code": 6006,
+      "name": "WrongUserStakingAccountStakingTier",
+      "msg": "wrong staking_tier in UserStakingAccount"
+    },
+    {
+      "code": 6007,
+      "name": "InsufficientTokenBalance",
+      "msg": "User doesn't own as many tokens as specified in instruction"
+    },
+    {
+      "code": 6008,
+      "name": "WrongTokenMint",
+      "msg": "Unexpected TokenMint (UserStakeTokenAccount / PoolStakeTokenAccount)"
+    },
+    {
+      "code": 6009,
+      "name": "PoolStakeTokenAccountMismatch",
+      "msg": "pool_stake_tokenaccount is different in args / in the staking pool"
+    },
+    {
+      "code": 6010,
+      "name": "WithdrawTooEarly",
+      "msg": "Minimum lock duration not elapsed yet"
+    },
+    {
+      "code": 6011,
+      "name": "WrongAmmProgramId",
+      "msg": "Wrong AMM program ID"
+    },
+    {
+      "code": 6012,
+      "name": "WrongTokenAccount",
+      "msg": "Wrong TokenAccount"
+    },
+    {
+      "code": 6013,
+      "name": "NotEnoughRemainingAccounts",
+      "msg": "not enough remaining accounts"
+    },
+    {
+      "code": 6014,
+      "name": "WrongAssociatedAccount",
+      "msg": "expected associated account. Found non-associated account"
+    },
+    {
+      "code": 6015,
+      "name": "WrongAccountFromSeeds",
+      "msg": "expected account from seeds, found other account"
+    },
+    {
+      "code": 6016,
+      "name": "ExpectedZeroedAccount",
+      "msg": "expected zeroed account"
+    },
+    {
+      "code": 6017,
+      "name": "AccountSpaceTooSmall",
+      "msg": "account space too small"
+    },
+    {
+      "code": 6018,
+      "name": "AccountSizeExceeded",
+      "msg": "account size exceeded"
+    },
+    {
+      "code": 6019,
+      "name": "WrongRemainingAccountKey",
+      "msg": "Wrong remaining account key, must correspond to some other account field"
+    },
+    {
+      "code": 6020,
+      "name": "WrongStakeTokenMint",
+      "msg": "wrong stake_token_mint"
+    },
+    {
+      "code": 6021,
+      "name": "WrongRewardTokenMint",
+      "msg": "wrong reward_token_mint"
+    },
+    {
+      "code": 6022,
+      "name": "DontUseAssociatedTokenAccount",
+      "msg": "The program will take ownership of the TokenAccount you pass. Do not pass the user's unique associated TokenAccount. Use randomly generated account instead."
+    }
+  ]
+}
