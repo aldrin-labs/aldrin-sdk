@@ -3,9 +3,9 @@ import idl from './plutonians.json'
 import { Program, Idl, Provider } from 'anchor020'
 import { PublicKey } from '@solana/web3.js'
 
-export const PLUTONIANS_STAKING_PROGRAM = new PublicKey('HAjGJWMqqiCV2LdQWL7W7ho9cTCtaq7829sVtR1evz5a')
-export const PLUTONIANS_STAKE_TOKEN_MINT = new PublicKey('3UGQ4Xpx8RBBjRGkTktm7j9raPn5tv91bScVKjNMyBiD')
-export const PLUTONIANS_REWARD_TOKEN_MINT = new PublicKey('3UGQ4Xpx8RBBjRGkTktm7j9raPn5tv91bScVKjNMyBiD')
+export const PLUTONIANS_STAKING_PROGRAM = new PublicKey('PLUSqEwLLUrkrGLJvBjevMQtpomPxcLHPjQQ6ZNvTsL')
+export const PLUTONIANS_STAKE_TOKEN_MINT = new PublicKey('2cJgFtnqjaoiu9fKVX3fny4Z4pRzuaqfJ3PBTMk2D9ur') // PLD
+export const PLUTONIANS_REWARD_TOKEN_MINT = new PublicKey('7p6zGHdmWHvCH4Lsik2MoMBXqPGhFbSPSceSBXd8KNEC') // PU238
 
 export const program = new Program(
   idl as Idl,

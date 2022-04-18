@@ -7,8 +7,19 @@ import { sendTransaction } from '../../src/transactions';
 
 
 export const DAYS_TO_SECONDS = 86400;
-export const APR = 90000; // Denominator = 1_000_000, 90000 / 1_000_000 = 0.09, which means 9% APR
+
+// 1
+export const APR = 120000; // Denominator = 1_000_000, 120000 / 1_000_000 = 0.12, which means 12% APR
 export const LOCK_DURATION = 60 * DAYS_TO_SECONDS;
+// 2
+// export const APR = 150000; 
+// export const LOCK_DURATION = 90 * DAYS_TO_SECONDS;
+// 3
+// export const APR = 180000; 
+// export const LOCK_DURATION = 120 * DAYS_TO_SECONDS;
+// 3
+// export const APR = 200000; 
+// export const LOCK_DURATION = 150 * DAYS_TO_SECONDS;
 
 
 export const createPlutoniansTier = async () => {
