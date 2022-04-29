@@ -450,7 +450,7 @@ export class TokenSwap extends SwapBase {
       throw new Error('Pool not found!')
     }
 
-    const tickets = await this.farmingClient.getFarmingTickets({ userKey: wallet.publicKey, pool: pool.poolPublicKey })
+    const tickets = await this.farmingClient.getFarmingTickets({ userKey: wallet.publicKey, pool: pool.poolPublicKey, poolVersion: pool.poolVersion })
 
     if (tickets.length === 0) {
       throw new Error('No tickets, nothing to check')
