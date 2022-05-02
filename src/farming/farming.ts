@@ -41,10 +41,12 @@ export class Farming {
       programId,
     } = params
 
+    console.log('tokenAmount:', tokenAmount.toString())
+
     START_FARMING_INSTRUCTION_LAYOUT.encode(
       {
         instruction: instructionDiscriminator('start_farming'),
-        tokenAmount,
+        poolTokenAmount: tokenAmount,
       },
       data,
     );

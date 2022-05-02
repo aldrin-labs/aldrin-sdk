@@ -9,13 +9,12 @@ import { wallet } from '../common';
 export async function startFarming() {
   const tokenSwap = await TokenSwap.initialize()
 
-  const txId = await tokenSwap.startFarming({
+  const txId = await tokenSwap.endFarming({
     wallet,
     // poolMint: AUTHORIZED_POOLS.SOL_USDC.poolMint,
     poolMint: new PublicKey('J5mbqcCa2L6JSZHjr29PABgPsPFKgB6XYw7kbi1cR19x'),
-    amount: new BN('100000'),
   })
-  console.log(`Farming started: ${txId}`)
+  console.log(`Farming finished: ${txId.join(' , ')}`)
 }
 
 startFarming()

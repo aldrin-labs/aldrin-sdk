@@ -4,7 +4,7 @@ import {
   TransactionInstruction,
 } from '@solana/web3.js';
 import { computeOutputAmount } from '@orca-so/stablecurve'
-import { Farming, FarmingClient, PRECISION_NOMINATOR, TokenClient } from '.';
+import { DEFAULT_FARMING_TICKET_END_TIME, Farming, FarmingClient, PRECISION_NOMINATOR, TokenClient } from '.';
 import {
   CURVE, PoolClient,
   PoolRpcResponse,
@@ -22,9 +22,10 @@ import {
   TokenSwapWithdrawLiquidityParams,
 } from './pools';
 import { SwapBase } from './swapBase';
-import { sendTransaction } from './transactions';
+import { sendTransaction, createAccountInstruction } from './transactions';
 import BN from 'bn.js';
 import { Wallet, WithReferral } from './types';
+import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 
 
 /**
@@ -500,7 +501,6 @@ export class TokenSwap extends SwapBase {
   async startFarming(params: TokenSwapStartFamingParams): Promise<string> {
     const { wallet = this.wallet, poolMint, amount } = params
 
-    console.log('w')
     if (!wallet) {
       throw new Error('Wallet not provided')
     }
@@ -534,15 +534,89 @@ export class TokenSwap extends SwapBase {
 
 
     const fs = activeStates[0] // Start farming on any of active states, all other states (if available) will apply automaticaly
-    
+
     return this.farmingClient.startFarming({
       poolPublicKey: pool.poolPublicKey,
+      poolVersion: pool.poolVersion,
       farmingState: fs.farmingStatePublicKey,
       lpTokenFreezeVault: pool.lpTokenFreezeVault,
       lpTokenAccount: poolTokenAccount.pubkey,
       tokenAmount: amount,
       wallet,
     })
+  }
+
+  async endFarming(params: TokenSwapGetFarmedParams): Promise<string[]> {
+    const { wallet = this.wallet, poolMint } = params
+
+    if (!wallet) {
+      throw new Error('Wallet not provided')
+    }
+
+    const pool = this.pools.find((p) => p.poolMint.equals(poolMint))
+
+    if (!pool) {
+      throw new Error('Pool not found!')
+    }
+
+
+    const walletTokens = await this.getWalletTokens(wallet)
+
+
+    let poolTokenAccount = walletTokens
+      .find((wt) => wt.account.data.parsed.info.mint === pool.poolMint.toBase58())?.pubkey
+
+
+    const additionalInstructions: TransactionInstruction[] = []
+    if (!poolTokenAccount) {
+
+      poolTokenAccount = await Token.getAssociatedTokenAddress(
+        ASSOCIATED_TOKEN_PROGRAM_ID,
+        TOKEN_PROGRAM_ID,
+        pool.poolMint,
+        wallet.publicKey,
+      )
+
+      // createAccountInstruction()
+      const instruction = Token.createAssociatedTokenAccountInstruction(
+        ASSOCIATED_TOKEN_PROGRAM_ID,
+        TOKEN_PROGRAM_ID,
+        pool.poolMint,
+        poolTokenAccount,
+        wallet.publicKey,
+        wallet.publicKey
+      )
+
+      additionalInstructions.push(instruction)
+
+    }
+
+    if (!poolTokenAccount) {
+      throw new Error('No LP account - cannot end farming!')
+    }
+
+    const userPoolTokenAccount = poolTokenAccount
+
+    const tickets = await this.farmingClient.getFarmingTickets({ userKey: wallet.publicKey, pool: pool.poolPublicKey, poolVersion: pool.poolVersion })
+
+    const activeTickets = tickets.filter((t) => t.endTime.eq(DEFAULT_FARMING_TICKET_END_TIME))
+
+    const states = await this.farmingClient.getFarmingState({ poolPublicKey: pool.poolPublicKey, poolVersion: pool.poolVersion })
+    const activeStates = states.filter((s) => !s.tokensTotal.eq(s.tokensUnlocked)) // Skip finished staking states
+
+
+    const fs = activeStates[0] // Start farming on any of active states, all other states (if available) will apply automaticaly
+
+    return Promise.all(activeTickets.map((at) => this.farmingClient.endFarming({
+      poolPublicKey: pool.poolPublicKey,
+      poolVersion: pool.poolVersion,
+      farmingState: fs.farmingStatePublicKey,
+      lpTokenFreezeVault: pool.lpTokenFreezeVault,
+      userPoolTokenAccount,
+      farmingSnapshots: fs.farmingSnapshots,
+      farmingTicket: at.farmingTicketPublicKey,
+      wallet,
+    })))
   }
 
   async claimFarmed(params: TokenSwapGetFarmedParams): Promise<string[]> {

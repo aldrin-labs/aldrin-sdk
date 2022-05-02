@@ -89,8 +89,7 @@ export interface TokenSwapGetFarmedParams {
 }
 
 
-export interface TokenSwapStartFamingParams {
-  wallet?: Wallet
-  poolMint: PublicKey
+export interface TokenSwapStartFamingParams extends TokenSwapGetFarmedParams {
   amount: BN
 }
+

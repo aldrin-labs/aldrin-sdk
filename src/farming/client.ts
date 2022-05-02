@@ -6,10 +6,18 @@ import {
   FARMING_STATE_LAYOUT,
   FARMING_TICKET_LAYOUT, GetFarmingCalcParams, GetFarmingSnapshotParams, SNAPSHOT_QUEUE_LAYOUT,
 } from '.';
-import { PoolClient, SOLANA_RPC_ENDPOINT, TokenClient } from '..';
+import { PoolClient, SOLANA_RPC_ENDPOINT } from '..';
 import { createAccountInstruction, sendTransaction } from '../transactions';
 import { Farming } from './farming';
-import { EndFarmingParams, FarmingSnapshotQueue, FarmingState, FarmingTicket, GetFarmingStateParams, GetFarmingTicketsParams, StartFarmingParams } from './types';
+import {
+  EndFarmingParams,
+  FarmingSnapshotQueue,
+  FarmingState,
+  FarmingTicket,
+  GetFarmingStateParams,
+  GetFarmingTicketsParams,
+  StartFarmingParams,
+} from './types';
 
 
 /**
@@ -165,8 +173,8 @@ export class FarmingClient {
     })).map((ca) => ca.farmingState.toBase58())
 
     const statesWithoutCalc = states
-    .filter((state) => !state.tokensUnlocked.eq(state.tokensTotal)) // Has locked tokens -> state not finished yet    
-    .filter((state) => !calcForUser.includes(state.farmingStatePublicKey.toString()))
+      .filter((state) => !state.tokensUnlocked.eq(state.tokensTotal)) // Has locked tokens -> state not finished yet    
+      .filter((state) => !calcForUser.includes(state.farmingStatePublicKey.toString()))
 
     const createCalcInstructions = await Promise.all(statesWithoutCalc.map(async (fs) => {
       const farmingCalc = Keypair.generate()
@@ -193,7 +201,7 @@ export class FarmingClient {
     if (createCalcInstructions.length) {
       transaction.add(...createCalcInstructions.flat())
     }
-    
+
     return sendTransaction({
       transaction,
       wallet,
