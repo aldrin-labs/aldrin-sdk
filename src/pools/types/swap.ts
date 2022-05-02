@@ -87,3 +87,10 @@ export interface TokenSwapGetFarmedParams {
   wallet?: Wallet
   poolMint: PublicKey
 }
+
+
+export interface TokenSwapStartFamingParams {
+  wallet?: Wallet
+  poolMint: PublicKey
+  amount: BN
+}

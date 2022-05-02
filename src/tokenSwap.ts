@@ -10,9 +10,15 @@ import {
   PoolRpcResponse,
   PoolRpcV2Response,
   SIDE,
-  SOLANA_RPC_ENDPOINT, SWAP_FEE_DENOMINATOR, SWAP_FEE_NUMERATOR, TokenSwapAddlLiquidityParams, TokenSwapGetFarmedParams, TokenSwapGetPriceParams,
+  SOLANA_RPC_ENDPOINT,
+  SWAP_FEE_DENOMINATOR,
+  SWAP_FEE_NUMERATOR,
+  TokenSwapAddlLiquidityParams,
+  TokenSwapGetFarmedParams,
+  TokenSwapGetPriceParams,
   TokenSwapLoadParams,
   TokenSwapParams,
+  TokenSwapStartFamingParams,
   TokenSwapWithdrawLiquidityParams,
 } from './pools';
 import { SwapBase } from './swapBase';
@@ -33,7 +39,7 @@ export class TokenSwap extends SwapBase {
     private farmingClient: FarmingClient,
     protected connection = new Connection(SOLANA_RPC_ENDPOINT),
     private wallet: Wallet | null = null,
-    private referralParams: WithReferral | undefined = undefined 
+    private referralParams: WithReferral | undefined = undefined
   ) {
 
     super(tokenClient, connection)
@@ -57,7 +63,7 @@ export class TokenSwap extends SwapBase {
 
   async swap(params: TokenSwapParams) {
     const resolvedInputs = await this.resolveSwapInputs(params)
-    return this.poolClient.swap({...resolvedInputs, slippage: params.slippage, referralParams: this.referralParams})
+    return this.poolClient.swap({ ...resolvedInputs, slippage: params.slippage, referralParams: this.referralParams })
   }
 
   /**
@@ -373,7 +379,7 @@ export class TokenSwap extends SwapBase {
       const { curveType } = pool as PoolRpcV2Response
 
       if (curveType === 1) {
-        const amountToSwap = isInverted ? baseVaultAccount.amount.divn(2) :  quoteVaultAccount.amount.divn(2)
+        const amountToSwap = isInverted ? baseVaultAccount.amount.divn(2) : quoteVaultAccount.amount.divn(2)
         const poolInputAmount = isInverted ? quoteVaultAccount.amount : baseVaultAccount.amount
         const poolOutputAmount = isInverted ? baseVaultAccount.amount : quoteVaultAccount.amount
 
@@ -450,6 +456,8 @@ export class TokenSwap extends SwapBase {
       throw new Error('Pool not found!')
     }
 
+    console.log('pool found:', wallet.publicKey.toString(), pool.poolPublicKey.toString(), pool.poolVersion)
+
     const tickets = await this.farmingClient.getFarmingTickets({ userKey: wallet.publicKey, pool: pool.poolPublicKey, poolVersion: pool.poolVersion })
 
     if (tickets.length === 0) {
@@ -487,6 +495,54 @@ export class TokenSwap extends SwapBase {
       return { ...sv, calcAccount }
     }).filter((sv) => sv.calcAccount?.tokenAmount.gtn(0))
 
+  }
+
+  async startFarming(params: TokenSwapStartFamingParams): Promise<string> {
+    const { wallet = this.wallet, poolMint, amount } = params
+
+    console.log('w')
+    if (!wallet) {
+      throw new Error('Wallet not provided')
+    }
+
+    const pool = this.pools.find((p) => p.poolMint.equals(poolMint))
+
+    if (!pool) {
+      throw new Error('Pool not found!')
+    }
+
+
+    const walletTokens = await this.getWalletTokens(wallet)
+
+
+    const poolTokenAccount = walletTokens
+      .find((wt) => wt.account.data.parsed.info.mint === pool.poolMint.toBase58())
+
+
+    if (!poolTokenAccount) {
+      throw new Error('No LP account - nothing to stake!')
+    }
+
+    const lpTokenAmount = new BN(poolTokenAccount.account.data.parsed.info.tokenAmount.amount)
+
+    if (lpTokenAmount.eqn(0)) {
+      throw new Error('LP account is empty - nothing to stake!')
+    }
+
+    const states = await this.farmingClient.getFarmingState({ poolPublicKey: pool.poolPublicKey, poolVersion: pool.poolVersion })
+    const activeStates = states.filter((s) => !s.tokensTotal.eq(s.tokensUnlocked)) // Skip finished staking states
+
+
+    const fs = activeStates[0] // Start farming on any of active states, all other states (if available) will apply automaticaly
+    
+    return this.farmingClient.startFarming({
+      poolPublicKey: pool.poolPublicKey,
+      farmingState: fs.farmingStatePublicKey,
+      lpTokenFreezeVault: pool.lpTokenFreezeVault,
+      lpTokenAccount: poolTokenAccount.pubkey,
+      tokenAmount: amount,
+      wallet,
+    })
   }
 
   async claimFarmed(params: TokenSwapGetFarmedParams): Promise<string[]> {
