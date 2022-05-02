@@ -86,12 +86,14 @@ export class DTwapClient {
 
   async getAvailableTokens(params: GetDTwapAvailableTokensParams): Promise<GetDTwapResponse> {
     const transaction = new Transaction().add(TwAmm.getAvailableTokensInstruction(params))
+
     const simulation = await simulateTransaction({
       transaction,
       wallet: params.wallet,
       connection: this.connection,
     })
-    if (simulation.value.logs) {
+    console.log('debug2', simulation)
+    if (simulation.value.logs?.length) {
       const prefix = 'Program log: '
       const programLogs = simulation.value.logs.filter((v) => v.startsWith(prefix))
 
@@ -108,8 +110,8 @@ export class DTwapClient {
   }
 
   /**
-   * 
-   * @param params 
+   *
+   * @param params
    * @returns Transaction Id
    */
   async executeSwap(params: DTwapExecuteSwapParams): Promise<string> {

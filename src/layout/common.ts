@@ -1,9 +1,9 @@
-import { blob, Layout, Structure, u8, union, Boolean, u32, struct, seq, offset } from '@solana/buffer-layout';
+import { blob, Layout, Structure, u8, union } from '@solana/buffer-layout';
 import { PublicKey } from '@solana/web3.js';
 import BN from 'bn.js';
 
-class PublicKeyLayout extends Layout {
-  private layout: Layout
+class PublicKeyLayout extends Layout<any> {
+  private layout: Layout<any>
 
   constructor(property?: string) {
     const layout = blob(32)
@@ -31,8 +31,8 @@ export const publicKey = (property: string) => new PublicKeyLayout(property)
 // export const publicKey = (property: string) => blob(32, property);
 
 
-class U64Layout extends Layout {
-  private layout: Layout
+class U64Layout extends Layout<any> {
+  private layout: Layout<any>
   private toNumber: boolean
   private signed: boolean
 
@@ -72,10 +72,10 @@ export const int64 = (property: string, toNumber = false) => new U64Layout(prope
 
 
 export const rustEnum = (
-  variants: Structure[],
+  variants: Structure<any>[],
   property: string,
 ) => {
-  const unionLayout = union(u8(), blob(0), property);
+  const unionLayout = union(<any>u8(), blob(0), property);
 
   variants.forEach((variant, index) =>
     unionLayout.addVariant(index, variant, variant.property || ''),
@@ -84,8 +84,8 @@ export const rustEnum = (
 }
 
 
-class BoolLayout extends Layout {
-  private layout: Layout
+class BoolLayout extends Layout<any> {
+  private layout: Layout<any>
 
   constructor(property: string) {
     const layout = blob(1)

@@ -1,13 +1,10 @@
-
-import { blob, seq, struct, u8 } from '@solana/buffer-layout';
+import { blob, seq, struct, u8, LayoutObject } from '@solana/buffer-layout';
 import BN from 'bn.js';
 import { publicKey, uint64 } from '../layout/common';
 
-
 export const DEFAULT_FARMING_TICKET_END_TIME = new BN('9223372036854775807')
 
-
-export const FARMING_STATE_LAYOUT = struct([
+export const FARMING_STATE_LAYOUT = struct<LayoutObject>([
   blob(8, 'padding'),
   uint64('tokensUnlocked'),
   uint64('tokensPerPeriod'),
@@ -23,7 +20,7 @@ export const FARMING_STATE_LAYOUT = struct([
   publicKey('farmingSnapshots'),
 ])
 
-export const FARMING_TICKET_LAYOUT = struct([
+export const FARMING_TICKET_LAYOUT = struct<LayoutObject>([
   blob(8, 'padding'),
   uint64('tokensFrozen'),
   uint64('startTime'),
@@ -32,7 +29,7 @@ export const FARMING_TICKET_LAYOUT = struct([
   publicKey('pool'),
   uint64('nextAttached'),
   seq(
-    struct([
+    struct<LayoutObject>([
       publicKey('farmingState'),
       uint64('lastWithdrawTime', true),
       uint64('lastVestedWithdrawTime', true),
@@ -40,7 +37,7 @@ export const FARMING_TICKET_LAYOUT = struct([
     10, 'statesAttached'),
 ])
 
-export const FARMING_CALC_LAYOUT = struct([
+export const FARMING_CALC_LAYOUT = struct<LayoutObject>([
   blob(8, 'padding'),
   publicKey('farmingState'),
   publicKey('userKey'),
@@ -48,28 +45,28 @@ export const FARMING_CALC_LAYOUT = struct([
   uint64('tokenAmount'),
 ])
 
-export const END_FARMING_INSTRUCTION_LAYOUT = struct([
+export const END_FARMING_INSTRUCTION_LAYOUT = struct<LayoutObject>([
   blob(8, 'instruction'),
 ])
 
 export const CREATE_CALC_INSTRUCTION_LAYOUT = END_FARMING_INSTRUCTION_LAYOUT
 export const WITHDRAW_FARMED_INSTRUCTION_LAYOUT = END_FARMING_INSTRUCTION_LAYOUT
 
-export const CALCULATE_FARMED_INSTRUCTION = struct([
+export const CALCULATE_FARMED_INSTRUCTION = struct<LayoutObject>([
   blob(8, 'instruction'),
   uint64('maxSnapshots'),
 ])
 
-export const START_FARMING_INSTRUCTION_LAYOUT = struct([
+export const START_FARMING_INSTRUCTION_LAYOUT = struct<LayoutObject>([
   blob(8, 'instruction'),
   uint64('poolTokenAmount'),
 ])
 
 
-export const SNAPSHOT_QUEUE_LAYOUT = struct([
+export const SNAPSHOT_QUEUE_LAYOUT = struct<LayoutObject>([
   blob(8, 'padding'),
   uint64('nextIndex'),
-  seq(struct([
+  seq(struct<LayoutObject>([
     u8('isInitialized'),
     uint64('tokensFrozen'),
     uint64('farmingTokens'),

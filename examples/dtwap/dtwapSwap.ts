@@ -35,7 +35,7 @@ async function doSwap() {
     mintTo: CONFIG.base,
   })
 
-  console.log('poolPrice: ', poolPrice)
+  console.log('poolPrice: ', poolPrice, dtwapSwap)
 
   const buyPrices = await dtwapSwap.getPrices({
     mintFrom: CONFIG.quote,
@@ -58,15 +58,14 @@ async function doSwap() {
     return
   }
 
-  const buyDif = bestBuy ? Math.log(poolPrice / bestBuy.price) * 100 : 0
+  const buyDiff = bestBuy ? Math.log(poolPrice / bestBuy.price) * 100 : 0
   const sellDiff = bestSell ? Math.log((1 / bestSell.price) / poolPrice) * 100 : 0
 
-  const buyOrder = buyDif > CONFIG.priceDiff ? bestBuy : undefined
+  const buyOrder = buyDiff > CONFIG.priceDiff ? bestBuy : undefined
   const sellOrder = sellDiff > CONFIG.priceDiff ? bestSell : undefined
 
   // We always have funds in quote (USDC), so calculate base diff to swap back
   const poolAmount = (bestBuy?.available.amountTo || new BN(0)).sub((bestSell?.available.amountFrom || new BN(0)))
-
 
   if (!poolAmount.eqn(0)) {
     const myTokens = await connection.getParsedTokenAccountsByOwner(wallet.publicKey, {
@@ -102,7 +101,7 @@ async function doSwap() {
     }
 
     console.log('Price diffs: ',
-      buyDif,
+      buyDiff,
       sellDiff,
     )
 
@@ -168,7 +167,7 @@ async function doSwap() {
 
 
   } else {
-    console.log('Price diff less than threshold: ', buyDif, sellDiff)
+    console.log('Price diff less than threshold: ', buyDiff, sellDiff)
   }
 
   console.log('Nothing to do here, wait 1min')
