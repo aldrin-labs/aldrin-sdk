@@ -59,6 +59,7 @@ export class FarmingClient {
 
   async getFarmingTickets(params: GetFarmingTicketsParams = {}): Promise<FarmingTicket[]> {
     const programId = PoolClient.getPoolAddress(params.poolVersion || 1)
+    console.log('pool version: ', params.poolVersion)
 
     const filters: GetProgramAccountsFilter[] = [
       { dataSize: FARMING_TICKET_LAYOUT.span },
@@ -189,7 +190,9 @@ export class FarmingClient {
       return [farmingCalcInstruction, calcInstruction]
     }))
 
-    transaction.add(...createCalcInstructions.flat())
+    if (createCalcInstructions.length) {
+      transaction.add(...createCalcInstructions.flat())
+    }
     
     return sendTransaction({
       transaction,
