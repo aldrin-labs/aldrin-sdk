@@ -92,7 +92,7 @@ export class DTwapClient {
       wallet: params.wallet,
       connection: this.connection,
     })
-    console.log('debug2', simulation)
+
     if (simulation.value.logs?.length) {
       const prefix = 'Program log: '
       const programLogs = simulation.value.logs.filter((v) => v.startsWith(prefix))

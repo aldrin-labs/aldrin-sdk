@@ -30,8 +30,6 @@ export const poolResponseToModel = (
   const quoteTvlUsd = quoteTvl.muln(prices.get(quote) || 0)
   const totalTvlUsd = baseTvl.add(quoteTvl)
 
-  const lpPrice = new BN(response.lpTokenFreezeVaultBalance).div(totalTvlUsd)
-
   return {
     poolPublicKey,
     poolMint: new PublicKey(response.poolTokenMint),
