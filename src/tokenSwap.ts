@@ -546,7 +546,7 @@ export class TokenSwap extends SwapBase {
     })
   }
 
-  async endFarming(params: TokenSwapGetFarmedParams): Promise<string[]> {
+  async endFarming(params: TokenSwapGetFarmedParams): Promise<string> {
     const { wallet = this.wallet, poolMint } = params
 
     if (!wallet) {
@@ -607,16 +607,16 @@ export class TokenSwap extends SwapBase {
 
     const fs = activeStates[0] // Start farming on any of active states, all other states (if available) will apply automaticaly
 
-    return Promise.all(activeTickets.map((at) => this.farmingClient.endFarming({
+    return this.farmingClient.endFarmings({
       poolPublicKey: pool.poolPublicKey,
       poolVersion: pool.poolVersion,
       farmingState: fs.farmingStatePublicKey,
       lpTokenFreezeVault: pool.lpTokenFreezeVault,
       userPoolTokenAccount,
       farmingSnapshots: fs.farmingSnapshots,
-      farmingTicket: at.farmingTicketPublicKey,
+      farmingTickets: activeTickets.map((at) => at.farmingTicketPublicKey),
       wallet,
-    })))
+    })
   }
 
   async claimFarmed(params: TokenSwapGetFarmedParams): Promise<string[]> {

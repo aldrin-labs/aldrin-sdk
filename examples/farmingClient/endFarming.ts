@@ -1,5 +1,6 @@
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token'
-import { AUTHORIZED_POOLS } from '../../src' // or "@aldrin-exchange/sdk"
+import { Transaction } from '@solana/web3.js'
+import { AUTHORIZED_POOLS, sendTransaction } from '../../src' // or "@aldrin-exchange/sdk"
 import { connection, farmingClient, poolClient, wallet } from '../common'
 
 async function endFarming() {
@@ -14,7 +15,7 @@ async function endFarming() {
   if (!myPool) {
     throw new Error('Pool not found!')
   }
-  const states = await farmingClient.getFarmingState({ poolPublicKey: myPool?.poolPublicKey })
+  const states = await farmingClient.getFarmingState({ poolPublicKey: myPool?.poolPublicKey, poolVersion: myPool?.poolVersion })
 
   const activeStates = states.filter((s) => !s.tokensTotal.eq(s.tokensUnlocked)) // Skip finished staking states
 
@@ -39,18 +40,15 @@ async function endFarming() {
   }
 
   const fs = activeStates[0] // End farming on any of active states, all other states (if available) will apply automaticaly
-  tickets.forEach(async (t) => {
-    const txId = await farmingClient.endFarming({
-      wallet,
-      poolPublicKey: myPool.poolPublicKey,
-      farmingState: fs.farmingStatePublicKey,
-      farmingSnapshots: fs.farmingSnapshots,
-      farmingTicket: t.farmingTicketPublicKey,
-      lpTokenFreezeVault: myPool.lpTokenFreezeVault,
-      userPoolTokenAccount: poolTokenAccount.pubkey,
-    })
-
-    console.log('Unstake LP tokens: Transaction sent', txId)
+  // TODO: split into multiple transactions, by 20 tickets per transaction
+  return farmingClient.endFarmings({
+    wallet,
+    poolPublicKey: myPool.poolPublicKey,
+    farmingState: fs.farmingStatePublicKey,
+    farmingSnapshots: fs.farmingSnapshots,
+    farmingTickets: tickets.map((t) => t.farmingTicketPublicKey),
+    lpTokenFreezeVault: myPool.lpTokenFreezeVault,
+    userPoolTokenAccount: poolTokenAccount.pubkey,
   })
 
 }

@@ -1,6 +1,5 @@
 import { PublicKey } from '@solana/web3.js';
-import BN from 'bn.js';
-import { AUTHORIZED_POOLS, TokenSwap } from '../../src'; // or "@aldrin-exchange/sdk"
+import { TokenSwap } from '../../src'; // or "@aldrin-exchange/sdk"
 import { wallet } from '../common';
 
 
@@ -14,7 +13,7 @@ export async function startFarming() {
     // poolMint: AUTHORIZED_POOLS.SOL_USDC.poolMint,
     poolMint: new PublicKey('J5mbqcCa2L6JSZHjr29PABgPsPFKgB6XYw7kbi1cR19x'),
   })
-  console.log(`Farming finished: ${txId.join(' , ')}`)
+  console.log(`Farming finished: ${txId}`)
 }
 
 startFarming()
