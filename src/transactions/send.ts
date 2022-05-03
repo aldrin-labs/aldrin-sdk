@@ -1,15 +1,5 @@
-import { Connection, Signer, Transaction } from '@solana/web3.js'
-import { Wallet } from '../types'
 import { log } from '../utils'
-
-export interface SendTransactionParams {
-  transaction: Transaction
-  wallet: Wallet
-  connection: Connection
-  timeout?: number
-  partialSigners?: Signer[]
-}
-
+import { SendTransactionParams, SendTransactionsParams } from './types'
 
 export async function sendTransaction({
   transaction,
@@ -44,5 +34,44 @@ export async function sendTransaction({
   log('Transaction sent: ', txid)
 
   return txid
+
+}
+
+
+export async function sendTransactions({
+  transactionsAndSigners,
+  wallet,
+  connection,
+}: SendTransactionsParams): Promise<string[]> {
+  const blockHash = await connection.getRecentBlockhash('max')
+
+
+  transactionsAndSigners.forEach((t) => {
+    t.transaction.recentBlockhash = blockHash.blockhash
+    if (t.partialSigners) {
+      t.transaction.partialSign(...t.partialSigners)
+    }
+
+    if (!wallet.publicKey) {
+      throw new Error(`No publicKey for wallet: ${wallet}`)
+    }
+
+    t.transaction.feePayer = wallet.publicKey
+
+  })
+  log('Transaction signers', wallet)
+
+
+  const transactionsFromWallet = await wallet.signAllTransactions(transactionsAndSigners.map((t) => t.transaction))
+
+  const rawTransactions = transactionsFromWallet.map((t) => t.serialize())
+
+  const txids = await Promise.all(rawTransactions.map((t) => connection.sendRawTransaction(t, {
+    skipPreflight: true,
+  })))
+
+  log('Transactions sent: ', txids)
+
+  return txids
 
 }

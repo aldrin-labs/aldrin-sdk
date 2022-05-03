@@ -72,9 +72,6 @@ export class DTwapSwap extends SwapBase {
       })
       .sort((a, b) => a.price - b.price)
 
-
-    console.log('allAmounts: ', allAmounts)
-
     return pricesWithAmount
   }
 

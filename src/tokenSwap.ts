@@ -22,7 +22,7 @@ import {
   TokenSwapWithdrawLiquidityParams,
 } from './pools';
 import { SwapBase } from './swapBase';
-import { sendTransaction, createAccountInstruction } from './transactions';
+import { sendTransactions } from './transactions';
 import BN from 'bn.js';
 import { Wallet, WithReferral } from './types';
 import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
@@ -457,8 +457,6 @@ export class TokenSwap extends SwapBase {
       throw new Error('Pool not found!')
     }
 
-    console.log('pool found:', wallet.publicKey.toString(), pool.poolPublicKey.toString(), pool.poolVersion)
-
     const tickets = await this.farmingClient.getFarmingTickets({ userKey: wallet.publicKey, pool: pool.poolPublicKey, poolVersion: pool.poolVersion })
 
     if (tickets.length === 0) {
@@ -644,7 +642,7 @@ export class TokenSwap extends SwapBase {
 
     const walletTokens = await this.getWalletTokens(wallet)
 
-    const transactions = await Promise.all(farmed
+    const transactionInstructions = await Promise.all(farmed
       .flatMap(async (state) => {
 
         const farmingToken = await this.tokenClient.getTokenAccount(state.state.farmingTokenVault)
@@ -687,16 +685,15 @@ export class TokenSwap extends SwapBase {
       })
     )
 
-    return Promise.all(
-      transactions
-        .flat()
-        .map((_) => new Transaction().add(_))
-        .map(async (transaction) => sendTransaction({
-          transaction,
-          wallet,
-          connection: this.connection,
-        }))
-    )
+    const transactions = transactionInstructions
+      .flat()
+      .map((_) => new Transaction().add(_))
+
+    return sendTransactions({
+      transactionsAndSigners: transactions.map((transaction) => ({ transaction })),
+      wallet,
+      connection: this.connection,
+    })
   }
 
 }

@@ -1,6 +1,5 @@
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token'
-import { Transaction } from '@solana/web3.js'
-import { AUTHORIZED_POOLS, sendTransaction } from '../../src' // or "@aldrin-exchange/sdk"
+import { AUTHORIZED_POOLS } from '../../src' // or "@aldrin-exchange/sdk"
 import { connection, farmingClient, poolClient, wallet } from '../common'
 
 async function endFarming() {
@@ -41,7 +40,7 @@ async function endFarming() {
 
   const fs = activeStates[0] // End farming on any of active states, all other states (if available) will apply automaticaly
   // TODO: split into multiple transactions, by 20 tickets per transaction
-  return farmingClient.endFarmings({
+  const txId = farmingClient.endFarmings({
     wallet,
     poolPublicKey: myPool.poolPublicKey,
     farmingState: fs.farmingStatePublicKey,
@@ -50,6 +49,8 @@ async function endFarming() {
     lpTokenFreezeVault: myPool.lpTokenFreezeVault,
     userPoolTokenAccount: poolTokenAccount.pubkey,
   })
+
+  console.log('Farming finished:', txId)
 
 }
 
