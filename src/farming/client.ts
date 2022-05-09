@@ -9,8 +9,8 @@ import {
 import { PoolClient, SOLANA_RPC_ENDPOINT } from '..';
 import { createAccountInstruction, sendTransaction } from '../transactions';
 import { Farming } from './farming';
-import { EndFarmingParams, FarmingSnapshotQueue, FarmingState, FarmingTicket, GetFarmingStateParams, GetFarmingTicketsParams, StartFarmingParams } from './types';
-
+import { EndFarmingParams, FarmingSnapshotQueue, FarmingTicket, GetFarmingStateParams, GetFarmingTicketsParams, StartFarmingParams } from './types';
+import { FarmingState } from '../types'
 
 /**
  * Aldrin AMM Pools farming(staking) client
@@ -146,7 +146,6 @@ export class FarmingClient {
       farmingTicket: farmingTicket.publicKey,
       programId,
     })
-
 
     const transaction = new Transaction()
 

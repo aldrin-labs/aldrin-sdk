@@ -2,7 +2,7 @@ import { Connection, Keypair } from '@solana/web3.js';
 import * as bs58 from 'bs58';
 import fs from 'fs';
 import os from 'os';
-import { FarmingClient, PoolClient, TokenClient, DTwapClient, SOLANA_RPC_ENDPOINT } from '../src';  // or "@aldrin-exchange/sdk"
+import { StakingClient, FarmingClient, PoolClient, TokenClient, DTwapClient, SOLANA_RPC_ENDPOINT } from '../src';  // or "@aldrin-exchange/sdk"
 import { Wallet } from './wallet';
 
 // If you are working with the sources of SDK, not with an npm package, you should place you privateKey into ~/.config/aldrin/privateKey first
@@ -31,6 +31,7 @@ const poolClient = new PoolClient(connection)
 const farmingClient = new FarmingClient(connection)
 const tokenClient = new TokenClient(connection)
 const dTwapClient = new DTwapClient(connection)
+const stakingClient = new StakingClient(connection)
 
 export {
   wallet,
@@ -38,6 +39,7 @@ export {
   tokenClient,
   farmingClient,
   dTwapClient,
+  stakingClient,
   connection,
 };
 

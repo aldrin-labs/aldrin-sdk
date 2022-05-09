@@ -1,6 +1,7 @@
 import BN from 'bn.js'
 import { PRE_VESTING_DENOMINATOR, PRE_VESTING_NUMERATOR, VESTING_DENOMINATOR, VESTING_NUMERATOR } from '../pools'
-import { AttachedFarmingState, FarmingSnapshot, FarmingState, FarmingTicket } from './types'
+import { AttachedFarmingState, FarmingSnapshot, FarmingTicket } from './types'
+import { FarmingState } from '../types'
 
 export const getFarmingRewardsFromSnapshots = ({
   ticket,
