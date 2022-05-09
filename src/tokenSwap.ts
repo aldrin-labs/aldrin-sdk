@@ -220,7 +220,7 @@ export class TokenSwap extends SwapBase {
    */
 
   async depositLiquidity(params: TokenSwapAddlLiquidityParams): Promise<string> {
-    const { poolMint, wallet = this.wallet } = params
+    const { poolMint, wallet = this.wallet, slippage } = params
     let { maxBase, maxQuote } = params
 
 
@@ -288,6 +288,7 @@ export class TokenSwap extends SwapBase {
       userBaseTokenAccount: userBaseTokenAccount.pubkey,
       userQuoteTokenAccount: userQuoteTokenAccount.pubkey,
       wallet,
+      slippage,
     })
 
   }
