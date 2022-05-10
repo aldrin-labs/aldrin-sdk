@@ -79,13 +79,6 @@ export interface PoolInfo extends PoolCommon, WithPoolPK {
   tvl: TvlInfo
 }
 
-export interface StakingPoolInfo {
-  swapToken: string
-  poolSigner: string
-  poolTokenMint: string
-  stakingVault: string
-}
-
 export interface Price {
   symbol: string
   price: number

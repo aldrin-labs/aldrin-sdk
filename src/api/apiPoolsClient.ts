@@ -1,6 +1,6 @@
 import { gql } from 'graphql-request';
 import { AldrinApiClient } from './aldrinClient';
-import {GetPoolsInfoResponse, GetPriceResponse, GetStakingPoolInfoResponse, PoolInfo, StakingPoolInfo} from './types';
+import { GetPoolsInfoResponse, GetPriceResponse, GetStakingPoolInfoResponse, PoolInfo, StakingPoolInfoResponse } from './types';
 import { poolResponseToModel } from './utils';
 
 /**
@@ -104,7 +104,7 @@ export class AldrinApiPoolsClient extends AldrinApiClient {
     return response.getPoolsInfo.map((p) => poolResponseToModel(p, prices))
   }
 
-  async getStakingPoolInfo(): Promise<StakingPoolInfo> {
+  async getStakingPoolInfo(): Promise<StakingPoolInfoResponse> {
     const query = gql`
       query {
         getStakingPoolInfo {

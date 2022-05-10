@@ -8,17 +8,17 @@ async function stake(): Promise<string> {
   const stakingClient = new StakingClient()
 
   const stakingPool = await aldrinPoolsClient.getStakingPoolInfo()
-  const tokenAmount = new BN(100_000)
+  const tokenAmount = new BN(1_100_000)
 
-  const transactionHash = await stakingClient.doStake({
+  const transactionId = await stakingClient.doStake({
     wallet,
     stakingPool,
     tokenAmount,
   })
 
-  log(`LOG: Executed successfully.\nTransaction hash: ${transactionHash}`)
+  log(`LOG: Executed successfully.\nTransaction hash: ${transactionId}`)
 
-  return transactionHash
+  return transactionId
 }
 
 stake()

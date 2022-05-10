@@ -7,7 +7,6 @@ export interface Wallet {
   publicKey: PublicKey;
 }
 
-
 export interface TokenSwapClaimFarmedParams {
   wallet?: Wallet
   poolMint: PublicKey
