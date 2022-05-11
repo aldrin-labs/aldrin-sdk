@@ -3,6 +3,7 @@ import BN from 'bn.js';
 import { PRECISION_NOMINATOR, SOLANA_RPC_ENDPOINT, TokenClient, TokenSwapGetPriceParams, TokenSwapLoadParams, DTwapClient, DTwapPair } from '.';
 import { SwapBase } from './swapBase';
 import { SIDE, Wallet } from './types';
+import { bnToNumber } from './utils';
 
 export class DTwapSwap extends SwapBase {
 
@@ -67,7 +68,7 @@ export class DTwapSwap extends SwapBase {
 
         return {
           ...orderWithAvailable,
-          price: price.toNumber() / PRECISION_NOMINATOR.toNumber(),
+          price: bnToNumber(price) / bnToNumber(PRECISION_NOMINATOR),
         }
       })
       .sort((a, b) => a.price - b.price)

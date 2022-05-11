@@ -7,7 +7,7 @@ const POOLS_V2_PROGRAM_ADDRESS = new PublicKey('CURVGoZn8zycx6FXwwevgBTB2gVvdbGT
 const DTWAP_PROGRAM_ADDRESS = new PublicKey('TWAPR9s1DEhrr8tuFbwEPws5moHXebMotqU85wwVmvU')
 
 
-export const PRECISION_NOMINATOR = new BN(1_000_000) // BN precision
+export const PRECISION_NOMINATOR = new BN(1_000_000_000) // BN precision
 
 export {
   POOLS_PROGRAM_ADDRESS,

@@ -26,6 +26,7 @@ import { sendTransactions } from './transactions';
 import BN from 'bn.js';
 import { Wallet, WithReferral } from './types';
 import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { bnToNumber } from './utils';
 
 
 /**
@@ -200,7 +201,7 @@ export class TokenSwap extends SwapBase {
       ? baseVaultAccount.amount.div(minIncomeAmount)
       : baseVaultAccount.amount.div(outcomeAmount)
 
-    const priceImpact = 100 / (poolsAmountDiff.toNumber() + 1)
+    const priceImpact = 100 / (bnToNumber(poolsAmountDiff) + 1)
 
     const fee = outcomeAmount.mul(SWAP_FEE_NUMERATOR).div(SWAP_FEE_DENOMINATOR)
 
@@ -278,6 +279,7 @@ export class TokenSwap extends SwapBase {
       maxQuote = maxBase.mul(price).div(PRECISION_NOMINATOR)
     }
 
+    console.log('maxBase', quoteVaultAccount.amount.toString(),baseVaultAccount.amount.toString(), price.toString() )
     const poolTokenAccount = walletTokens.find((wt) => wt.account.data.parsed.info.mint === pool.poolMint.toBase58())
 
     return this.poolClient.depositLiquidity({
@@ -398,7 +400,7 @@ export class TokenSwap extends SwapBase {
           .mul(PRECISION_NOMINATOR)
           .mul(baseMintInfo.decimalDenominator)
           .div(quoteMintInfo.decimalDenominator)
-          .toString()) / parseFloat(amountToSwap.toString()) / PRECISION_NOMINATOR.toNumber()
+          .toString()) / bnToNumber(amountToSwap) / bnToNumber(PRECISION_NOMINATOR)
 
       }
     }
@@ -411,10 +413,10 @@ export class TokenSwap extends SwapBase {
       .div(baseVaultAccount.amount)
 
     if (isInverted) {
-      return PRECISION_NOMINATOR.toNumber() / price.toNumber()
+      return bnToNumber(PRECISION_NOMINATOR) / bnToNumber(price)
     }
 
-    return price.toNumber() / PRECISION_NOMINATOR.toNumber()
+    return bnToNumber(price) / bnToNumber(PRECISION_NOMINATOR)
 
   }
 
