@@ -142,6 +142,7 @@ export class FarmingClient {
     const { wallet } = params
     const farmingTicket = Keypair.generate()
 
+    const partialSigners = [farmingTicket]
     const farmingTicketInstruction = await createAccountInstruction({
       size: FARMING_TICKET_LAYOUT.span,
       connection: this.connection,
@@ -179,6 +180,7 @@ export class FarmingClient {
 
     const createCalcInstructions = await Promise.all(statesWithoutCalc.map(async (fs) => {
       const farmingCalc = Keypair.generate()
+      partialSigners.push(farmingCalc)
       const farmingCalcInstruction = await createAccountInstruction({
         size: FARMING_CALC_LAYOUT.span,
         connection: this.connection,
@@ -207,7 +209,7 @@ export class FarmingClient {
       transaction,
       wallet,
       connection: this.connection,
-      partialSigners: [farmingTicket],
+      partialSigners,
     })
 
 
