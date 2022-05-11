@@ -10,7 +10,7 @@ async function stake(): Promise<string> {
   const stakingPool = await aldrinPoolsClient.getStakingPoolInfo()
   const tokenAmount = new BN(1_100_000)
 
-  const transactionId = await stakingClient.doStake({
+  const transactionId = await stakingClient.startStaking({
     wallet,
     stakingPool,
     tokenAmount,

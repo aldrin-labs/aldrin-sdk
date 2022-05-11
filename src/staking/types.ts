@@ -33,15 +33,25 @@ export interface UnstakingInstructionParams extends UnstakingCommons {
   programId: PublicKey
 }
 
-export interface DoStakingParams {
+export interface StartStakingParams {
   wallet: Wallet
   stakingPool: StakingPoolInfoResponse
   tokenAmount: BN
 }
 
-export interface DoUnstakingParams {
+export interface EndStakingParams {
   wallet: Wallet
   stakingPool: StakingPoolInfoResponse
+}
+
+export interface EndStakingTicketParams {
+  wallet: Wallet
+  poolPublicKey: PublicKey
+  farmingState: PublicKey
+  stakingSnapshots: PublicKey
+  stakingVault: PublicKey
+  userStakingTokenAccount: PublicKey
+  poolSigner: PublicKey
   stakingTicket: PublicKey
 }
 
@@ -59,4 +69,9 @@ export interface StakingTicket {
   nextAttached: BN
   statesAttached: AttachedFarmingState[]
   stakingTicketPublicKey: PublicKey
+}
+
+export interface ClaimParams {
+  wallet: Wallet
+  stakingPool: StakingPoolInfoResponse
 }

@@ -1,22 +1,22 @@
 import {Connection, GetProgramAccountsFilter, Keypair, PublicKey, Transaction} from '@solana/web3.js';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token'
 import {
+  ClaimParams,
   STAKING_TICKET_LAYOUT,
-  UNSTAKING_TICKET_LAYOUT,
 } from '.';
 import {
-  FARMING_TICKET_LAYOUT,
   StakingTicket,
   GetStakingTicketsParams,
-  PoolClient,
   SOLANA_RPC_ENDPOINT,
-  STAKING_PROGRAM_ADDRESS, Farming,
+  STAKING_PROGRAM_ADDRESS,
+  DEFAULT_FARMING_TICKET_END_TIME,
+  createTokenAccountTransaction,
+  Farming,
 } from '..';
 import { createAccountInstruction, sendTransaction } from '../transactions';
 import { Staking } from './staking';
-import { DoStakingParams, DoUnstakingParams } from './types';
-import {PoolFarmingResponse} from '../api/types';
-import {farmingClient, stakingClient, wallet} from '../../examples/common';
+import { StartStakingParams, EndStakingParams, EndStakingTicketParams } from './types';
+import { PoolFarmingResponse } from '../api/types';
 
 /**
  * Aldrin Staking client
@@ -24,7 +24,7 @@ import {farmingClient, stakingClient, wallet} from '../../examples/common';
 export class StakingClient {
   constructor(private connection: Connection = new Connection(SOLANA_RPC_ENDPOINT)) {}
 
-  async doStake(params: DoStakingParams): Promise<string> {
+  async startStaking(params: StartStakingParams): Promise<string> {
     const { wallet, stakingPool, tokenAmount } = params
 
     const programId = STAKING_PROGRAM_ADDRESS
@@ -84,8 +84,8 @@ export class StakingClient {
     })
   }
 
-  async doUnstake(params: DoUnstakingParams): Promise<string> {
-    const { wallet, stakingPool, stakingTicket } = params
+  async endStaking(params: EndStakingParams): Promise<string[]> {
+    const { wallet, stakingPool } = params
 
     const programId = STAKING_PROGRAM_ADDRESS
 
@@ -109,25 +109,64 @@ export class StakingClient {
     })
 
     const tokenAccount = tokenAccounts.value
-        .find((item) => item.account.data.parsed.info.mint === stakingPool.poolTokenMint)
+      .find((item) => item.account.data.parsed.info.mint === stakingPool.poolTokenMint)
 
-    if (!tokenAccount) {
-      throw new Error('No account - cannot stake!')
+    let tokenAccountPublicKey: PublicKey
+
+    if (tokenAccount) {
+      tokenAccountPublicKey = tokenAccount.pubkey
+    } else {
+      const resp = await createTokenAccountTransaction({
+        wallet,
+        mint: new PublicKey(stakingPool.poolTokenMint),
+      })
+
+      tokenAccountPublicKey = resp.newAccountPubkey
     }
+
+    const tickets = await this.getStakingTickets({ userKey: wallet.publicKey })
+    const ticketsToClose = tickets.filter((ticket) => ticket.endTime.eq(DEFAULT_FARMING_TICKET_END_TIME))
+
+    if (!tickets.length) {
+      throw new Error('No tickets, nothing to check')
+    }
+
+    const promises = ticketsToClose.map((ticket) => {
+      return this.endStakingTicket({
+        wallet,
+        poolPublicKey: new PublicKey(stakingPool.swapToken),
+        farmingState: new PublicKey(farmingStateItem.farmingState),
+        stakingSnapshots: new PublicKey(farmingStateItem.farmingSnapshots),
+        stakingVault: new PublicKey(stakingPool.stakingVault),
+        userStakingTokenAccount: new PublicKey(tokenAccountPublicKey),
+        stakingTicket: ticket.stakingTicketPublicKey,
+        poolSigner,
+      })
+    })
+
+    return Promise.all(promises)
+  }
+
+  async endStakingTicket(params: EndStakingTicketParams): Promise<string> {
+    const {
+      wallet, poolPublicKey, farmingState,
+      stakingSnapshots, stakingVault, userStakingTokenAccount,
+      stakingTicket, poolSigner,
+    } = params
 
     const transaction = new Transaction()
 
     transaction.add(
       Staking.unstakingInstruction({
-        poolPublicKey: new PublicKey(stakingPool.swapToken),
-        farmingState: new PublicKey(farmingStateItem.farmingState),
-        stakingSnapshots: new PublicKey(farmingStateItem.farmingSnapshots),
-        stakingVault: new PublicKey(stakingPool.stakingVault),
-        lpTokenFreezeVault: new PublicKey(stakingPool.stakingVault),
-        userStakingTokenAccount: new PublicKey(tokenAccount.pubkey),
+        poolPublicKey,
+        farmingState,
+        stakingSnapshots,
+        stakingVault,
+        lpTokenFreezeVault: stakingVault,
+        userStakingTokenAccount,
         poolSigner,
         userKey: wallet.publicKey,
-        programId,
+        programId: STAKING_PROGRAM_ADDRESS,
         stakingTicket,
       })
     )
@@ -147,7 +186,12 @@ export class StakingClient {
     ]
 
     if (params.userKey) {
-      filters.push({ memcmp: { offset: STAKING_TICKET_LAYOUT.offsetOf('userKey') || 0, bytes: params.userKey.toBase58() } })
+      filters.push({
+        memcmp: {
+          offset: STAKING_TICKET_LAYOUT.offsetOf('userKey') || 0,
+          bytes: params.userKey.toBase58(),
+        },
+      })
     }
 
     const tickets = await this.connection.getProgramAccounts(programId, {
@@ -160,6 +204,70 @@ export class StakingClient {
         ...data,
         stakingTicketPublicKey: t.pubkey,
       }
+    })
+  }
+
+  async claim(params: ClaimParams): Promise<string> {
+    const { stakingPool, wallet } = params
+
+    const programId = STAKING_PROGRAM_ADDRESS
+
+    const [poolSigner] = await PublicKey.findProgramAddress(
+        [new PublicKey(stakingPool.swapToken).toBuffer()],
+        programId
+    )
+
+    if (!stakingPool.farming) {
+      throw new Error('Dont have any farming tickets - cannot stake!')
+    }
+
+    const farmingStateItem = stakingPool.farming.find((item: PoolFarmingResponse) => item.tokensTotal !== item.tokensUnlocked)
+
+    if (!farmingStateItem) {
+      throw new Error('Dont have farming item - cannot claim!')
+    }
+
+    const tokenAccounts = await this.connection.getParsedTokenAccountsByOwner(wallet.publicKey, {
+      programId: TOKEN_PROGRAM_ID,
+    })
+
+    const tokenAccount = tokenAccounts.value
+        .find((item) => item.account.data.parsed.info.mint === stakingPool.poolTokenMint)
+
+    let tokenAccountPublicKey: PublicKey
+
+    if (tokenAccount) {
+      tokenAccountPublicKey = tokenAccount.pubkey
+    } else {
+      const resp = await createTokenAccountTransaction({
+        wallet,
+        mint: new PublicKey(stakingPool.poolTokenMint),
+      })
+
+      tokenAccountPublicKey = resp.newAccountPubkey
+    }
+
+    const farmingCalc = Keypair.generate()
+
+    const transaction = new Transaction()
+
+    transaction.add(
+        Farming.withdrawFarmedInstruction({
+          poolPublicKey: new PublicKey(stakingPool.swapToken),
+          farmingState: new PublicKey(farmingStateItem.farmingState),
+          farmingTokenVault: new PublicKey(stakingPool.stakingVault),
+          farmingCalc: farmingCalc.publicKey,
+          userFarmingTokenAccount: tokenAccountPublicKey,
+          poolSigner,
+          userKey: wallet.publicKey,
+          programId,
+        })
+    )
+
+    return sendTransaction({
+      wallet: wallet,
+      connection: this.connection,
+      transaction,
     })
   }
 }
