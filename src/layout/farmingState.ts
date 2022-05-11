@@ -1,5 +1,5 @@
 import * as BufferLayout from '@solana/buffer-layout';
-import { uint64, publicKey } from './common'
+import { uint64, publicKey } from './common';
 
 
 /**
@@ -48,7 +48,7 @@ import { uint64, publicKey } from './common'
           }
 
  */
-export const FarmingStateLayout = BufferLayout.struct<BufferLayout.Layout<any>>([
+export const FarmingStateLayout = BufferLayout.struct<BufferLayout.Layout<BufferLayout.LayoutObject>>([
   uint64('tokensUnlocked'),
   uint64('tokensPerPeriod'),
   uint64('tokensTotal'),
