@@ -43,7 +43,6 @@ export const getFarmingRewardsFromSnapshots = ({
 
         const currentTime = Date.now() / 1000
 
-
         // Decrease reward on vesting period
         const preVestingReward = lastClaimTime < snapshot.time
           ? ticketMaxReward.mul(PRE_VESTING_NUMERATOR).div(PRE_VESTING_DENOMINATOR)

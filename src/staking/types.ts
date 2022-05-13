@@ -35,13 +35,11 @@ export interface UnstakingInstructionParams extends UnstakingCommons {
 
 export interface StartStakingParams {
   wallet: Wallet
-  stakingPool: StakingPoolInfoResponse
   tokenAmount: BN
 }
 
 export interface EndStakingParams {
   wallet: Wallet
-  stakingPool: StakingPoolInfoResponse
 }
 
 export interface EndStakingTicketParams {

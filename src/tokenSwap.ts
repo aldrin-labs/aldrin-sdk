@@ -4,7 +4,7 @@ import {
   TransactionInstruction,
 } from '@solana/web3.js';
 import { computeOutputAmount } from '@orca-so/stablecurve'
-import { Farming, FarmingClient, PRECISION_NOMINATOR, TokenClient } from '.';
+import {Farming, FarmingClient, PRECISION_NOMINATOR, TokenClient, withdrawFarmedInstruction} from '.';
 import {
   CURVE, PoolClient,
   PoolRpcResponse,
@@ -538,7 +538,7 @@ export class TokenSwap extends SwapBase {
         }
 
         if (state.calcAccount) {
-          const withdrawInstruction = Farming.withdrawFarmedInstruction({
+          const withdrawInstruction = withdrawFarmedInstruction({
             farmingState: state.state.farmingStatePublicKey,
             farmingCalc: state.calcAccount.farmingCalcPublicKey,
             farmingTokenVault: state.state.farmingTokenVault,

@@ -1,5 +1,6 @@
 import {Connection, GetProgramAccountsFilter, Keypair, PublicKey, Transaction} from '@solana/web3.js';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token'
+import BN from 'bn.js';
 import {
   ClaimParams,
   STAKING_TICKET_LAYOUT,
@@ -11,7 +12,7 @@ import {
   STAKING_PROGRAM_ADDRESS,
   DEFAULT_FARMING_TICKET_END_TIME,
   createTokenAccountTransaction,
-  Farming,
+  withdrawFarmedInstruction, AldrinApiPoolsClient,
 } from '..';
 import { createAccountInstruction, sendTransaction } from '../transactions';
 import { Staking } from './staking';
@@ -25,7 +26,11 @@ export class StakingClient {
   constructor(private connection: Connection = new Connection(SOLANA_RPC_ENDPOINT)) {}
 
   async startStaking(params: StartStakingParams): Promise<string> {
-    const { wallet, stakingPool, tokenAmount } = params
+    const { wallet, tokenAmount } = params
+
+    const aldrinPoolsClient = new AldrinApiPoolsClient()
+
+    const stakingPool = await aldrinPoolsClient.getStakingPoolInfo()
 
     const programId = STAKING_PROGRAM_ADDRESS
 
@@ -85,12 +90,15 @@ export class StakingClient {
   }
 
   async endStaking(params: EndStakingParams): Promise<string[]> {
-    const { wallet, stakingPool } = params
+    const { wallet } = params
+
+    const aldrinPoolsClient = new AldrinApiPoolsClient()
+    const stakingPool = await aldrinPoolsClient.getStakingPoolInfo()
 
     const programId = STAKING_PROGRAM_ADDRESS
 
     const [poolSigner] = await PublicKey.findProgramAddress(
-[new PublicKey(stakingPool.swapToken).toBuffer()],
+      [new PublicKey(stakingPool.swapToken).toBuffer()],
       programId
     )
 
@@ -125,9 +133,13 @@ export class StakingClient {
     }
 
     const tickets = await this.getStakingTickets({ userKey: wallet.publicKey })
-    const ticketsToClose = tickets.filter((ticket) => ticket.endTime.eq(DEFAULT_FARMING_TICKET_END_TIME))
+    const ticketsToClose = tickets
+      .filter((ticket) =>
+        ticket.endTime.eq(DEFAULT_FARMING_TICKET_END_TIME)
+          && ticket.startTime.lt(new BN(Date.now() / 1000).sub(new BN(3600)))
+      )
 
-    if (!tickets.length) {
+    if (!ticketsToClose.length) {
       throw new Error('No tickets, nothing to check')
     }
 
@@ -172,7 +184,7 @@ export class StakingClient {
     )
 
     return sendTransaction({
-      wallet: wallet,
+      wallet,
       connection: this.connection,
       transaction,
     })
@@ -218,7 +230,7 @@ export class StakingClient {
     )
 
     if (!stakingPool.farming) {
-      throw new Error('Dont have any farming tickets - cannot stake!')
+      throw new Error('Dont have any farming tickets - cannot claim!')
     }
 
     const farmingStateItem = stakingPool.farming.find((item: PoolFarmingResponse) => item.tokensTotal !== item.tokensUnlocked)
@@ -252,20 +264,20 @@ export class StakingClient {
     const transaction = new Transaction()
 
     transaction.add(
-        Farming.withdrawFarmedInstruction({
-          poolPublicKey: new PublicKey(stakingPool.swapToken),
-          farmingState: new PublicKey(farmingStateItem.farmingState),
-          farmingTokenVault: new PublicKey(stakingPool.stakingVault),
-          farmingCalc: farmingCalc.publicKey,
-          userFarmingTokenAccount: tokenAccountPublicKey,
-          poolSigner,
-          userKey: wallet.publicKey,
-          programId,
-        })
+      withdrawFarmedInstruction({
+        poolPublicKey: new PublicKey(stakingPool.swapToken),
+        farmingState: new PublicKey(farmingStateItem.farmingState),
+        farmingTokenVault: new PublicKey(farmingStateItem.farmingTokenVault),
+        farmingCalc: farmingCalc.publicKey,
+        userFarmingTokenAccount: tokenAccountPublicKey,
+        poolSigner,
+        userKey: wallet.publicKey,
+        programId,
+      })
     )
 
     return sendTransaction({
-      wallet: wallet,
+      wallet,
       connection: this.connection,
       transaction,
     })

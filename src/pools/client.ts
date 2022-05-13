@@ -467,7 +467,7 @@ export class PoolClient {
 
 
     return sendTransaction({
-      wallet: wallet,
+      wallet,
       connection: this.connection,
       transaction,
     })

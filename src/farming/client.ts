@@ -7,7 +7,7 @@ import {
   FARMING_TICKET_LAYOUT, GetFarmingCalcParams, GetFarmingSnapshotParams, SNAPSHOT_QUEUE_LAYOUT,
 } from '.';
 import { PoolClient, SOLANA_RPC_ENDPOINT } from '..';
-import { createAccountInstruction, sendTransaction } from '../transactions';
+import { createAccountInstruction, sendTransaction, withdrawFarmedInstruction } from '../transactions';
 import { Farming } from './farming';
 import { EndFarmingParams, FarmingSnapshotQueue, FarmingTicket, GetFarmingStateParams, GetFarmingTicketsParams, StartFarmingParams } from './types';
 import { FarmingState } from '../types'
@@ -226,7 +226,7 @@ export class FarmingClient {
     )
 
     return sendTransaction({
-      wallet: wallet,
+      wallet,
       connection: this.connection,
       transaction,
     })
@@ -249,7 +249,7 @@ export class FarmingClient {
     const transaction = new Transaction()
 
     transaction.add(
-      Farming.withdrawFarmedInstruction({
+      withdrawFarmedInstruction({
         ...params,
         poolSigner,
         userKey: wallet.publicKey,
@@ -258,7 +258,7 @@ export class FarmingClient {
     )
 
     return sendTransaction({
-      wallet: wallet,
+      wallet,
       connection: this.connection,
       transaction,
     })
