@@ -2,27 +2,37 @@ import {Connection, GetProgramAccountsFilter, Keypair, PublicKey, Transaction} f
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token'
 import BN from 'bn.js';
 import {
-  ClaimParams,
+  ClaimParams, 
+  GetStakingStateParams,
   STAKING_TICKET_LAYOUT,
 } from '.';
 import {
+  TokenClient,
   StakingTicket,
   GetStakingTicketsParams,
   SOLANA_RPC_ENDPOINT,
   STAKING_PROGRAM_ADDRESS,
   DEFAULT_FARMING_TICKET_END_TIME,
   createTokenAccountTransaction,
-  withdrawFarmedInstruction, AldrinApiPoolsClient,
+  withdrawFarmedInstruction,
+  AldrinApiPoolsClient,
+  FARMING_CALC_LAYOUT,
+  FarmingCalc,
+  GetFarmingStateParams,
+  PoolClient,
+  FARMING_STATE_LAYOUT,
 } from '..';
 import { createAccountInstruction, sendTransaction } from '../transactions';
 import { Staking } from './staking';
-import { StartStakingParams, EndStakingParams, EndStakingTicketParams } from './types';
+import { StartStakingParams, EndStakingParams, EndStakingTicketParams, StakingState } from './types';
 import { PoolFarmingResponse } from '../api/types';
 
 /**
  * Aldrin Staking client
  */
 export class StakingClient {
+  private tokenClient = new TokenClient(this.connection)
+
   constructor(private connection: Connection = new Connection(SOLANA_RPC_ENDPOINT)) {}
 
   async startStaking(params: StartStakingParams): Promise<string> {
@@ -219,13 +229,42 @@ export class StakingClient {
     })
   }
 
+  async getStakingState(
+    params: GetStakingStateParams
+  ): Promise<StakingState[]> {
+    const states = await this.connection.getProgramAccounts(STAKING_PROGRAM_ADDRESS, {
+      commitment: 'finalized',
+      filters: [
+        {
+          dataSize: FARMING_STATE_LAYOUT.span,
+        },
+        {
+          memcmp: {
+            offset: FARMING_STATE_LAYOUT.offsetOf('pool') || 0,
+            bytes: params.poolPublicKey.toBase58(),
+          },
+        },
+      ],
+    })
+
+    return states.map((state) => {
+      const decodedState = FARMING_STATE_LAYOUT.decode(state.account.data) as StakingState
+
+      return {
+        ...decodedState,
+        statePublicKey: state.pubkey,
+      }
+    })
+  }
+
   async claim(params: ClaimParams): Promise<string> {
     const { stakingPool, wallet } = params
 
     const programId = STAKING_PROGRAM_ADDRESS
+    const poolPublicKey = new PublicKey(stakingPool.swapToken)
 
     const [poolSigner] = await PublicKey.findProgramAddress(
-        [new PublicKey(stakingPool.swapToken).toBuffer()],
+        [poolPublicKey.toBuffer()],
         programId
     )
 
@@ -259,7 +298,39 @@ export class StakingClient {
       tokenAccountPublicKey = resp.newAccountPubkey
     }
 
-    const farmingCalc = Keypair.generate()
+    const states = await this.getStakingState({ poolPublicKey })
+    console.log('debug states', states)
+    const stateKeys = states.map((state) => state.statePublicKey.toBase58())
+
+    // Resolve rewards
+    const stateVaults = await Promise.all(states.map((state) => {
+      const tokenInfo = this.tokenClient.getTokenAccount(state.farmingTokenVault)
+
+      return {
+        tokenInfo,
+        state,
+      }
+    }))
+
+    const calcs = await this.connection.getProgramAccounts(programId, {
+      filters: [{ dataSize: FARMING_CALC_LAYOUT.span }],
+    })
+
+    const calcAccounts = calcs.map((calc) => {
+      const data = FARMING_CALC_LAYOUT.decode(calc.account.data) as FarmingCalc
+      return {
+        ...data,
+        farmingCalcPublicKey: calc.pubkey,
+      }
+    })
+
+    const calcAccountsForStates = calcAccounts.filter((ca) => stateKeys.includes(ca.farmingState.toBase58()))
+
+    const farmingCalcs = stateVaults.map((stakingState) => {
+      const calcAccount = calcAccountsForStates.find((ca) => ca.farmingState.equals(stakingState.state.statePublicKey))
+      return { ...stakingState, calcAccount }
+    })
+      .filter((sv) => sv.calcAccount?.tokenAmount.gtn(0))
 
     const transaction = new Transaction()
 
@@ -268,7 +339,7 @@ export class StakingClient {
         poolPublicKey: new PublicKey(stakingPool.swapToken),
         farmingState: new PublicKey(farmingStateItem.farmingState),
         farmingTokenVault: new PublicKey(farmingStateItem.farmingTokenVault),
-        farmingCalc: farmingCalc.publicKey,
+        farmingCalc: farmingCalcs[0].state.statePublicKey,
         userFarmingTokenAccount: tokenAccountPublicKey,
         poolSigner,
         userKey: wallet.publicKey,

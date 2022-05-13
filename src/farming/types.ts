@@ -5,8 +5,8 @@ import { PoolVersion, FarmingState } from '../types'
 
 interface WithPoolVersion {
   poolVersion?: PoolVersion
-
 }
+
 export interface GetFarmingStateParams extends WithPoolPK, WithPoolVersion {
 }
 
