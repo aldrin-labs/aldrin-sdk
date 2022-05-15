@@ -44,7 +44,7 @@ export class Farming {
     START_FARMING_INSTRUCTION_LAYOUT.encode(
       {
         instruction: instructionDiscriminator('start_farming'),
-        tokenAmount,
+        poolTokenAmount: tokenAmount,
       },
       data,
     );

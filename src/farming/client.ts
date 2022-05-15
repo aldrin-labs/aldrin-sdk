@@ -1,15 +1,24 @@
 import { Connection, GetProgramAccountsFilter, Keypair, PublicKey, Transaction } from '@solana/web3.js';
 import {
   ClaimFarmedParams,
+  EndFarmingsParams,
   FarmingCalc,
   FARMING_CALC_LAYOUT,
   FARMING_STATE_LAYOUT,
   FARMING_TICKET_LAYOUT, GetFarmingCalcParams, GetFarmingSnapshotParams, SNAPSHOT_QUEUE_LAYOUT,
 } from '.';
-import { PoolClient, SOLANA_RPC_ENDPOINT, TokenClient } from '..';
+import { PoolClient, SOLANA_RPC_ENDPOINT } from '..';
 import { createAccountInstruction, sendTransaction } from '../transactions';
 import { Farming } from './farming';
-import { EndFarmingParams, FarmingSnapshotQueue, FarmingState, FarmingTicket, GetFarmingStateParams, GetFarmingTicketsParams, StartFarmingParams } from './types';
+import {
+  EndFarmingParams,
+  FarmingSnapshotQueue,
+  FarmingState,
+  FarmingTicket,
+  GetFarmingStateParams,
+  GetFarmingTicketsParams,
+  StartFarmingParams,
+} from './types';
 
 
 /**
@@ -59,6 +68,7 @@ export class FarmingClient {
 
   async getFarmingTickets(params: GetFarmingTicketsParams = {}): Promise<FarmingTicket[]> {
     const programId = PoolClient.getPoolAddress(params.poolVersion || 1)
+
 
     const filters: GetProgramAccountsFilter[] = [
       { dataSize: FARMING_TICKET_LAYOUT.span },
@@ -132,6 +142,7 @@ export class FarmingClient {
     const { wallet } = params
     const farmingTicket = Keypair.generate()
 
+    const partialSigners = [farmingTicket]
     const farmingTicketInstruction = await createAccountInstruction({
       size: FARMING_TICKET_LAYOUT.span,
       connection: this.connection,
@@ -164,11 +175,12 @@ export class FarmingClient {
     })).map((ca) => ca.farmingState.toBase58())
 
     const statesWithoutCalc = states
-    .filter((state) => !state.tokensUnlocked.eq(state.tokensTotal)) // Has locked tokens -> state not finished yet    
-    .filter((state) => !calcForUser.includes(state.farmingStatePublicKey.toString()))
+      .filter((state) => !state.tokensUnlocked.eq(state.tokensTotal)) // Has locked tokens -> state not finished yet    
+      .filter((state) => !calcForUser.includes(state.farmingStatePublicKey.toString()))
 
     const createCalcInstructions = await Promise.all(statesWithoutCalc.map(async (fs) => {
       const farmingCalc = Keypair.generate()
+      partialSigners.push(farmingCalc)
       const farmingCalcInstruction = await createAccountInstruction({
         size: FARMING_CALC_LAYOUT.span,
         connection: this.connection,
@@ -189,13 +201,15 @@ export class FarmingClient {
       return [farmingCalcInstruction, calcInstruction]
     }))
 
-    transaction.add(...createCalcInstructions.flat())
-    
+    if (createCalcInstructions.length) {
+      transaction.add(...createCalcInstructions.flat())
+    }
+
     return sendTransaction({
       transaction,
       wallet,
       connection: this.connection,
-      partialSigners: [farmingTicket],
+      partialSigners,
     })
 
 
@@ -207,6 +221,55 @@ export class FarmingClient {
    */
 
   async endFarming(params: EndFarmingParams) {
+
+    const { wallet } = params
+    const transaction = new Transaction()
+
+    transaction.add(
+      await this.endFarmingInstruction(params)
+    )
+
+    return sendTransaction({
+      wallet: wallet,
+      connection: this.connection,
+      transaction,
+    })
+  }
+
+  /**
+   * End multiple farmings for 1 pool
+   */
+
+  async endFarmings(params: EndFarmingsParams) {
+
+    const { wallet, farmingTickets } = params
+
+
+    if (farmingTickets.length === 0) {
+      throw new Error('No tickets provided')
+    }
+
+    const instructions = await Promise.all(
+      farmingTickets.map((t) => this.endFarmingInstruction({
+        ...params,
+        farmingTicket: t,
+      })
+      )
+    )
+
+    const transaction = new Transaction()
+    // TODO: split into multiple transactions, by 20 tickets per transaction
+
+    transaction.add(...instructions)
+
+    return sendTransaction({
+      wallet: wallet,
+      connection: this.connection,
+      transaction,
+    })
+  }
+
+  async endFarmingInstruction(params: EndFarmingParams) {
     const programId = PoolClient.getPoolAddress(params.poolVersion || 1)
 
     const { poolPublicKey, wallet } = params
@@ -215,22 +278,15 @@ export class FarmingClient {
       programId,
     )
 
-    const transaction = new Transaction()
 
-    transaction.add(
-      Farming.endFarmingInstruction({
-        ...params,
-        poolSigner,
-        userKey: wallet.publicKey,
-        programId,
-      })
-    )
-
-    return sendTransaction({
-      wallet: wallet,
-      connection: this.connection,
-      transaction,
+    return Farming.endFarmingInstruction({
+      ...params,
+      poolSigner,
+      userKey: wallet.publicKey,
+      programId,
     })
+
+
   }
 
   /**

@@ -79,16 +79,23 @@ export interface FarmingCalc {
   tokenAmount: BN
 }
 
-export interface EndFarmingCommon extends WithPoolPK {
+export interface EndFarmingBase extends WithPoolPK {
   farmingState: PublicKey
   farmingSnapshots: PublicKey
-  farmingTicket: PublicKey
   lpTokenFreezeVault: PublicKey
   userPoolTokenAccount: PublicKey
 }
 
-export interface EndFarmingParams extends EndFarmingCommon, WithWallet, WithPoolVersion {
 
+export interface EndFarmingCommon extends EndFarmingBase {
+  farmingTicket: PublicKey
+}
+
+export interface EndFarmingParams extends EndFarmingCommon, WithWallet, WithPoolVersion {
+}
+
+export interface EndFarmingsParams extends WithWallet, WithPoolVersion, EndFarmingBase {
+  farmingTickets: PublicKey[]
 }
 
 export interface EndFarmingInstructionParams extends EndFarmingCommon {
@@ -135,7 +142,7 @@ export interface ClaimFarmedParams extends ClaimFarmedCommons, WithWallet, WithP
   userFarmingTokenAccount: PublicKey
   maxSnapshots: BN
   farmingTokenVault: PublicKey
-  farmingCalc: PublicKey 
+  farmingCalc: PublicKey
 }
 
 export type GetFarmingSnapshotParams = WithPoolVersion
@@ -148,19 +155,19 @@ export interface CalculateFarmedInstruction extends ClaimFarmedCommons {
 
 export interface ClaimFarmedInstructionParams extends WithPoolPK {
   farmingState: PublicKey
-  farmingCalc: PublicKey 
-  farmingTokenVault: PublicKey 
-  poolSigner: PublicKey 
-  userFarmingTokenAccount: PublicKey 
-  userKey: PublicKey 
+  farmingCalc: PublicKey
+  farmingTokenVault: PublicKey
+  poolSigner: PublicKey
+  userFarmingTokenAccount: PublicKey
+  userKey: PublicKey
   programId: PublicKey
 }
 
 export interface CreateCalcInstructionParams {
-  farmingTicket: PublicKey 
-  userKey: PublicKey 
-  farmingState: PublicKey 
-  initializer: PublicKey 
-  farmingCalc: PublicKey 
+  farmingTicket: PublicKey
+  userKey: PublicKey
+  farmingState: PublicKey
+  initializer: PublicKey
+  farmingCalc: PublicKey
   programId: PublicKey
 }

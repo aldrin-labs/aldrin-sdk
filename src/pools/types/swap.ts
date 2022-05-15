@@ -69,6 +69,7 @@ export type OptionalDepositAmounts = {
 export interface TokenSwapAddLiquidityParamsBase {
   poolMint: PublicKey
   wallet?: Wallet
+  slippage?: number
 }
 
 
@@ -87,3 +88,9 @@ export interface TokenSwapGetFarmedParams {
   wallet?: Wallet
   poolMint: PublicKey
 }
+
+
+export interface TokenSwapStartFamingParams extends TokenSwapGetFarmedParams {
+  amount: BN
+}
+
