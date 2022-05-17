@@ -4,7 +4,7 @@ import {
   TransactionInstruction,
 } from '@solana/web3.js';
 import { computeOutputAmount } from '@orca-so/stablecurve'
-import {Farming, FarmingClient, PRECISION_NOMINATOR, TokenClient, withdrawFarmedInstruction} from '.';
+import { FarmingClient, PRECISION_NOMINATOR, TokenClient, withdrawFarmedInstruction } from '.';
 import {
   CURVE, PoolClient,
   PoolRpcResponse,

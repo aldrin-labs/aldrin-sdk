@@ -1,5 +1,4 @@
-import { blob, seq, struct, u8, LayoutObject } from '@solana/buffer-layout';
-import BN from 'bn.js';
+import { blob, seq, struct, LayoutObject } from '@solana/buffer-layout';
 import { publicKey, uint64 } from '../layout/common';
 
 export const STAKING_TICKET_LAYOUT = struct<LayoutObject>([

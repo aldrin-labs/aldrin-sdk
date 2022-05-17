@@ -1,6 +1,5 @@
-import { Connection, RpcResponseAndContext, Signer, SimulatedTransactionResponse, Transaction } from '@solana/web3.js'
+import { RpcResponseAndContext, SimulatedTransactionResponse } from '@solana/web3.js'
 import { SendTransactionParams } from '.'
-import { Wallet } from '../types'
 import { log } from '../utils'
 
 

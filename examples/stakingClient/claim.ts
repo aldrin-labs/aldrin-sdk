@@ -1,5 +1,5 @@
 import { wallet } from '../common'
-import { AldrinApiPoolsClient, StakingClient } from '../../src'
+import { StakingClient } from '../../src'
 import { log } from '../../src/utils';
 
 async function claim(): Promise<string> {

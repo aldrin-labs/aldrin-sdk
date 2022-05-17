@@ -2,8 +2,7 @@ import {Connection, GetProgramAccountsFilter, Keypair, PublicKey, Transaction} f
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token'
 import BN from 'bn.js';
 import {
-  ClaimParams, 
-  GetStakingStateParams,
+  ClaimParams,
   STAKING_TICKET_LAYOUT,
 } from '.';
 import {
@@ -18,13 +17,10 @@ import {
   AldrinApiPoolsClient,
   FARMING_CALC_LAYOUT,
   FarmingCalc,
-  GetFarmingStateParams,
-  PoolClient,
-  FARMING_STATE_LAYOUT,
 } from '..';
 import { createAccountInstruction, sendTransaction } from '../transactions';
 import { Staking } from './staking';
-import { StartStakingParams, EndStakingParams, EndStakingTicketParams, StakingState } from './types';
+import { StartStakingParams, EndStakingParams, EndStakingTicketParams } from './types';
 import { PoolFarmingResponse } from '../api/types';
 
 /**
@@ -229,36 +225,6 @@ export class StakingClient {
     })
   }
 
-  async getStakingState(
-    params: GetStakingStateParams
-  ): Promise<StakingState[]> {
-    const states = await this.connection.getProgramAccounts(STAKING_PROGRAM_ADDRESS, {
-      commitment: 'finalized',
-      filters: [
-        {
-          dataSize: FARMING_STATE_LAYOUT.span,
-        },
-        {
-          memcmp: {
-            offset: FARMING_STATE_LAYOUT.offsetOf('pool') || 0,
-            bytes: params.poolPublicKey.toBase58(),
-          },
-        },
-      ],
-    })
-
-    console.log('debug getStakingState', states)
-
-    return states.map((state) => {
-      const decodedState = FARMING_STATE_LAYOUT.decode(state.account.data) as StakingState
-
-      return {
-        ...decodedState,
-        statePublicKey: state.pubkey,
-      }
-    })
-  }
-
   async claim(params: ClaimParams): Promise<string> {
     const { wallet } = params
 
@@ -314,30 +280,32 @@ export class StakingClient {
       }
     }).filter((calcAccount) => calcAccount.tokenAmount.gtn(0))
 
-    const farmingStatesWithCalcAccount = stakingPool.farming.map((item) => {
-      return {
+    const farmingStatesWithCalcAccount = stakingPool.farming
+      .map((item) => ({
         ...item,
         calcAccount: calcAccounts.find((calcAccount) => calcAccount.farmingState.equals(new PublicKey(item.farmingState))),
-      }
-    })
+      }))
+      .filter((item) => !!item.calcAccount) as (PoolFarmingResponse & { calcAccount: FarmingCalc })[]
+
+    if (!farmingStatesWithCalcAccount.length) {
+      throw new Error('Dont have any farming tickets with a calc account - cannot claim!')
+    }
 
     const transaction = new Transaction()
 
     farmingStatesWithCalcAccount.forEach((item) => {
-      if (item.calcAccount) {
-        transaction.add(
-          withdrawFarmedInstruction({
-            poolPublicKey: new PublicKey(stakingPool.swapToken),
-            farmingState: new PublicKey(item.farmingState),
-            farmingTokenVault: new PublicKey(item.farmingTokenVault),
-            farmingCalc: new PublicKey(item.calcAccount.farmingCalcPublicKey),
-            userFarmingTokenAccount: tokenAccountPublicKey,
-            poolSigner,
-            userKey: wallet.publicKey,
-            programId,
-          })
-        )
-      }
+      transaction.add(
+        withdrawFarmedInstruction({
+          poolPublicKey: new PublicKey(stakingPool.swapToken),
+          farmingState: new PublicKey(item.farmingState),
+          farmingTokenVault: new PublicKey(item.farmingTokenVault),
+          farmingCalc: new PublicKey(item.calcAccount.farmingCalcPublicKey),
+          userFarmingTokenAccount: tokenAccountPublicKey,
+          poolSigner,
+          userKey: wallet.publicKey,
+          programId,
+        })
+      )
     })
 
     return sendTransaction({

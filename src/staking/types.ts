@@ -2,10 +2,9 @@ import { PublicKey } from '@solana/web3.js'
 import BN from 'bn.js'
 import { WithPoolPK } from '../pools'
 import { PoolVersion, Wallet } from '../types'
-import { StakingPoolInfoResponse } from '../api/types';
 import { AttachedFarmingState } from '../farming';
 
-export interface GetStakingStateParams extends WithPoolPK {}
+export type GetStakingStateParams = WithPoolPK
 
 export interface StakingState {
   tokensUnlocked: BN
