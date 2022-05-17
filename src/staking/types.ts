@@ -89,5 +89,4 @@ export interface StakingTicket {
 
 export interface ClaimParams {
   wallet: Wallet
-  stakingPool: StakingPoolInfoResponse
 }
