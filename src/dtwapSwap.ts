@@ -31,7 +31,6 @@ export class DTwapSwap extends SwapBase {
       pairSettings: pair.pairSettings,
     })
 
-
     const { baseMintDecimals, quoteMintDecimals } = pair
 
     const side = isInverted ? SIDE.BID : SIDE.ASK

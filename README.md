@@ -133,6 +133,48 @@ checkFarmed()
 
 ```
 
+### [Staking](https://dex.aldrin.com/staking)
+
+```js
+import BN from 'bn.js'
+import { wallet } from '../common'
+import { StakingClient } from '../../src'
+
+const stakingClient = new StakingClient()
+const tokenAmount = new BN(1_100_000)
+
+stakingClient.startStaking({
+  wallet,
+  tokenAmount,
+})
+```
+
+### [Unstaking](https://dex.aldrin.com/staking)
+
+```js
+import { wallet } from '../common'
+import { StakingClient } from '../../src'
+
+const stakingClient = new StakingClient()
+
+stakingClient.endStaking({
+  wallet,
+})
+```
+
+### [Claim staking rewards](https://dex.aldrin.com/staking)
+
+```js
+import { wallet } from '../common'
+import { StakingClient } from '../../src'
+
+const stakingClient = new StakingClient()
+
+stakingClient.claim({
+  wallet,
+})
+```
+
 You can find more complex examples by [link](https://github.com/aldrin-exchange/aldrin-sdk/tree/main/examples).
 
 

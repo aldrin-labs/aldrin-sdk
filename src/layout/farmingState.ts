@@ -3,7 +3,7 @@ import { uint64, publicKey } from './common'
 
 
 /**
- * 
+ *
  * {
 
           {
@@ -48,7 +48,7 @@ import { uint64, publicKey } from './common'
           }
 
  */
-export const FarmingStateLayout = BufferLayout.struct([
+export const FarmingStateLayout = BufferLayout.struct<BufferLayout.Layout<any>>([
   uint64('tokensUnlocked'),
   uint64('tokensPerPeriod'),
   uint64('tokensTotal'),

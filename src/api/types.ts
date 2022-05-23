@@ -1,11 +1,11 @@
 import { PublicKey } from '@solana/web3.js';
 import BN from 'bn.js';
-import { FarmingState, PoolCommon, WithPoolPK } from '..';
+import { PoolCommon, WithPoolPK } from '..';
+import { FarmingState } from '../types'
 
 export interface WithPoolFilter {
   poolMint?: PublicKey
 }
-
 
 interface PoolTvl {
   tokenA: string
@@ -42,12 +42,23 @@ export interface PoolInfoResponse {
   farming: PoolFarmingResponse[] | null
 }
 
+export interface StakingPoolInfoResponse {
+  swapToken: string
+  poolSigner: string
+  poolTokenMint: string
+  stakingVault: string
+  farming: PoolFarmingResponse[] | null
+}
+
 export interface GetPoolsInfoResponse {
   getPoolsInfo: PoolInfoResponse[]
 }
 
+export interface GetStakingPoolInfoResponse {
+  getStakingPoolInfo: StakingPoolInfoResponse
+}
 
-export interface FarmingStateInfo extends Omit<FarmingState, 'noWithdrawalTime' | 'vestingType' | 'noWithdrawalTime' | 'startTime' > {
+export interface FarmingStateInfo extends Omit<FarmingState, 'noWithdrawalTime' | 'vestingType' | 'startTime'> {
   farmingTokenMint: PublicKey
   farmingTokenMintDecimals: number
 }

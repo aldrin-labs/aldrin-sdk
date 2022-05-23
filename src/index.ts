@@ -1,6 +1,6 @@
-
 export * from './api'
 export * from './farming'
+export * from './staking'
 export * from './pools'
 export * from './token'
 export * from './transactions'

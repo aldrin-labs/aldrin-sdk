@@ -1,6 +1,6 @@
 import { gql } from 'graphql-request';
 import { AldrinApiClient } from './aldrinClient';
-import { GetPoolsInfoResponse, GetPriceResponse, PoolInfo } from './types';
+import { GetPoolsInfoResponse, GetPriceResponse, GetStakingPoolInfoResponse, PoolInfo, StakingPoolInfoResponse } from './types';
 import { poolResponseToModel } from './utils';
 
 /**
@@ -8,11 +8,9 @@ import { poolResponseToModel } from './utils';
  */
 
 export class AldrinApiPoolsClient extends AldrinApiClient {
-
-
   /**
    * Get TVL for AMM pools
-   * @returns last value in USD 
+   * @returns last value in USD
    */
   async getTotalVolumeLocked(): Promise<number> {
 
@@ -103,8 +101,36 @@ export class AldrinApiPoolsClient extends AldrinApiClient {
     const prices = new Map<string, number>()
     pricesResponse.getDexTokensPrices.forEach((v) => prices.set(v.symbol, v.price))
 
-    const parsed = response.getPoolsInfo.map((p) => poolResponseToModel(p, prices))
+    return response.getPoolsInfo.map((p) => poolResponseToModel(p, prices))
+  }
 
-    return parsed
+  async getStakingPoolInfo(): Promise<StakingPoolInfoResponse> {
+    const query = gql`
+      query {
+        getStakingPoolInfo {
+          swapToken
+          poolSigner
+          poolTokenMint
+          stakingVault
+          farming {
+            farmingState
+            farmingTokenVault
+            farmingTokenMint
+            farmingTokenMintDecimals
+            farmingSnapshots
+            tokensUnlocked
+            tokensTotal
+            tokensPerPeriod
+            periodLength
+            vestingPeriod
+            currentTime
+          }
+        }
+      }
+    `
+
+    const response = await this.gqlClient.request<GetStakingPoolInfoResponse>(query)
+
+    return response.getStakingPoolInfo
   }
 }

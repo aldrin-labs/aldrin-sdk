@@ -6,11 +6,11 @@ import {
   FARMING_STATE_LAYOUT,
   FARMING_TICKET_LAYOUT, GetFarmingCalcParams, GetFarmingSnapshotParams, SNAPSHOT_QUEUE_LAYOUT,
 } from '.';
-import { PoolClient, SOLANA_RPC_ENDPOINT, TokenClient } from '..';
-import { createAccountInstruction, sendTransaction } from '../transactions';
+import { PoolClient, SOLANA_RPC_ENDPOINT } from '..';
+import { createAccountInstruction, sendTransaction, withdrawFarmedInstruction } from '../transactions';
 import { Farming } from './farming';
-import { EndFarmingParams, FarmingSnapshotQueue, FarmingState, FarmingTicket, GetFarmingStateParams, GetFarmingTicketsParams, StartFarmingParams } from './types';
-
+import { EndFarmingParams, FarmingSnapshotQueue, FarmingTicket, GetFarmingStateParams, GetFarmingTicketsParams, StartFarmingParams } from './types';
+import { FarmingState } from '../types'
 
 /**
  * Aldrin AMM Pools farming(staking) client
@@ -24,8 +24,8 @@ export class FarmingClient {
 
   /**
    * Get farming state for pool
-   * @param params 
-   * @returns 
+   * @param params
+   * @returns
    */
 
   async getFarmingState(
@@ -53,8 +53,8 @@ export class FarmingClient {
 
   /**
    * Get farming tickets for pool/user
-   * @param params 
-   * @returns 
+   * @param params
+   * @returns
    */
 
   async getFarmingTickets(params: GetFarmingTicketsParams = {}): Promise<FarmingTicket[]> {
@@ -89,7 +89,7 @@ export class FarmingClient {
   /**
    * Get farming calc accounts for farming and/or user
    * @param params Search params (farming state, user)
-   * @returns 
+   * @returns
    */
 
   async getFarmingCalcAccounts(params: GetFarmingCalcParams = {}): Promise<FarmingCalc[]> {
@@ -122,7 +122,7 @@ export class FarmingClient {
 
   /**
    * Start farming, creates Farming Ticket
-   * @param params 
+   * @param params
    * @returns Transaction Id
    */
 
@@ -147,7 +147,6 @@ export class FarmingClient {
       programId,
     })
 
-
     const transaction = new Transaction()
 
     transaction.add(farmingTicketInstruction)
@@ -164,7 +163,7 @@ export class FarmingClient {
     })).map((ca) => ca.farmingState.toBase58())
 
     const statesWithoutCalc = states
-    .filter((state) => !state.tokensUnlocked.eq(state.tokensTotal)) // Has locked tokens -> state not finished yet    
+    .filter((state) => !state.tokensUnlocked.eq(state.tokensTotal)) // Has locked tokens -> state not finished yet
     .filter((state) => !calcForUser.includes(state.farmingStatePublicKey.toString()))
 
     const createCalcInstructions = await Promise.all(statesWithoutCalc.map(async (fs) => {
@@ -190,7 +189,7 @@ export class FarmingClient {
     }))
 
     transaction.add(...createCalcInstructions.flat())
-    
+
     return sendTransaction({
       transaction,
       wallet,
@@ -227,7 +226,7 @@ export class FarmingClient {
     )
 
     return sendTransaction({
-      wallet: wallet,
+      wallet,
       connection: this.connection,
       transaction,
     })
@@ -235,7 +234,7 @@ export class FarmingClient {
 
   /**
    * Claim staking rewards
-   * @param params 
+   * @param params
    * @returns Transaction Id
    */
   async claimFarmed(params: ClaimFarmedParams): Promise<string> {
@@ -250,7 +249,7 @@ export class FarmingClient {
     const transaction = new Transaction()
 
     transaction.add(
-      Farming.withdrawFarmedInstruction({
+      withdrawFarmedInstruction({
         ...params,
         poolSigner,
         userKey: wallet.publicKey,
@@ -259,7 +258,7 @@ export class FarmingClient {
     )
 
     return sendTransaction({
-      wallet: wallet,
+      wallet,
       connection: this.connection,
       transaction,
     })
@@ -268,7 +267,7 @@ export class FarmingClient {
   /**
    * Get farming snapshots. Useful for reward calculations.
    * // TODO: add caching
-   * 
+   *
    */
   async getFarmingSnapshotsQueue(params: GetFarmingSnapshotParams): Promise<FarmingSnapshotQueue[]> {
     const programId = PoolClient.getPoolAddress(params.poolVersion || 1)

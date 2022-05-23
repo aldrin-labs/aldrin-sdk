@@ -1,12 +1,12 @@
 import { PublicKey } from '@solana/web3.js'
 import BN from 'bn.js'
 import { WithPoolPK, WithWallet } from '../pools/types'
-import { PoolVersion } from '../types'
+import { PoolVersion, FarmingState } from '../types'
 
 interface WithPoolVersion {
   poolVersion?: PoolVersion
-
 }
+
 export interface GetFarmingStateParams extends WithPoolPK, WithPoolVersion {
 }
 
@@ -20,22 +20,6 @@ export interface GetFarmingCalcParams {
   farmingState?: PublicKey
   userKey?: PublicKey
   poolVersion?: PoolVersion
-}
-
-export interface FarmingState {
-  tokensUnlocked: BN
-  tokensPerPeriod: BN
-  tokensTotal: BN
-  vestingType: number
-  periodLength: number
-  noWithdrawalTime: number
-  vestingPeriod: number
-  startTime: number
-  currentTime: number
-  pool: PublicKey
-  farmingTokenVault: PublicKey
-  farmingSnapshots: PublicKey
-  farmingStatePublicKey: PublicKey
 }
 
 export interface StartFarmingCommons extends WithPoolPK {
@@ -99,7 +83,7 @@ export interface EndFarmingInstructionParams extends EndFarmingCommon {
 
 export interface FarmingSnapshot {
   /**
-   * LP tokens staked  
+   * LP tokens staked
    * */
 
   tokensFrozen: BN
@@ -135,7 +119,7 @@ export interface ClaimFarmedParams extends ClaimFarmedCommons, WithWallet, WithP
   userFarmingTokenAccount: PublicKey
   maxSnapshots: BN
   farmingTokenVault: PublicKey
-  farmingCalc: PublicKey 
+  farmingCalc: PublicKey
 }
 
 export type GetFarmingSnapshotParams = WithPoolVersion
@@ -148,19 +132,19 @@ export interface CalculateFarmedInstruction extends ClaimFarmedCommons {
 
 export interface ClaimFarmedInstructionParams extends WithPoolPK {
   farmingState: PublicKey
-  farmingCalc: PublicKey 
-  farmingTokenVault: PublicKey 
-  poolSigner: PublicKey 
-  userFarmingTokenAccount: PublicKey 
-  userKey: PublicKey 
+  farmingCalc: PublicKey
+  farmingTokenVault: PublicKey
+  poolSigner: PublicKey
+  userFarmingTokenAccount: PublicKey
+  userKey: PublicKey
   programId: PublicKey
 }
 
 export interface CreateCalcInstructionParams {
-  farmingTicket: PublicKey 
-  userKey: PublicKey 
-  farmingState: PublicKey 
-  initializer: PublicKey 
-  farmingCalc: PublicKey 
+  farmingTicket: PublicKey
+  userKey: PublicKey
+  farmingState: PublicKey
+  initializer: PublicKey
+  farmingCalc: PublicKey
   programId: PublicKey
 }
