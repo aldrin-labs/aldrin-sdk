@@ -15,6 +15,7 @@ const privateKey = fs.readFileSync(
 
 // If you wallet privateKey is in base58 format, you have to use this approach of extracting your privateKey:
 const decoded = bs58.decode(privateKey.trim())
+console.log('decoded:', decoded.toJSON())
 const payer = Keypair.fromSecretKey(new Uint8Array(decoded))
 
 // If you wallet privateKey is in String<Uint8Array>, you have to use this approach of extracting your privateKey:
