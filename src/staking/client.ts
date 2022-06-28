@@ -27,8 +27,6 @@ import { PoolFarmingResponse } from '../api/types';
  * Aldrin Staking client
  */
 export class StakingClient {
-  private tokenClient = new TokenClient(this.connection)
-
   constructor(private connection: Connection = new Connection(SOLANA_RPC_ENDPOINT)) {}
 
   async startStaking(params: StartStakingParams): Promise<string> {
