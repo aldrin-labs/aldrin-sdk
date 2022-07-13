@@ -23,12 +23,12 @@ export interface PoolResponse extends PoolCommon, WithFeesAccount {
   authority: PublicKey
   initializerAccount: PublicKey
   fees: {
-    tradeFeeNumerator: number
-    tradeFeeDenominator: number
-    ownerTradeFeeNumerator: number
-    ownerTradeFeeDenominator: number
-    ownerWithdrawFeeNumerator: number
-    ownerWithdrawFeeDenominator: number
+    tradeFeeNumerator: BN
+    tradeFeeDenominator: BN
+    ownerTradeFeeNumerator: BN
+    ownerTradeFeeDenominator: BN
+    ownerWithdrawFeeNumerator: BN
+    ownerWithdrawFeeDenominator: BN
   }
   poolVersion: PoolVersion
   curveType: number

@@ -1,19 +1,16 @@
 import { PublicKey } from '@solana/web3.js'
 import BN from 'bn.js'
-import { WithPoolPK, WithWallet } from '../pools/types'
-import { PoolVersion, FarmingState } from '../types'
+import { WithWallet } from '../pools/types'
+import { PoolVersion } from '../types'
 
-interface WithPoolVersion {
-  poolVersion?: PoolVersion
+export interface GetFarmingStateParams {
+  stakeMint?: PublicKey
+  farms?: PublicKey[]
 }
 
-export interface GetFarmingStateParams extends WithPoolPK, WithPoolVersion {
-}
-
-export interface GetFarmingTicketsParams {
-  pool?: PublicKey
-  userKey?: PublicKey
-  poolVersion?: PoolVersion
+export interface GetFarmersParams {
+  farm?: PublicKey
+  authority?: PublicKey
 }
 
 export interface GetFarmingCalcParams {
@@ -22,19 +19,22 @@ export interface GetFarmingCalcParams {
   poolVersion?: PoolVersion
 }
 
-export interface StartFarmingCommons extends WithPoolPK {
-  farmingState: PublicKey
-  lpTokenFreezeVault: PublicKey
-  lpTokenAccount: PublicKey
+export interface StartFarmingCommons {
+  farm: PublicKey
   tokenAmount: BN
 }
 
-export interface StartFarmingParams extends StartFarmingCommons, WithWallet, WithPoolVersion { }
+export interface TakeSnapshotInstructionParams {
+  farm: PublicKey
+  stakeVault: PublicKey
+}
+
+export interface StartFarmingParams extends StartFarmingCommons, WithWallet { }
 
 export interface StartFarmingInstructionParams extends StartFarmingCommons {
-  userKey: PublicKey
-  farmingTicket: PublicKey
-  programId: PublicKey
+  walletAuthority: PublicKey
+  stakeWallet: PublicKey
+  stakeVault: PublicKey
 }
 
 export interface AttachedFarmingState {
@@ -43,108 +43,86 @@ export interface AttachedFarmingState {
   lastVestedWithdrawTime: number
 }
 
-
-export interface FarmingTicket {
-  tokensFrozen: BN
-  startTime: BN
-  endTime: BN // Could be infinity
-  userKey: PublicKey
-  pool: PublicKey
-  nextAttached: BN
-  statesAttached: AttachedFarmingState[]
-  farmingTicketPublicKey: PublicKey
+export interface StopfarmingCommons {
+  farm: PublicKey
+  unstakeMax: BN
 }
 
-export interface FarmingCalc {
-  farmingState: PublicKey
-  userKey: PublicKey
-  initializer: PublicKey
-  farmingCalcPublicKey: PublicKey
-  tokenAmount: BN
+export interface StopFarmingInstructionParams extends StopfarmingCommons {
+  authority: PublicKey,
+  stakeWallet: PublicKey
 }
 
-export interface EndFarmingCommon extends WithPoolPK {
-  farmingState: PublicKey
-  farmingSnapshots: PublicKey
-  farmingTicket: PublicKey
-  lpTokenFreezeVault: PublicKey
-  userPoolTokenAccount: PublicKey
+export interface StopFarmingParams extends StopfarmingCommons, WithWallet {
 }
 
-export interface EndFarmingParams extends EndFarmingCommon, WithWallet, WithPoolVersion {
-
+export interface ClaimFarmedParams extends WithWallet {
+  farm: PublicKey
 }
 
-export interface EndFarmingInstructionParams extends EndFarmingCommon {
-  userKey: PublicKey,
-  poolSigner: PublicKey
-  programId: PublicKey
+export interface ClaimElegibleHarvestRestAccount {
+  userRewardAccount: PublicKey
+  harvestVaultAccount: PublicKey
 }
 
-export interface FarmingSnapshot {
-  /**
-   * LP tokens staked
-   * */
-
-  tokensFrozen: BN
-
-  /**
-   * Total tokens (rewards) unlocked
-   * */
-  farmingTokens: BN
-
-  time: number
+export interface ClaimEligibleHarvestInstructionParams {
+  authority: PublicKey
+  farm: PublicKey
+  restAccounts: ClaimElegibleHarvestRestAccount[]
 }
 
-export interface FarmingSnapshotQueue {
-  snapshots: FarmingSnapshot[]
-  nextIndex: BN
-  queuePublicKey: PublicKey
+export interface Harvest {
+  mint: PublicKey;
+  vault: PublicKey;
+  periods: HarvestPeriod[]
 }
 
-
-export interface GetFarmingRewardParams {
-  state: FarmingState
-  queue: FarmingSnapshotQueue[]
-  ticket: FarmingTicket
+export interface HarvestPeriod {
+  tps: BN
+  startsAt: BN
+  endsAt: BN
 }
 
-export interface ClaimFarmedCommons extends WithPoolPK {
-  farmingState: PublicKey
-  farmingSnapshots: PublicKey
-  farmingTicket: PublicKey
+export interface Snapshot {
+  staked: BN
+  startedAt: BN
 }
 
-export interface ClaimFarmedParams extends ClaimFarmedCommons, WithWallet, WithPoolVersion {
-  userFarmingTokenAccount: PublicKey
-  maxSnapshots: BN
-  farmingTokenVault: PublicKey
-  farmingCalc: PublicKey
+export interface Snapshots {
+  ringBuffer: Snapshot[];
+  ringBufferTip: BN
 }
 
-export type GetFarmingSnapshotParams = WithPoolVersion
-
-export interface CalculateFarmedInstruction extends ClaimFarmedCommons {
-  maxSnapshots: BN
-  programId: PublicKey
-  farmingCalc: PublicKey
+export interface Farm {
+  padding: Uint8Array
+  admin: PublicKey
+  stakeMint: PublicKey
+  stakeVault: PublicKey
+  harvests: Harvest[]
+  snapshots: Snapshots
+  minSnapshotWindowSlots: BN
 }
 
-export interface ClaimFarmedInstructionParams extends WithPoolPK {
-  farmingState: PublicKey
-  farmingCalc: PublicKey
-  farmingTokenVault: PublicKey
-  poolSigner: PublicKey
-  userFarmingTokenAccount: PublicKey
-  userKey: PublicKey
-  programId: PublicKey
+export interface FarmWithPubKey extends Farm {
+  publicKey: PublicKey
 }
 
-export interface CreateCalcInstructionParams {
-  farmingTicket: PublicKey
-  userKey: PublicKey
-  farmingState: PublicKey
-  initializer: PublicKey
-  farmingCalc: PublicKey
-  programId: PublicKey
+export interface AvailableHarvest {
+  mint: PublicKey
+  tokens: BN
+}
+
+export interface Farmer {
+  padding: Uint8Array
+  authority: PublicKey
+  farm: PublicKey
+  staked: BN
+  vested: BN
+  vestedAt: BN
+  calculateNextHarvestFrom: BN
+  harvests: AvailableHarvest[]
+}
+
+export interface FarmerWithPubKey extends Farmer {
+  publicKey: PublicKey
 }

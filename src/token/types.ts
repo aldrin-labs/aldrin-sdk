@@ -31,7 +31,7 @@ export interface TokenAccountInfo {
   delegate: PublicKey 
   state: number
   isNativeOption: number
-  isNative: number
+  isNative: BN
   delegatedAmount: BN
   closeAuthorityOption: number
   closeAuthority: PublicKey

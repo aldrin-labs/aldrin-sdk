@@ -1,7 +1,6 @@
 import { PublicKey } from '@solana/web3.js';
 import BN from 'bn.js';
 import { PoolCommon, WithPoolPK } from '..';
-import { FarmingState } from '../types'
 
 export interface WithPoolFilter {
   poolMint?: PublicKey
@@ -58,10 +57,6 @@ export interface GetStakingPoolInfoResponse {
   getStakingPoolInfo: StakingPoolInfoResponse
 }
 
-export interface FarmingStateInfo extends Omit<FarmingState, 'noWithdrawalTime' | 'vestingType' | 'startTime'> {
-  farmingTokenMint: PublicKey
-  farmingTokenMintDecimals: number
-}
 
 export interface TvlInfo {
   base: BN
@@ -75,7 +70,6 @@ export interface PoolInfo extends PoolCommon, WithPoolPK {
   name: string
   lpApr24h: number // percent
   supply: BN
-  farmingStates: FarmingStateInfo[]
   tvl: TvlInfo
 }
 

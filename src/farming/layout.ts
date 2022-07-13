@@ -1,76 +1,65 @@
-import { blob, seq, struct, u8, LayoutObject } from '@solana/buffer-layout';
-import BN from 'bn.js';
+import { blob, LayoutObject, seq, struct } from '@solana/buffer-layout';
 import { publicKey, uint64 } from '../layout/common';
+import { AvailableHarvest, Farm, Farmer, Harvest, HarvestPeriod, Snapshot, Snapshots } from './types';
 
-export const DEFAULT_FARMING_TICKET_END_TIME = new BN('9223372036854775807')
-
-export const FARMING_STATE_LAYOUT = struct<LayoutObject>([
-  blob(8, 'padding'),
-  uint64('tokensUnlocked'),
-  uint64('tokensPerPeriod'),
-  uint64('tokensTotal'),
-  uint64('periodLength', true),
-  uint64('noWithdrawalTime', true),
-  u8('vestingType'),
-  uint64('vestingPeriod', true),
-  uint64('startTime', true),
-  uint64('currentTime', true),
-  publicKey('pool'),
-  publicKey('farmingTokenVault'),
-  publicKey('farmingSnapshots'),
+const HARVEST_PERIOD = struct<HarvestPeriod>([
+  uint64('tps'),
+  uint64('startsAt'),
+  uint64('endsAt'),
 ])
 
-export const FARMING_TICKET_LAYOUT = struct<LayoutObject>([
-  blob(8, 'padding'),
-  uint64('tokensFrozen'),
-  uint64('startTime'),
-  uint64('endTime'), // Could be DEFAULT_FARMING_TICKET_END_TIME
-  publicKey('userKey'),
-  publicKey('pool'),
-  uint64('nextAttached'),
+const HARVEST_LAYOUT = struct<Harvest>([
+  publicKey('mint'),
+  publicKey('vault'),
+  seq(HARVEST_PERIOD, 10, 'periods'),
+])
+
+const SNAPSHOTS_LAYOUT = struct<Snapshots>([
+  uint64('ringBufferTip'),
   seq(
-    struct<LayoutObject>([
-      publicKey('farmingState'),
-      uint64('lastWithdrawTime', true),
-      uint64('lastVestedWithdrawTime', true),
-    ]),
-    10, 'statesAttached'),
-])
+    struct<Snapshot>([
+      uint64('staked'),
+      uint64('startedAt'),
+    ]), 1000,
+    'ringBuffer'),
+], 'snapshots')
 
-export const FARMING_CALC_LAYOUT = struct<LayoutObject>([
+export const FARM_LAYOUT = struct<Farm>([
   blob(8, 'padding'),
-  publicKey('farmingState'),
-  publicKey('userKey'),
-  publicKey('initializer'),
-  uint64('tokenAmount'),
+  publicKey('admin'),
+  publicKey('stakeMint'),
+  publicKey('stakeVault'),
+  seq(HARVEST_LAYOUT, 10, 'harvests'),
+  SNAPSHOTS_LAYOUT,
+  uint64('minSnapshotWindowSlots'),
 ])
 
-export const END_FARMING_INSTRUCTION_LAYOUT = struct<LayoutObject>([
-  blob(8, 'instruction'),
+export const AVAILABLE_HARVEST_LAYOUT = struct<AvailableHarvest>([
+  publicKey('mint'),
+  uint64('tokens'),
 ])
 
-export const CREATE_CALC_INSTRUCTION_LAYOUT = END_FARMING_INSTRUCTION_LAYOUT
-export const WITHDRAW_FARMED_INSTRUCTION_LAYOUT = END_FARMING_INSTRUCTION_LAYOUT
+export const FARMER_LAYOUT = struct<Farmer>([
+  blob(8, 'padding'),
+  publicKey('authority'),
+  publicKey('farm'),
+  uint64('staked'),
+  uint64('vested'),
+  uint64('vestedAt'),
+  uint64('calculateNextHarvestFrom'),
+  seq(AVAILABLE_HARVEST_LAYOUT, 10, 'harvests'),
+])
 
-export const CALCULATE_FARMED_INSTRUCTION = struct<LayoutObject>([
+export const INSTRUCTION_LAYOUT = struct<LayoutObject>([
   blob(8, 'instruction'),
-  uint64('maxSnapshots'),
 ])
 
 export const START_FARMING_INSTRUCTION_LAYOUT = struct<LayoutObject>([
   blob(8, 'instruction'),
-  uint64('poolTokenAmount'),
+  uint64('stake'),
 ])
 
-
-export const SNAPSHOT_QUEUE_LAYOUT = struct<LayoutObject>([
-  blob(8, 'padding'),
-  uint64('nextIndex'),
-  seq(struct<LayoutObject>([
-    u8('isInitialized'),
-    uint64('tokensFrozen'),
-    uint64('farmingTokens'),
-    uint64('time', true),
-  ]), 1500, 'snapshots'),
+export const STOP_FARMING_INSTRUCTION_LAYOUT = struct<LayoutObject>([
+  blob(8, 'instruction'),
+  uint64('unstakeMax'),
 ])
-

@@ -3,12 +3,12 @@ import { publicKey, rustEnum, uint64 } from '../layout/common';
 
 
 const FEES_LAYOUT = struct<LayoutObject>([
-  uint64('tradeFeeNumerator', true),
-  uint64('tradeFeeDenominator', true),
-  uint64('ownerTradeFeeNumerator', true),
-  uint64('ownerTradeFeeDenominator', true),
-  uint64('ownerWithdrawFeeNumerator', true),
-  uint64('ownerWithdrawFeeDenominator', true),
+  uint64('tradeFeeNumerator'),
+  uint64('tradeFeeDenominator'),
+  uint64('ownerTradeFeeNumerator'),
+  uint64('ownerTradeFeeDenominator'),
+  uint64('ownerWithdrawFeeNumerator'),
+  uint64('ownerWithdrawFeeDenominator'),
 ], 'fees')
 
 const POOL_FIELDS_COMMON = [

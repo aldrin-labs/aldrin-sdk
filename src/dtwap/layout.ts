@@ -4,9 +4,9 @@ import { bool, int64, publicKey, rustEnum, uint64 } from '../layout/common';
 export const DTWAP_ORDER = struct<LayoutObject>([
   bool('isInitialized'),
   uint64('amount'),
-  uint64('startTime', true),
-  uint64('endTime', true),
-  uint64('timeHorizon', true),
+  uint64('startTime'),
+  uint64('endTime'),
+  uint64('timeHorizon'),
   uint64('averageTransaction'),
   uint64('amountFilled'),
   uint64('amountToFill'),

@@ -2,8 +2,8 @@ import { blob, Layout, Structure, u8, union } from '@solana/buffer-layout';
 import { PublicKey } from '@solana/web3.js';
 import BN from 'bn.js';
 
-class PublicKeyLayout extends Layout<any> {
-  private layout: Layout<any>
+class PublicKeyLayout extends Layout<PublicKey> {
+  private layout: Layout<Uint8Array>
 
   constructor(property?: string) {
     const layout = blob(32)
@@ -31,16 +31,14 @@ export const publicKey = (property: string) => new PublicKeyLayout(property)
 // export const publicKey = (property: string) => blob(32, property);
 
 
-class U64Layout extends Layout<any> {
-  private layout: Layout<any>
-  private toNumber: boolean
+class U64Layout extends Layout<BN> {
+  private layout: Layout<Uint8Array>
   private signed: boolean
 
-  constructor(property: string, signed: boolean, toNumber: boolean) {
+  constructor(property: string, signed: boolean) {
     const layout = blob(8)
     super(layout.span, property)
-    this.layout = layout
-    this.toNumber = toNumber
+    this.layout = layout /* A function that takes a `Structure` and returns a `Layout`. */
     this.signed = signed
   }
 
@@ -48,13 +46,10 @@ class U64Layout extends Layout<any> {
     return this.layout.getSpan(b, offset)
   }
 
-  decode(b: Uint8Array, offset?: number): BN | number {
+  decode(b: Uint8Array, offset?: number): BN  {
     let bn = new BN(this.layout.decode(b, offset), 10, 'le');
     if (this.signed) {
       bn = bn.fromTwos(this.span * 8).clone();
-    }
-    if (this.toNumber) {
-      return bn.toNumber()
     }
     return bn
   }
@@ -67,8 +62,8 @@ class U64Layout extends Layout<any> {
 /**
  * Layout for a 64bit unsigned value
  */
-export const uint64 = (property: string, toNumber = false) => new U64Layout(property, false, toNumber)
-export const int64 = (property: string, toNumber = false) => new U64Layout(property, true, toNumber)
+export const uint64 = (property: string) => new U64Layout(property, false)
+export const int64 = (property: string) => new U64Layout(property, true)
 
 
 export const rustEnum = (
@@ -84,7 +79,7 @@ export const rustEnum = (
 }
 
 
-class BoolLayout extends Layout<any> {
+class BoolLayout extends Layout<boolean> {
   private layout: Layout<any>
 
   constructor(property: string) {
