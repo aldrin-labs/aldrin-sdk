@@ -18,3 +18,8 @@ export enum SIDE {
   BID = 1,
   ASK = -1,
 }
+
+export interface TokenSwapGetFarmedParams {
+  wallet: Wallet
+  poolMint: PublicKey
+}

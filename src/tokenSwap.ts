@@ -15,7 +15,7 @@ import {
   TokenSwapWithdrawLiquidityParams,
 } from './pools';
 import { SwapBase } from './swapBase';
-import { Wallet, WithReferral } from './types';
+import { TokenSwapGetFarmedParams, Wallet, WithReferral } from './types';
 
 
 /**
@@ -30,7 +30,7 @@ export class TokenSwap extends SwapBase {
     private farmingClient: FarmingClient,
     protected connection = new Connection(SOLANA_RPC_ENDPOINT),
     private wallet: Wallet | null = null,
-    private referralParams: WithReferral | undefined = undefined 
+    private referralParams: WithReferral | undefined = undefined
   ) {
 
     super(tokenClient, connection)
@@ -54,7 +54,7 @@ export class TokenSwap extends SwapBase {
 
   async swap(params: TokenSwapParams) {
     const resolvedInputs = await this.resolveSwapInputs(params)
-    return this.poolClient.swap({...resolvedInputs, slippage: params.slippage, referralParams: this.referralParams})
+    return this.poolClient.swap({ ...resolvedInputs, slippage: params.slippage, referralParams: this.referralParams })
   }
 
   /**
@@ -370,7 +370,7 @@ export class TokenSwap extends SwapBase {
       const { curveType } = pool as PoolRpcV2Response
 
       if (curveType === 1) {
-        const amountToSwap = isInverted ? baseVaultAccount.amount.divn(2) :  quoteVaultAccount.amount.divn(2)
+        const amountToSwap = isInverted ? baseVaultAccount.amount.divn(2) : quoteVaultAccount.amount.divn(2)
         const poolInputAmount = isInverted ? quoteVaultAccount.amount : baseVaultAccount.amount
         const poolOutputAmount = isInverted ? baseVaultAccount.amount : quoteVaultAccount.amount
 
@@ -431,6 +431,48 @@ export class TokenSwap extends SwapBase {
       wallet,
       params.referralParams,
     )
+  }
+
+  async getFarmed(params: TokenSwapGetFarmedParams) {
+    const farms = await this.farmingClient.getFarms({
+      stakeMint: params.poolMint,
+    })
+    const farm = farms[0]
+
+    if (!farm) {
+      throw new Error('No farm found')
+    }
+
+    const farmers = await this.farmingClient.getFarmers({
+      farm: farm.publicKey,
+      authority: params.wallet.publicKey,
+    })
+
+    const farmer = farmers[0]
+
+    if (!farmer) {
+      throw new Error('Farmer not found!')
+    }
+
+    return farmer.harvests
+  }
+
+  async claimFarmed(params: TokenSwapGetFarmedParams) {
+    const farms = await this.farmingClient.getFarms({
+      stakeMint: params.poolMint,
+    })
+
+    const farm = farms[0]
+
+  
+    if (!farm) {
+      throw new Error('No farm found')
+    }
+
+    return this. farmingClient.claimFarmed({
+      farm:farm.publicKey,
+      wallet: params.wallet,
+    })
   }
 
 
