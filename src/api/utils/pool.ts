@@ -24,11 +24,11 @@ export const poolResponseToModel = (
 ): PoolInfo => {
   const [base, quote] = response.parsedName.split('_')
   const poolPublicKey = new PublicKey(response.swapToken)
-  const baseTvl = new BN(response.tvl.tokenA)
-  const quoteTvl = new BN(response.tvl.tokenB)
-  const baseTvlUsd = baseTvl.muln(prices.get(base) || 0)
-  const quoteTvlUsd = quoteTvl.muln(prices.get(quote) || 0)
-  const totalTvlUsd = baseTvl.add(quoteTvl)
+  const baseTvl = response.tvl.tokenA
+  const quoteTvl = response.tvl.tokenB
+  const baseTvlUsd = baseTvl * (prices.get(base) || 0)
+  const quoteTvlUsd = quoteTvl * (prices.get(quote) || 0)
+  const totalTvlUsd = baseTvlUsd + quoteTvlUsd
 
   return {
     poolPublicKey,
@@ -37,6 +37,7 @@ export const poolResponseToModel = (
     baseTokenMint: new PublicKey(response.tokenA),
     quoteTokenVault: new PublicKey(response.poolTokenAccountB),
     quoteTokenMint: new PublicKey(response.tokenA),
+    lpTokenFreezeVaultBalance: new BN(response.lpTokenFreezeVaultBalance.toString()),
     name: response.parsedName,
     lpApr24h: response.apy24h,
     supply: new BN(response.supply),
