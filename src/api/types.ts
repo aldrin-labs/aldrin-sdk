@@ -8,23 +8,28 @@ export interface WithPoolFilter {
 }
 
 interface PoolTvl {
-  tokenA: string
-  tokenB: string
+  tokenA: number
+  tokenB: number
 }
 
-export interface PoolFarmingResponse {
-  farmingState: string
-  farmingTokenVault: string
-  farmingTokenMint: string
+export interface PoolFarmingBase<P, N> {
+  farmingState: P
+  farmingTokenVault: P
+  farmingTokenMint: P
   farmingTokenMintDecimals: number
-  farmingSnapshots: string
-  tokensUnlocked: number
-  tokensTotal: number
-  tokensPerPeriod: number
+  farmingSnapshots: P
+  tokensUnlocked: N
+  tokensTotal: N
+  tokensPerPeriod: N
   periodLength: number
   vestingPeriod: number
   currentTime: number
 }
+
+export type PoolFarmingResponse = PoolFarmingBase<string, number>
+
+export type PoolFarming = PoolFarmingBase<PublicKey, BN>
+
 
 export interface PoolInfoResponse {
   name: string
@@ -64,16 +69,18 @@ export interface FarmingStateInfo extends Omit<FarmingState, 'noWithdrawalTime' 
 }
 
 export interface TvlInfo {
-  base: BN
-  quote: BN
-  baseUsd: BN
-  quoteUsd: BN
-  totalUsd: BN
+  base: number
+  quote: number
+  baseUsd: number
+  quoteUsd: number
+  totalUsd: number
 }
+
 
 export interface PoolInfo extends PoolCommon, WithPoolPK {
   name: string
   lpApr24h: number // percent
+  lpTokenFreezeVaultBalance: BN
   supply: BN
   farmingStates: FarmingStateInfo[]
   tvl: TvlInfo

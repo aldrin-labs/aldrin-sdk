@@ -112,6 +112,8 @@ export class AldrinApiPoolsClient extends AldrinApiClient {
           poolSigner
           poolTokenMint
           stakingVault
+          lpTokenFreezeVault
+          lpTokenFreezeVaultBalance
           farming {
             farmingState
             farmingTokenVault
