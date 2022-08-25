@@ -118,7 +118,6 @@ export class Farming {
     });
   }
 
-
   static async takeSnapshotInstruction(params: TakeSnapshotInstructionParams) {
     const data = Buffer.alloc(INSTRUCTION_LAYOUT.span)
 

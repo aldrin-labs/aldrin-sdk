@@ -67,6 +67,6 @@
     "skipLibCheck": true,                     /* Skip type checking of declaration files. */
     "forceConsistentCasingInFileNames": true /* Disallow inconsistently-cased references to the same file. */
   },
-  "include": ["src/**/*", "test/test.ts"],
+  "include": ["src/**/*", "test/test.ts", "examples/farmingClient/createOldFarming.ts"],
   "exclude": ["node_modules"],
 }
