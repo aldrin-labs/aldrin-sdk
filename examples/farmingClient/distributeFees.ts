@@ -19,13 +19,13 @@ async function createFarm() {
   const tx = new Transaction()
     .add(
       await program.instruction.distributeFees(
-        new BN(100_000000000),
+        new BN(10_000000000),
         {
           accounts: {
             pool,
-            farmingState: new PublicKey('2pXGJso2Zzp16KeK5y7ac3jgQr6Yz9bjRrNG5L3y8eWt'),
-            farmingSnapshots: new PublicKey('Arima5vE5noxehtZLYVgQX3EEM6pemxSpEeqfT9N2qGj'),
-            farmingTokenVault: new PublicKey('3umQCGSRTVB1x4XJASp2dHEaEeQJ2h15BueAq3RJnv8R'),
+            farmingState: new PublicKey('CR8Ah6vGck7p9tpR8CL6f4o4D9viZytvZ7TPhKy3TD6B'),
+            farmingSnapshots: new PublicKey('GDCPeicDdTTUY97nKX95zduv9SNfzh4EMfgmaNQJERv1'),
+            farmingTokenVault: new PublicKey('FSngMihexTk62nrhGVuW2Gxiw7DAEcgTKCWWRmDw3yik'),
             feeAccount: new PublicKey('3JVNogLH4t9Q6ozLSbiXtrb9EAgp72sJPEoerpMuwf6B'),
             walletAuthority: wallet.publicKey,
             authority: wallet.publicKey,

@@ -73,7 +73,7 @@ async function createFarm() {
 
     .add(
       await program.instruction.initializeFarming(
-        new BN(1000_000000000), // tokenAmount
+        new BN(800_000000000), // tokenAmount
         new BN(100_000000000), //tokensPerPeriod
         new BN(600), // periodLength
         new BN(0), //noWithdrawPeriodSeconds

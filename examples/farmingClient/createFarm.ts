@@ -1,6 +1,6 @@
-import { Program, Idl, AnchorProvider } from '@project-serum/anchor'
+import { AnchorProvider, Idl, Program } from '@project-serum/anchor'
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token'
-import { Keypair, PublicKey, SystemProgram, SYSVAR_RENT_PUBKEY, Transaction } from '@solana/web3.js'
+import { Keypair, PublicKey, Transaction } from '@solana/web3.js'
 import { BN } from 'bn.js'
 import { FARMING_PROGRAM_ADDRESS, sendTransaction } from '../../src'
 import idl from '../../src/idl/farming.json'
