@@ -58,9 +58,9 @@ async function createFarm() {
     harvestVault.toString(),
   )
   const tx = new Transaction()
-    .add(
-      await program.account.farm.createInstruction(c),
-    )
+    // .add(
+    //   await program.account.farm.createInstruction(c),
+    // )
     // .add(
     //   await program.methods
     //     .createFarm()
@@ -92,7 +92,7 @@ async function createFarm() {
     // )
     .add(
       await program.methods
-        .newHarvestPeriod(harvestMint, { slot: new BN(currentSlot + 100) }, new BN(80), { amount: new BN('100000000000') })
+        .newHarvestPeriod(harvestMint, { slot: new BN(currentSlot + 100) }, new BN(800000), { amount: new BN('10000000') })
         .accounts({
           admin: wallet.publicKey,
           farm,
@@ -104,7 +104,7 @@ async function createFarm() {
         .instruction()
     )
 
-  const txId = await sendTransaction({ transaction: tx, wallet, connection, partialSigners: [c] })
+  const txId = await sendTransaction({ transaction: tx, wallet, connection })
   console.log('Transaciton sent:', txId)
 }
 
