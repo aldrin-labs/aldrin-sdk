@@ -23,9 +23,9 @@ async function createFarm() {
         {
           accounts: {
             pool,
-            farmingState: new PublicKey('98zmA7r3ScGJvjSNoP2Y2AinxRAseF8y9vQ5nWF1WHh3'),
-            farmingSnapshots: new PublicKey('Bq3VFJy6sBTHTyVJwBg1MqwdK7xrWKAQYtC1CXmUYP35'),
-            farmingTokenVault: new PublicKey('5TiNvZr9AgHrD1VkwiPHavh3kBiFYYhYQW8ojk1GndYm'),
+            farmingState: new PublicKey('4E7tMp1WE4boLnz7wN1qemyKb22JgSxsx6LW9WFBkEqm'),
+            farmingSnapshots: new PublicKey('3cWdEgyRE63QY9YbD2t6SEnpDYWqydS57CbY85ycnnjn'),
+            farmingTokenVault: new PublicKey('GMBcDBq9vHiKBq7RK89JF6g6RTQxrYW4Xriqg8B5cTR'),
             feeAccount: new PublicKey('3JVNogLH4t9Q6ozLSbiXtrb9EAgp72sJPEoerpMuwf6B'),
             walletAuthority: wallet.publicKey,
             authority: wallet.publicKey,
