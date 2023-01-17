@@ -3,6 +3,7 @@ import * as BufferLayout from '@solana/buffer-layout';
 import BN from 'bn.js';
 
 import { publicKey, uint64 } from '../layout/common';
+import { TokenAccountInfo } from './types';
 
 type TYPE_SPL_TOKEN_LAYOUT = {
   mintAuthorityOption: number
@@ -38,7 +39,8 @@ export const SPL_TOKEN_LAYOUT = BufferLayout.struct<TYPE_SPL_TOKEN_LAYOUT>([
   publicKey('freezeAuthority'),
 ]);
 
-export const SPL_ACCOUNT_LAYOUT = BufferLayout.struct<SPL_ACCOUNT_LAYOUT>(
+
+export const SPL_ACCOUNT_LAYOUT = BufferLayout.struct<TokenAccountInfo>(
   [
     publicKey('mint'),
     publicKey('owner'),
@@ -47,7 +49,7 @@ export const SPL_ACCOUNT_LAYOUT = BufferLayout.struct<SPL_ACCOUNT_LAYOUT>(
     publicKey('delegate'),
     BufferLayout.u8('state'),
     BufferLayout.u32('isNativeOption'),
-    uint64('isNative', true),
+    uint64('isNative'),
     uint64('delegatedAmount'),
     BufferLayout.u32('closeAuthorityOption'),
     publicKey('closeAuthority'),

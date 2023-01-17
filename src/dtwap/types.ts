@@ -32,9 +32,9 @@ export type DTwapPair = {
 export type DTwapOrder = {
   isInitialized: boolean
   amount: u64
-  startTime: number
-  endTime: number
-  timeHorizon: number
+  startTime: BN
+  endTime: BN
+  timeHorizon: BN
   averageTransaction: u64
   amountFilled: u64
   amountToFill: u64

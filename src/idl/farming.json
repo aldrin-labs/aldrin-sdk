@@ -1,0 +1,889 @@
+{
+  "version": "2.1.0",
+  "name": "farming",
+  "instructions": [
+    {
+      "name": "createFarm",
+      "accounts": [
+        {
+          "name": "admin",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "farm",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "farmSignerPda",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "stakeMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "stakeVault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "addHarvest",
+      "accounts": [
+        {
+          "name": "admin",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "farm",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "farmSignerPda",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "harvestMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "harvestVault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "removeHarvest",
+      "accounts": [
+        {
+          "name": "admin",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "farm",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "farmSignerPda",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "harvestVault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "harvestMint",
+          "type": "publicKey"
+        }
+      ]
+    },
+    {
+      "name": "setFarmOwner",
+      "accounts": [
+        {
+          "name": "admin",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "newFarmAdmin",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "farm",
+          "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "newHarvestPeriod",
+      "accounts": [
+        {
+          "name": "admin",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "farm",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "harvestWallet",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "harvestVault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "farmSignerPda",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "harvestMint",
+          "type": "publicKey"
+        },
+        {
+          "name": "startsAt",
+          "type": {
+            "defined": "Slot"
+          }
+        },
+        {
+          "name": "periodLengthInSlots",
+          "type": "u64"
+        },
+        {
+          "name": "tokensPerSlot",
+          "type": {
+            "defined": "TokenAmount"
+          }
+        }
+      ]
+    },
+    {
+      "name": "takeSnapshot",
+      "accounts": [
+        {
+          "name": "farm",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "stakeVault",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "setMinSnapshotWindow",
+      "accounts": [
+        {
+          "name": "admin",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "farm",
+          "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "minSnapshotWindowSlots",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "createFarmer",
+      "accounts": [
+        {
+          "name": "authority",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "farmer",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "farm",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "closeFarmer",
+      "accounts": [
+        {
+          "name": "authority",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "farmer",
+          "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "startFarming",
+      "accounts": [
+        {
+          "name": "walletAuthority",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "farmer",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "stakeWallet",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "farm",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "stakeVault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "stake",
+          "type": {
+            "defined": "TokenAmount"
+          }
+        }
+      ]
+    },
+    {
+      "name": "stopFarming",
+      "accounts": [
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "farmer",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "stakeWallet",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "farm",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "farmSignerPda",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "stakeVault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "unstakeMax",
+          "type": {
+            "defined": "TokenAmount"
+          }
+        }
+      ]
+    },
+    {
+      "name": "updateEligibleHarvest",
+      "accounts": [
+        {
+          "name": "farm",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "farmer",
+          "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "claimEligibleHarvest",
+      "accounts": [
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "farmer",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "farmSignerPda",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "whitelistFarmForCompounding",
+      "accounts": [
+        {
+          "name": "admin",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "sourceFarm",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "targetFarm",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "whitelistCompounding",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "dewhitelistFarmForCompounding",
+      "accounts": [
+        {
+          "name": "admin",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "sourceFarm",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "targetFarm",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "whitelistCompounding",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "compoundSameFarm",
+      "accounts": [
+        {
+          "name": "farm",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "farmSignerPda",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "whitelistCompounding",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "stakeVault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "harvestVault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "farmer",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "compoundAcrossFarms",
+      "accounts": [
+        {
+          "name": "sourceFarm",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "targetFarm",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "sourceFarmSignerPda",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "whitelistCompounding",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "targetStakeVault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "sourceHarvestVault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "sourceFarmer",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "targetFarmer",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    }
+  ],
+  "accounts": [
+    {
+      "name": "Farmer",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "authority",
+            "type": "publicKey"
+          },
+          {
+            "name": "farm",
+            "type": "publicKey"
+          },
+          {
+            "name": "staked",
+            "type": {
+              "defined": "TokenAmount"
+            }
+          },
+          {
+            "name": "vested",
+            "type": {
+              "defined": "TokenAmount"
+            }
+          },
+          {
+            "name": "vestedAt",
+            "type": {
+              "defined": "Slot"
+            }
+          },
+          {
+            "name": "calculateNextHarvestFrom",
+            "type": {
+              "defined": "Slot"
+            }
+          },
+          {
+            "name": "harvests",
+            "type": {
+              "array": [
+                {
+                  "defined": "AvailableHarvest"
+                },
+                10
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Farm",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "admin",
+            "type": "publicKey"
+          },
+          {
+            "name": "stakeMint",
+            "type": "publicKey"
+          },
+          {
+            "name": "stakeVault",
+            "type": "publicKey"
+          },
+          {
+            "name": "harvests",
+            "type": {
+              "array": [
+                {
+                  "defined": "Harvest"
+                },
+                10
+              ]
+            }
+          },
+          {
+            "name": "snapshots",
+            "type": {
+              "defined": "Snapshots"
+            }
+          },
+          {
+            "name": "minSnapshotWindowSlots",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "WhitelistCompounding",
+      "type": {
+        "kind": "struct",
+        "fields": []
+      }
+    }
+  ],
+  "types": [
+    {
+      "name": "AvailableHarvest",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mint",
+            "type": "publicKey"
+          },
+          {
+            "name": "tokens",
+            "type": {
+              "defined": "TokenAmount"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Harvest",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mint",
+            "type": "publicKey"
+          },
+          {
+            "name": "vault",
+            "type": "publicKey"
+          },
+          {
+            "name": "periods",
+            "type": {
+              "array": [
+                {
+                  "defined": "HarvestPeriod"
+                },
+                10
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "HarvestPeriod",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "tps",
+            "type": {
+              "defined": "TokenAmount"
+            }
+          },
+          {
+            "name": "startsAt",
+            "type": {
+              "defined": "Slot"
+            }
+          },
+          {
+            "name": "endsAt",
+            "type": {
+              "defined": "Slot"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Snapshots",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "ringBufferTip",
+            "type": "u64"
+          },
+          {
+            "name": "ringBuffer",
+            "type": {
+              "array": [
+                {
+                  "defined": "Snapshot"
+                },
+                1000
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Snapshot",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "staked",
+            "type": {
+              "defined": "TokenAmount"
+            }
+          },
+          {
+            "name": "startedAt",
+            "type": {
+              "defined": "Slot"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "TokenAmount",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "amount",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Slot",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "slot",
+            "type": "u64"
+          }
+        ]
+      }
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "MathOverflow",
+      "msg": "Operation would result in an overflow"
+    },
+    {
+      "code": 6001,
+      "name": "InvalidAccountInput",
+      "msg": "Provided account breaks some constraints, see logs for more info"
+    },
+    {
+      "code": 6002,
+      "name": "InvariantViolation",
+      "msg": "There's a bug in the program, see logs for more info"
+    },
+    {
+      "code": 6003,
+      "name": "InvalidArg",
+      "msg": "One of the provided input arguments is invalid"
+    },
+    {
+      "code": 6004,
+      "name": "FarmAdminMismatch",
+      "msg": "Farm admin does not match the provided signer"
+    },
+    {
+      "code": 6005,
+      "name": "InsufficientSlotTimeSinceLastSnapshot",
+      "msg": "Insufficient slot time has passed since last snapshot was taken"
+    },
+    {
+      "code": 6006,
+      "name": "UnknownHarvestMintPubKey",
+      "msg": "None of existing harvest mints  possedes the public key"
+    },
+    {
+      "code": 6007,
+      "name": "ConfigurationUpdateLimitExceeded",
+      "msg": "The limit of configuration updates has been already exceeded within the snapshot history"
+    },
+    {
+      "code": 6008,
+      "name": "CannotCompoundIfStakeMintIsNotHarvest",
+      "msg": "Stake mint must be one of harvestable mints \\\n        for autocompouding to work"
+    },
+    {
+      "code": 6009,
+      "name": "CannotOverwriteOpenHarvestPeriod",
+      "msg": "Running harvest periods must finish before a new one can start"
+    },
+    {
+      "code": 6010,
+      "name": "HarvestPeriodCannotHaveNegativeLength",
+      "msg": "Harvest period must start before it ends"
+    },
+    {
+      "code": 6011,
+      "name": "HarvestPeriodMustStartAtOrAfterCurrentSlot",
+      "msg": "Cannot start a new harvest period in the past"
+    },
+    {
+      "code": 6012,
+      "name": "HarvestPeriodMustBeAtLeastOneSlot",
+      "msg": "Cannot have a period that lasts 0 slots"
+    }
+  ],
+  "metadata": {
+    "address": "DFarMhaRkdYqhK5jZsexMftaJuWHrY7VzAfkXx5ZmxqZ"
+  }
+}

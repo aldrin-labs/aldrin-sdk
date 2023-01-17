@@ -7,15 +7,14 @@ import { wallet } from '../common';
 export async function getFarmed() {
   const tokenSwap = await TokenSwap.initialize()
 
-  const claimIds = await tokenSwap.claimFarmed({
+  const claimTxId = await tokenSwap.claimFarmed({
     wallet,
     poolMint: AUTHORIZED_POOLS.mSOL_USDC.poolMint,
   })
 
+  console.log(`Reward for farming claimed: ${claimTxId}`)
 
-  claimIds.forEach((id) => {
-    console.log(`Reward for farming claimed: ${id}`)
-  })
+
 }
 
 getFarmed()

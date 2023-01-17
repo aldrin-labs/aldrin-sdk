@@ -1,16 +1,16 @@
-import { Connection, GetProgramAccountsFilter, Keypair, PublicKey, Transaction } from '@solana/web3.js';
+import { Connection, GetProgramAccountsFilter, Transaction } from '@solana/web3.js';
 import {
   ClaimFarmedParams,
-  FarmingCalc,
-  FARMING_CALC_LAYOUT,
-  FARMING_STATE_LAYOUT,
-  FARMING_TICKET_LAYOUT, GetFarmingCalcParams, GetFarmingSnapshotParams, SNAPSHOT_QUEUE_LAYOUT,
 } from '.';
-import { PoolClient, SOLANA_RPC_ENDPOINT } from '..';
-import { createAccountInstruction, sendTransaction, withdrawFarmedInstruction } from '../transactions';
+import { SOLANA_RPC_ENDPOINT } from '..';
+import { EMPTY_PUBLIC_KEY, FARMING_PROGRAM_ADDRESS } from '../constants';
+import { StopFarmingParams, FarmerWithPubKey, FarmWithPubKey, GetFarmersParams, GetFarmingStateParams, StartFarmingParams, ClaimElegibleHarvestRestAccount } from './types';
+import { FARMER_LAYOUT, FARM_LAYOUT } from './layout'
+import { accountDiscriminator } from '../utils';
+import base58 from 'bs58';
 import { Farming } from './farming';
-import { EndFarmingParams, FarmingSnapshotQueue, FarmingTicket, GetFarmingStateParams, GetFarmingTicketsParams, StartFarmingParams } from './types';
-import { FarmingState } from '../types'
+import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { createTokenAccountTransaction, sendTransaction } from '../transactions';
 
 /**
  * Aldrin AMM Pools farming(staking) client
@@ -28,26 +28,40 @@ export class FarmingClient {
    * @returns
    */
 
-  async getFarmingState(
+  async getFarms(
     params: GetFarmingStateParams
-  ): Promise<FarmingState[]> {
-    const programId = PoolClient.getPoolAddress(params.poolVersion || 1)
-    const states = await this.connection.getProgramAccounts(programId, {
+  ): Promise<FarmWithPubKey[]> {
+    const programId = FARMING_PROGRAM_ADDRESS
+
+    const farmPubKeys = (params.farms || []).map((_) => _.toString())
+
+    const filters: GetProgramAccountsFilter[] = [
+      { dataSize: FARM_LAYOUT.span },
+      { memcmp: { offset: 0, bytes: base58.encode(await accountDiscriminator('Farm')) } },
+    ]
+    if (params.stakeMint) {
+      const stakeMintOffset = FARM_LAYOUT.offsetOf('stakeMint')
+
+      if (!stakeMintOffset) {
+        throw new Error('No offset for stakeMint')
+      }
+      filters.push({ memcmp: { offset: stakeMintOffset, bytes: params.stakeMint.toBase58() } })
+    }
+    const farms = await this.connection.getProgramAccounts(programId, {
       commitment: 'finalized',
-      filters: [
-        { dataSize: FARMING_STATE_LAYOUT.span },
-        { memcmp: { offset: FARMING_STATE_LAYOUT.offsetOf('pool') || 0, bytes: params.poolPublicKey.toBase58() } },
-      ],
+      filters,
     })
 
-    return states.map((s) => {
-      const snapshot = FARMING_STATE_LAYOUT.decode(s.account.data) as FarmingState
+    const farmsForPubKeys = farmPubKeys.length ? farms.filter((_) => farmPubKeys.includes(_.pubkey.toBase58())) : farms
+
+    return farmsForPubKeys.map((f) => {
+      const farm = FARM_LAYOUT.decode(f.account.data)
 
       return {
-        ...snapshot,
-        farmingStatePublicKey: s.pubkey,
+        ...farm,
+        publicKey: f.pubkey,
       }
-    })
+    }).map((f) => ({ ...f, harvests: f.harvests.filter((h) => !h.mint.equals(EMPTY_PUBLIC_KEY)) }))
   }
 
 
@@ -57,67 +71,45 @@ export class FarmingClient {
    * @returns
    */
 
-  async getFarmingTickets(params: GetFarmingTicketsParams = {}): Promise<FarmingTicket[]> {
-    const programId = PoolClient.getPoolAddress(params.poolVersion || 1)
+  async getFarmers(params: GetFarmersParams = {}): Promise<FarmerWithPubKey[]> {
+    const programId = FARMING_PROGRAM_ADDRESS
 
     const filters: GetProgramAccountsFilter[] = [
-      { dataSize: FARMING_TICKET_LAYOUT.span },
+      { dataSize: FARMER_LAYOUT.span },
+      { memcmp: { offset: 0, bytes: base58.encode(await accountDiscriminator('Farmer')) } },
     ]
 
-    if (params.pool) {
-      filters.push({ memcmp: { offset: FARMING_TICKET_LAYOUT.offsetOf('pool') || 0, bytes: params.pool.toBase58() } })
+    if (params.farm) {
+      const farmOffset = FARMER_LAYOUT.offsetOf('farm')
+      if (!farmOffset) {
+        throw new Error('No offset for farm')
+      }
+      filters.push({ memcmp: { offset: farmOffset, bytes: params.farm.toBase58() } })
     }
 
-    if (params.userKey) {
-      filters.push({ memcmp: { offset: FARMING_TICKET_LAYOUT.offsetOf('userKey') || 0, bytes: params.userKey.toBase58() } })
+    if (params.authority) {
+      const authorityOffset = FARMER_LAYOUT.offsetOf('authority')
+      if (!authorityOffset) {
+        throw new Error('No offset for farm')
+      }
+      filters.push({ memcmp: { offset: authorityOffset, bytes: params.authority.toBase58() } })
     }
 
-    const tickets = await this.connection.getProgramAccounts(programId, {
+    const farmers = await this.connection.getProgramAccounts(programId, {
+      commitment: 'finalized',
       filters,
     })
 
-    return tickets.map((t) => {
-      const data = FARMING_TICKET_LAYOUT.decode(t.account.data) as FarmingTicket
-      return {
-        ...data,
-        farmingTicketPublicKey: t.pubkey,
-      }
-    })
-  }
+    return farmers
+      .map((f) => {
+        const farmer = FARMER_LAYOUT.decode(f.account.data)
 
-
-  /**
-   * Get farming calc accounts for farming and/or user
-   * @param params Search params (farming state, user)
-   * @returns
-   */
-
-  async getFarmingCalcAccounts(params: GetFarmingCalcParams = {}): Promise<FarmingCalc[]> {
-    const programId = PoolClient.getPoolAddress(params.poolVersion || 1)
-
-    const filters: GetProgramAccountsFilter[] = [
-      { dataSize: FARMING_CALC_LAYOUT.span },
-    ]
-
-    if (params.farmingState) {
-      filters.push({ memcmp: { offset: FARMING_CALC_LAYOUT.offsetOf('farmingState') || 0, bytes: params.farmingState.toBase58() } })
-    }
-
-    if (params.userKey) {
-      filters.push({ memcmp: { offset: FARMING_CALC_LAYOUT.offsetOf('userKey') || 0, bytes: params.userKey.toBase58() } })
-    }
-
-    const farmingCalcs = await this.connection.getProgramAccounts(programId, {
-      filters,
-    })
-
-    return farmingCalcs.map((ca) => {
-      const data = FARMING_CALC_LAYOUT.decode(ca.account.data) as FarmingCalc
-      return {
-        ...data,
-        farmingCalcPublicKey: ca.pubkey,
-      }
-    })
+        return {
+          ...farmer,
+          publicKey: f.pubkey,
+        }
+      })
+      .map((f) => ({ ...f, harvests: f.harvests.filter((h) => !h.mint.equals(EMPTY_PUBLIC_KEY)) }))
   }
 
   /**
@@ -127,77 +119,46 @@ export class FarmingClient {
    */
 
   async startFarming(params: StartFarmingParams): Promise<string> {
-    const programId = PoolClient.getPoolAddress(params.poolVersion || 1)
+    const farms = await this.getFarms({ farms: [params.farm] })
 
-    const { wallet } = params
-    const farmingTicket = Keypair.generate()
+    if (farms.length !== 1) {
+      throw new Error('Cant find farm!')
+    }
 
-    const farmingTicketInstruction = await createAccountInstruction({
-      size: FARMING_TICKET_LAYOUT.span,
-      connection: this.connection,
-      wallet,
-      programId,
-      newAccountPubkey: farmingTicket.publicKey,
+    const farm = farms[0]
+
+    const farmerForFarm = await this.getFarmers({
+      farm: params.farm,
+      authority: params.wallet.publicKey,
     })
 
-    const startFarmingTransaction = Farming.startFarmingInstruction({
-      ...params,
-      userKey: wallet.publicKey,
-      farmingTicket: farmingTicket.publicKey,
-      programId,
-    })
+    const tokensForWallet = await this.connection.getParsedTokenAccountsByOwner(params.wallet.publicKey, { programId: TOKEN_PROGRAM_ID })
 
+    const stakeMint = farm.stakeMint.toString()
+    const stakeWallet = tokensForWallet.value.find((_) => _.account.data.parsed.info.mint === stakeMint)
+    if (!stakeWallet) {
+      throw new Error('No token account for stakeable mint!')
+    }
     const transaction = new Transaction()
-
-    transaction.add(farmingTicketInstruction)
-    transaction.add(startFarmingTransaction)
-
-    const states = await this.getFarmingState({
-      poolVersion: params.poolVersion,
-      poolPublicKey: params.poolPublicKey,
-    })
-
-    const calcForUser = (await this.getFarmingCalcAccounts({
-      userKey: wallet.publicKey,
-      poolVersion: params.poolVersion,
-    })).map((ca) => ca.farmingState.toBase58())
-
-    const statesWithoutCalc = states
-    .filter((state) => !state.tokensUnlocked.eq(state.tokensTotal)) // Has locked tokens -> state not finished yet
-    .filter((state) => !calcForUser.includes(state.farmingStatePublicKey.toString()))
-
-    const createCalcInstructions = await Promise.all(statesWithoutCalc.map(async (fs) => {
-      const farmingCalc = Keypair.generate()
-      const farmingCalcInstruction = await createAccountInstruction({
-        size: FARMING_CALC_LAYOUT.span,
-        connection: this.connection,
-        wallet,
-        programId,
-        newAccountPubkey: farmingCalc.publicKey,
+    if (farmerForFarm.length === 0) {
+      transaction.add(await Farming.createFarmerInstruction(params.farm, params.wallet.publicKey))
+    }
+    transaction.add(
+      await Farming.startFarmingInstruction({
+        farm: params.farm,
+        walletAuthority: params.wallet.publicKey,
+        stakeWallet: stakeWallet.pubkey,
+        stakeVault: farm.stakeVault,
+        tokenAmount: params.tokenAmount,
       })
+    )
 
-      const calcInstruction = Farming.createCalcAccountInstruction({
-        farmingCalc: farmingCalc.publicKey,
-        farmingTicket: farmingTicket.publicKey,
-        userKey: wallet.publicKey,
-        farmingState: fs.farmingStatePublicKey,
-        initializer: wallet.publicKey,
-        programId,
-      })
-
-      return [farmingCalcInstruction, calcInstruction]
-    }))
-
-    transaction.add(...createCalcInstructions.flat())
 
     return sendTransaction({
-      transaction,
-      wallet,
+      wallet: params.wallet,
       connection: this.connection,
-      partialSigners: [farmingTicket],
+      transaction,
     })
-
-
   }
 
 
@@ -205,31 +166,51 @@ export class FarmingClient {
    * End farming
    */
 
-  async endFarming(params: EndFarmingParams) {
-    const programId = PoolClient.getPoolAddress(params.poolVersion || 1)
+  async stopFarming(params: StopFarmingParams) {
+    const farms = await this.getFarms({ farms: [params.farm] })
 
-    const { poolPublicKey, wallet } = params
-    const [poolSigner] = await PublicKey.findProgramAddress(
-      [poolPublicKey.toBuffer()],
-      programId,
-    )
+    if (farms.length !== 1) {
+      throw new Error('Can\'t find farm!')
+    }
+
+    const farm = farms[0]
+
+    const farmersForFarm = await this.getFarmers({
+      farm: params.farm,
+      authority: params.wallet.publicKey,
+    })
+
+    if (farmersForFarm.length !== 1) {
+      throw new Error('Can\'t find farmer!')
+    }
+
+    const tokensForWallet = await this.connection.getParsedTokenAccountsByOwner(params.wallet.publicKey, { programId: TOKEN_PROGRAM_ID })
+    const stakeMint = farm.stakeMint.toString()
+    let stakeWallet = tokensForWallet.value.find((_) => _.account.data.parsed.info.mint === stakeMint)?.pubkey
 
     const transaction = new Transaction()
 
+    if (!stakeWallet) {
+      const { newAccountPubkey, transaction: tx } = await createTokenAccountTransaction({ wallet: params.wallet, mint: farm.stakeMint })
+      stakeWallet = newAccountPubkey
+      transaction.add(tx)
+    }
+
     transaction.add(
-      Farming.endFarmingInstruction({
-        ...params,
-        poolSigner,
-        userKey: wallet.publicKey,
-        programId,
+      await Farming.stopFarmingInstruction({
+        farm: params.farm,
+        authority: params.wallet.publicKey,
+        unstakeMax: params.unstakeMax,
+        stakeWallet,
       })
     )
 
     return sendTransaction({
-      wallet,
+      wallet: params.wallet,
       connection: this.connection,
       transaction,
     })
+
   }
 
   /**
@@ -238,51 +219,56 @@ export class FarmingClient {
    * @returns Transaction Id
    */
   async claimFarmed(params: ClaimFarmedParams): Promise<string> {
-    const programId = PoolClient.getPoolAddress(params.poolVersion || 1)
+    const farms = await this.getFarms({ farms: [params.farm] })
 
-    const { poolPublicKey, wallet } = params
-    const [poolSigner] = await PublicKey.findProgramAddress(
-      [poolPublicKey.toBuffer()],
-      programId,
-    )
+    if (farms.length !== 1) {
+      throw new Error('Can\'t find farm!')
+    }
+
+    const farm = farms[0]
+
+    const farmersForFarm = await this.getFarmers({
+      farm: params.farm,
+      authority: params.wallet.publicKey,
+    })
+
+    if (farmersForFarm.length !== 1) {
+      throw new Error('Can\'t find farmer!')
+    }
 
     const transaction = new Transaction()
+    const tokensForWallet = await this.connection.getParsedTokenAccountsByOwner(params.wallet.publicKey, { programId: TOKEN_PROGRAM_ID })
+    const claimRestAccounts: ClaimElegibleHarvestRestAccount[] = []
+    for (const harvest of farm.harvests) {
+      let userRewardAccount = tokensForWallet.value.find(
+        (ut) => ut.account.data.parsed.info.mint === harvest.mint.toString()
+      )?.pubkey
+
+      if (!userRewardAccount) {
+        const { newAccountPubkey, transaction: newAccountTx } =
+          await createTokenAccountTransaction({ wallet: params.wallet, mint: harvest.mint })
+        userRewardAccount = newAccountPubkey
+
+        transaction.add(newAccountTx)
+      }
+      claimRestAccounts.push({
+        userRewardAccount,
+        harvestVaultAccount: harvest.vault,
+      })
+    }
 
     transaction.add(
-      withdrawFarmedInstruction({
-        ...params,
-        poolSigner,
-        userKey: wallet.publicKey,
-        programId,
+      await Farming.claimEligibleHarvest({
+        farm: params.farm,
+        authority: params.wallet.publicKey,
+        restAccounts: claimRestAccounts,
       })
     )
 
     return sendTransaction({
-      wallet,
+      wallet: params.wallet,
       connection: this.connection,
       transaction,
-    })
-  }
-
-  /**
-   * Get farming snapshots. Useful for reward calculations.
-   * // TODO: add caching
-   *
-   */
-  async getFarmingSnapshotsQueue(params: GetFarmingSnapshotParams): Promise<FarmingSnapshotQueue[]> {
-    const programId = PoolClient.getPoolAddress(params.poolVersion || 1)
-    const snapshots = await this.connection.getProgramAccounts(programId, {
-      filters: [
-        { dataSize: SNAPSHOT_QUEUE_LAYOUT.span },
-      ],
-    })
-
-    return snapshots.map((s) => {
-      const bucket = SNAPSHOT_QUEUE_LAYOUT.decode(s.account.data) as FarmingSnapshotQueue
-      return {
-        ...bucket,
-        queuePublicKey: s.pubkey,
-      }
     })
   }
 }

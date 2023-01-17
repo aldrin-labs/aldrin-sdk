@@ -1,24 +1,21 @@
+import { computeOutputAmount } from '@orca-so/stablecurve';
 import {
   Connection, PublicKey,
-  Transaction,
-  TransactionInstruction,
 } from '@solana/web3.js';
-import { computeOutputAmount } from '@orca-so/stablecurve'
-import { FarmingClient, PRECISION_NOMINATOR, TokenClient, withdrawFarmedInstruction } from '.';
+import BN from 'bn.js';
+import { FarmingClient, PRECISION_NOMINATOR, TokenClient } from '.';
 import {
   CURVE, PoolClient,
   PoolRpcResponse,
   PoolRpcV2Response,
   SIDE,
-  SOLANA_RPC_ENDPOINT, SWAP_FEE_DENOMINATOR, SWAP_FEE_NUMERATOR, TokenSwapAddlLiquidityParams, TokenSwapGetFarmedParams, TokenSwapGetPriceParams,
+  SOLANA_RPC_ENDPOINT, SWAP_FEE_DENOMINATOR, SWAP_FEE_NUMERATOR, TokenSwapAddlLiquidityParams, TokenSwapGetPriceParams,
   TokenSwapLoadParams,
   TokenSwapParams,
   TokenSwapWithdrawLiquidityParams,
 } from './pools';
 import { SwapBase } from './swapBase';
-import { sendTransaction } from './transactions';
-import BN from 'bn.js';
-import { Wallet, WithReferral } from './types';
+import { TokenSwapGetFarmedParams, Wallet, WithReferral } from './types';
 
 
 /**
@@ -33,7 +30,7 @@ export class TokenSwap extends SwapBase {
     private farmingClient: FarmingClient,
     protected connection = new Connection(SOLANA_RPC_ENDPOINT),
     private wallet: Wallet | null = null,
-    private referralParams: WithReferral | undefined = undefined 
+    private referralParams: WithReferral | undefined = undefined
   ) {
 
     super(tokenClient, connection)
@@ -57,7 +54,7 @@ export class TokenSwap extends SwapBase {
 
   async swap(params: TokenSwapParams) {
     const resolvedInputs = await this.resolveSwapInputs(params)
-    return this.poolClient.swap({...resolvedInputs, slippage: params.slippage, referralParams: this.referralParams})
+    return this.poolClient.swap({ ...resolvedInputs, slippage: params.slippage, referralParams: this.referralParams })
   }
 
   /**
@@ -373,7 +370,7 @@ export class TokenSwap extends SwapBase {
       const { curveType } = pool as PoolRpcV2Response
 
       if (curveType === 1) {
-        const amountToSwap = isInverted ? baseVaultAccount.amount.divn(2) :  quoteVaultAccount.amount.divn(2)
+        const amountToSwap = isInverted ? baseVaultAccount.amount.divn(2) : quoteVaultAccount.amount.divn(2)
         const poolInputAmount = isInverted ? quoteVaultAccount.amount : baseVaultAccount.amount
         const poolOutputAmount = isInverted ? baseVaultAccount.amount : quoteVaultAccount.amount
 
@@ -436,137 +433,47 @@ export class TokenSwap extends SwapBase {
     )
   }
 
-
   async getFarmed(params: TokenSwapGetFarmedParams) {
-    const { poolMint, wallet = this.wallet } = params
+    const farms = await this.farmingClient.getFarms({
+      stakeMint: params.poolMint,
+    })
+    const farm = farms[0]
 
-    if (!wallet) {
-      throw new Error('Wallet not provided')
+    if (!farm) {
+      throw new Error('No farm found')
     }
 
-    const pool = this.pools.find((p) => p.poolMint.equals(poolMint))
-
-    if (!pool) {
-      throw new Error('Pool not found!')
-    }
-
-    const tickets = await this.farmingClient.getFarmingTickets({ userKey: wallet.publicKey, pool: pool.poolPublicKey, poolVersion: pool.poolVersion })
-
-    if (tickets.length === 0) {
-      throw new Error('No tickets, nothing to check')
-    }
-
-
-    const states = await this.farmingClient.getFarmingState({ poolPublicKey: pool.poolPublicKey, poolVersion: pool.poolVersion })
-
-    const stateKeys = states.map((state) => state.farmingStatePublicKey.toBase58())
-
-
-    // Resolve rewards
-    const stateVaults = await Promise.all(
-      states.map(async (state) => {
-
-        const tokenInfo = await this.tokenClient.getTokenAccount(state.farmingTokenVault)
-
-        return {
-          tokenInfo,
-          state,
-        }
-      })
-    )
-
-    const calcAccounts = await this.farmingClient.getFarmingCalcAccounts({
-      poolVersion: pool.poolVersion,
-      userKey: wallet.publicKey,
+    const farmers = await this.farmingClient.getFarmers({
+      farm: farm.publicKey,
+      authority: params.wallet.publicKey,
     })
 
-    const calcAccountsForStates = calcAccounts.filter((ca) => stateKeys.includes(ca.farmingState.toBase58()))
+    const farmer = farmers[0]
 
-    return stateVaults.map((sv) => {
-      const calcAccount = calcAccountsForStates.find((ca) => ca.farmingState.equals(sv.state.farmingStatePublicKey))
-      return { ...sv, calcAccount }
-    }).filter((sv) => sv.calcAccount?.tokenAmount.gtn(0))
-
-  }
-
-  async claimFarmed(params: TokenSwapGetFarmedParams): Promise<string[]> {
-    const { wallet = this.wallet, poolMint } = params
-
-    if (!wallet) {
-      throw new Error('Wallet not provided')
+    if (!farmer) {
+      throw new Error('Farmer not found!')
     }
 
-    const farmed = await this.getFarmed(params)
+    return farmer.harvests
+  }
 
-    const pool = this.pools.find((p) => p.poolMint.equals(poolMint))
+  async claimFarmed(params: TokenSwapGetFarmedParams) {
+    const farms = await this.farmingClient.getFarms({
+      stakeMint: params.poolMint,
+    })
 
-    if (!pool) {
-      throw new Error('Pool not found!')
+    const farm = farms[0]
+
+  
+    if (!farm) {
+      throw new Error('No farm found')
     }
 
-    const programId = PoolClient.getPoolAddress(pool.poolVersion)
-
-    const [poolSigner] = await PublicKey.findProgramAddress(
-      [pool?.poolPublicKey.toBuffer()],
-      programId,
-    )
-
-
-    const walletTokens = await this.getWalletTokens(wallet)
-
-    const transactions = await Promise.all(farmed
-      .flatMap(async (state) => {
-
-        const farmingToken = await this.tokenClient.getTokenAccount(state.state.farmingTokenVault)
-
-
-        const instructions: TransactionInstruction[] = []
-        let userFarmingTokenAccount = walletTokens.find((wt) => wt.account.data.parsed.info.mint === farmingToken.mint.toBase58())?.pubkey
-
-
-        if (!userFarmingTokenAccount) {
-          const {
-            transaction: createAccountTransaction,
-            newAccountPubkey,
-          } = await TokenClient.createTokenAccountTransaction({
-            owner: wallet.publicKey,
-            mint: farmingToken.mint,
-          })
-
-          userFarmingTokenAccount = newAccountPubkey
-          instructions.push(...createAccountTransaction.instructions)
-        }
-
-        if (state.calcAccount) {
-          const withdrawInstruction = withdrawFarmedInstruction({
-            farmingState: state.state.farmingStatePublicKey,
-            farmingCalc: state.calcAccount.farmingCalcPublicKey,
-            farmingTokenVault: state.state.farmingTokenVault,
-            userFarmingTokenAccount: userFarmingTokenAccount as PublicKey,
-            userKey: wallet.publicKey,
-            poolPublicKey: pool.poolPublicKey,
-            poolSigner,
-            programId,
-          })
-
-          instructions.push(withdrawInstruction)
-        }
-
-
-        return instructions
-      })
-    )
-
-    return Promise.all(
-      transactions
-        .flat()
-        .map((_) => new Transaction().add(_))
-        .map(async (transaction) => sendTransaction({
-          transaction,
-          wallet,
-          connection: this.connection,
-        }))
-    )
+    return this. farmingClient.claimFarmed({
+      farm:farm.publicKey,
+      wallet: params.wallet,
+    })
   }
+
 
 }

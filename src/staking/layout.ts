@@ -12,8 +12,8 @@ export const STAKING_TICKET_LAYOUT = struct<LayoutObject>([
   seq(
     struct<LayoutObject>([
       publicKey('farmingState'),
-      uint64('lastWithdrawTime', true),
-      uint64('lastVestedWithdrawTime', true),
+      uint64('lastWithdrawTime'),
+      uint64('lastVestedWithdrawTime'),
     ]),
     10, 'statesAttached'),
 ])
