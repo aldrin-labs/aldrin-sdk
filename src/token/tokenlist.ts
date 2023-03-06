@@ -41,5 +41,10 @@ export const TOKEN_LIST = {
       'name': 'MNDE',
       'address': 'MNDEFzGvMt87ueuHvVU9VcTqsAP5b3fTGPsHuuPA5ey',
     },
+    {
+      'symbol': 'CKKA',
+      'name': 'CIKKA',
+      'address': '51pPuhLArFyrUTiLwFtoySBnELppjNdG13b86zPVBY9Z',
+    }
   ],
 }
