@@ -1,0 +1,13 @@
+yarn run v1.22.22
+warning package.json: License should be a valid SPDX license expression
+$ rm -rf dist && npm run build:cjs && npm run build:esm && npm run build:umd && npm run build:types
+
+> @aldrin_exchange/sdk@0.4.51 build:cjs
+> tsc -p config/tsconfig.cjs.json
+
+src/pools/client.ts(90,26): error TS2552: Cannot find name 'GetProgramAccountsFilter'. Did you mean 'GetProgramAccountsConfig'?
+src/pools/client.ts(183,7): error TS2739: Type 'Wallet' is missing the following properties from type 'WalletAdapter': connect, disconnect, connected, sendTransaction
+src/pools/client.ts(304,7): error TS2322: Type 'Wallet' is not assignable to type 'WalletAdapter'.
+src/pools/client.ts(474,7): error TS2322: Type 'Wallet' is not assignable to type 'WalletAdapter'.
+error Command failed with exit code 2.
+info Visit https://yarnpkg.com/en/docs/cli/run for documentation about this command.
