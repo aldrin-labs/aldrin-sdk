@@ -27,7 +27,5 @@ export async function simulateTransaction({
 
   const transactionFromWallet = await wallet.signTransaction(transaction)
 
-  return await connection.simulateTransaction(transactionFromWallet, partialSigners, true)
-
-
+  return await connection.simulateTransaction(transactionFromWallet)
 }

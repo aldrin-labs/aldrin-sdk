@@ -1,12 +1,17 @@
-import { Connection, PublicKey, GetProgramAccountsConfig, GetProgramAccountsResponse } from '@solana/web3.js';
-import { ProgramAccountFilter } from '../types/web3';
+import {
+  Connection,
+  PublicKey,
+  GetProgramAccountsConfig,
+  GetProgramAccountsResponse,
+  Commitment,
+  GetProgramAccountsFilter
+} from '@solana/web3.js';
 
-// Convert our filter type to web3.js filter type
-const convertFilter = (filter: ProgramAccountFilter): GetProgramAccountsConfig['filters'][0] => {
-  if (filter.dataSize !== undefined) {
+const convertFilter = (filter: GetProgramAccountsFilter): GetProgramAccountsFilter => {
+  if ('dataSize' in filter) {
     return { dataSize: filter.dataSize };
   }
-  if (filter.memcmp) {
+  if ('memcmp' in filter) {
     return { memcmp: filter.memcmp };
   }
   throw new Error('Invalid filter type');
@@ -15,13 +20,13 @@ const convertFilter = (filter: ProgramAccountFilter): GetProgramAccountsConfig['
 export const getProgramAccounts = async (
   connection: Connection,
   programId: PublicKey,
-  config: { filters?: ProgramAccountFilter[], commitment?: string }
+  config: { filters?: GetProgramAccountsFilter[], commitment?: Commitment }
 ): Promise<GetProgramAccountsResponse> => {
   try {
     const formattedConfig: GetProgramAccountsConfig = {
       commitment: config.commitment || 'confirmed',
       encoding: 'base64',
-      filters: config.filters?.map(convertFilter) || []
+      filters: config.filters?.map(convertFilter)
     };
 
     return connection.getProgramAccounts(programId, formattedConfig);

@@ -1,16 +1,17 @@
-import { Connection, GetProgramAccountsFilter, Transaction } from '@solana/web3.js';
+import { Connection, PublicKey, Transaction } from '@solana/web3.js';
+import { GetProgramAccountsConfig, GetProgramAccountsFilter, WalletAdapter } from '../types/web3';
 import {
   ClaimFarmedParams,
 } from '.';
 import { SOLANA_RPC_ENDPOINT } from '..';
 import { EMPTY_PUBLIC_KEY, FARMING_PROGRAM_ADDRESS } from '../constants';
 import { StopFarmingParams, FarmerWithPubKey, FarmWithPubKey, GetFarmersParams, GetFarmingStateParams, StartFarmingParams, ClaimElegibleHarvestRestAccount } from './types';
-import { FARMER_LAYOUT, FARM_LAYOUT } from './layout'
+import { FARMER_LAYOUT, FARM_LAYOUT } from './layout';
 import { accountDiscriminator } from '../utils';
 import base58 from 'bs58';
 import { Farming } from './farming';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { createTokenAccountTransaction, sendTransaction } from '../transactions';
+import { createTokenAccountTransaction, sendTransaction, wrapWallet } from '../transactions';
 
 /**
  * Aldrin AMM Pools farming(staking) client
@@ -36,8 +37,13 @@ export class FarmingClient {
     const farmPubKeys = (params.farms || []).map((_) => _.toString())
 
     const filters: GetProgramAccountsFilter[] = [
+      {
+        memcmp: {
+          offset: 0,
+          bytes: base58.encode(await accountDiscriminator('Farm')),
+        },
+      },
       { dataSize: FARM_LAYOUT.span },
-      { memcmp: { offset: 0, bytes: base58.encode(await accountDiscriminator('Farm')) } },
     ]
     if (params.stakeMint) {
       const stakeMintOffset = FARM_LAYOUT.offsetOf('stakeMint')
@@ -47,21 +53,26 @@ export class FarmingClient {
       }
       filters.push({ memcmp: { offset: stakeMintOffset, bytes: params.stakeMint.toBase58() } })
     }
-    const farms = await this.connection.getProgramAccounts(programId, {
+
+    const config: GetProgramAccountsConfig = {
       commitment: 'finalized',
+      encoding: 'base64',
       filters,
-    })
+    };
 
-    const farmsForPubKeys = farmPubKeys.length ? farms.filter((_) => farmPubKeys.includes(_.pubkey.toBase58())) : farms
+    const farms = await this.connection.getProgramAccounts(programId, config)
 
-    return farmsForPubKeys.map((f) => {
-      const farm = FARM_LAYOUT.decode(f.account.data)
+    const farmsForPubKeys = farmPubKeys.length ?
+      farms.filter((account: { pubkey: PublicKey }) => farmPubKeys.includes(account.pubkey.toBase58())) :
+      farms
 
+    return farmsForPubKeys.map((account: { pubkey: PublicKey; account: { data: Buffer } }) => {
+      const farm = FARM_LAYOUT.decode(account.account.data)
       return {
         ...farm,
-        publicKey: f.pubkey,
+        publicKey: account.pubkey,
       }
-    }).map((f) => ({ ...f, harvests: f.harvests.filter((h) => !h.mint.equals(EMPTY_PUBLIC_KEY)) }))
+    }).map((farm: any) => ({ ...farm, harvests: farm.harvests.filter((harvest: { mint: { equals: (arg0: PublicKey) => boolean } }) => !harvest.mint.equals(EMPTY_PUBLIC_KEY)) }))
   }
 
 
@@ -75,8 +86,13 @@ export class FarmingClient {
     const programId = FARMING_PROGRAM_ADDRESS
 
     const filters: GetProgramAccountsFilter[] = [
+      {
+        memcmp: {
+          offset: 0,
+          bytes: base58.encode(await accountDiscriminator('Farmer')),
+        },
+      },
       { dataSize: FARMER_LAYOUT.span },
-      { memcmp: { offset: 0, bytes: base58.encode(await accountDiscriminator('Farmer')) } },
     ]
 
     if (params.farm) {
@@ -95,21 +111,26 @@ export class FarmingClient {
       filters.push({ memcmp: { offset: authorityOffset, bytes: params.authority.toBase58() } })
     }
 
-    const farmers = await this.connection.getProgramAccounts(programId, {
+    const config: GetProgramAccountsConfig = {
       commitment: 'finalized',
+      encoding: 'base64',
       filters,
-    })
+    };
+
+    const farmers = await this.connection.getProgramAccounts(programId, config)
 
     return farmers
-      .map((f) => {
-        const farmer = FARMER_LAYOUT.decode(f.account.data)
-
+      .map((account: { pubkey: PublicKey; account: { data: Buffer } }) => {
+        const farmer = FARMER_LAYOUT.decode(account.account.data)
         return {
           ...farmer,
-          publicKey: f.pubkey,
+          publicKey: account.pubkey,
         }
       })
-      .map((f) => ({ ...f, harvests: f.harvests.filter((h) => !h.mint.equals(EMPTY_PUBLIC_KEY)) }))
+      .map((farmer: FarmerWithPubKey) => ({
+        ...farmer,
+        harvests: farmer.harvests.filter((harvest) => !harvest.mint.equals(EMPTY_PUBLIC_KEY))
+      }))
   }
 
   /**
@@ -155,7 +176,7 @@ export class FarmingClient {
 
 
     return sendTransaction({
-      wallet: params.wallet,
+      wallet: wrapWallet(params.wallet),
       connection: this.connection,
       transaction,
     })
@@ -206,7 +227,7 @@ export class FarmingClient {
     )
 
     return sendTransaction({
-      wallet: params.wallet,
+      wallet: wrapWallet(params.wallet),
       connection: this.connection,
       transaction,
     })
@@ -266,7 +287,7 @@ export class FarmingClient {
     )
 
     return sendTransaction({
-      wallet: params.wallet,
+      wallet: wrapWallet(params.wallet),
       connection: this.connection,
       transaction,
     })
