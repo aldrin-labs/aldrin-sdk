@@ -1,5 +1,6 @@
 import { Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { Connection, PublicKey, SystemProgram, Transaction, GetProgramAccountsConfig, GetProgramAccountsFilter, Commitment } from '@solana/web3.js';
+import { Connection, PublicKey, SystemProgram, Transaction, GetProgramAccountsConfig, Commitment } from '@solana/web3.js';
+import { GetProgramAccountsFilter } from '../types/web3';
 import base58 from 'bs58';
 import {
   CURVE,

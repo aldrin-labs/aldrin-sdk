@@ -1,4 +1,5 @@
-import { Connection, PublicKey, Transaction, GetProgramAccountsConfig, GetProgramAccountsFilter, AccountInfo } from '@solana/web3.js';
+import { Connection, PublicKey, Transaction, GetProgramAccountsConfig, AccountInfo } from '@solana/web3.js';
+import { GetProgramAccountsFilter } from '../types/web3';
 import { DTwapPair } from './types';
 import { SOLANA_RPC_ENDPOINT, DTWAP_PROGRAM_ADDRESS } from '..';
 import { DTWAP_PAIR_SETTINGS, DTWAP_ORDER_ARRAY } from './layout';
@@ -12,11 +13,10 @@ import {
   DTwapOrderArayResponse,
   DTWAP_AVAILABLE_TOKENS,
 } from '.';
-import { sendTransaction, simulateTransaction } from '../transactions';
+import { sendTransaction, simulateTransaction, wrapWallet } from '../transactions';
 import BN from 'bn.js';
 import { SIDE } from '../types';
 import base58 from 'bs58';
-import { wrapWallet } from '../types/wallet-adapter';
 
 export class DTwapClient {
   constructor(private connection: Connection = new Connection(SOLANA_RPC_ENDPOINT)) {

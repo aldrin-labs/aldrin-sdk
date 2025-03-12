@@ -3,9 +3,9 @@ import {
   PublicKey,
   GetProgramAccountsConfig,
   GetProgramAccountsResponse,
-  Commitment,
-  GetProgramAccountsFilter
+  Commitment
 } from '@solana/web3.js';
+import { GetProgramAccountsFilter } from '../types/web3';
 
 const convertFilter = (filter: GetProgramAccountsFilter): GetProgramAccountsFilter => {
   if ('dataSize' in filter) {
