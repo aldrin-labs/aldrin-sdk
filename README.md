@@ -178,6 +178,40 @@ stakingClient.claim({
 You can find more complex examples by [link](https://github.com/aldrin-exchange/aldrin-sdk/tree/main/examples).
 
 
+## Wallet Adapter Compatibility
+
+The Aldrin SDK now supports the Solana Wallet Adapter standard, making it easier to integrate with various wallet providers. You can use either a basic wallet or a WalletAdapter-compatible wallet with the SDK:
+
+```js
+// Using a basic wallet
+const wallet = {
+  publicKey: new PublicKey("..."),
+  signTransaction: async (tx) => { ... },
+  signAllTransactions: async (txs) => { ... }
+};
+
+// Using a WalletAdapter-compatible wallet
+const walletAdapter = {
+  publicKey: new PublicKey("..."),
+  signTransaction: async (tx) => { ... },
+  signAllTransactions: async (txs) => { ... },
+  connect: async () => { ... },
+  disconnect: async () => { ... },
+  connected: true,
+  sendTransaction: async (tx, connection) => { ... }
+};
+
+// Both can be used with the SDK
+const tokenSwap = await TokenSwap.initialize();
+await tokenSwap.swap({
+  wallet, // or walletAdapter
+  // other parameters...
+});
+```
+
+For more details, see the [Wallet Adapter Compatibility documentation](https://github.com/aldrin-exchange/aldrin-sdk/tree/main/docs/wallet-adapter-compatibility.md).
+
+
 ## Development
 
 1. Clone [repository](https://github.com/aldrin-exchange/aldrin-sdk)
@@ -186,4 +220,3 @@ You can find more complex examples by [link](https://github.com/aldrin-exchange/
 
 ## Warning 
 The library is under active development. Use it at your own risk.
-
