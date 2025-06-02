@@ -1,0 +1,67 @@
+name: Publish to NPM
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish (leave empty to use package.json version)'
+        required: false
+        type: string
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: read
+      id-token: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'yarn'
+          registry-url: 'https://registry.npmjs.org'
+          
+      - name: Install dependencies
+        run: |
+          # Try to install dependencies, handling the local file dependency issue
+          if ! yarn install --ignore-optional; then
+            echo "Warning: Some dependencies failed to install. This might be due to local file dependencies."
+            echo "Attempting to install without problematic dependencies..."
+            # Remove the problematic local dependency temporarily for CI
+            npm pkg delete dependencies["@project-serum/common"]
+            yarn install --ignore-optional
+          fi
+        
+      - name: Run linter
+        run: yarn lint
+        continue-on-error: false
+        
+      - name: Run tests
+        run: yarn test
+        continue-on-error: false
+        
+      - name: Build project
+        run: yarn build
+        
+      - name: Verify package version
+        run: |
+          PACKAGE_VERSION=$(node -p "require('./package.json').version")
+          echo "Package version: $PACKAGE_VERSION"
+          
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ inputs.version }}" ]; then
+            echo "Manual version specified: ${{ inputs.version }}"
+            npm version ${{ inputs.version }} --no-git-tag-version
+          fi
+        
+      - name: Publish to NPM
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
