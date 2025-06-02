@@ -1,5 +1,6 @@
 import { Connection, PublicKey, Transaction } from '@solana/web3.js';
-import { GetProgramAccountsConfig, GetProgramAccountsFilter, WalletAdapter } from '../types/web3';
+import { GetProgramAccountsConfig } from '../types/web3';
+import { GetProgramAccountsFilter } from '../types/web3';
 import {
   ClaimFarmedParams,
 } from '.';
@@ -129,7 +130,7 @@ export class FarmingClient {
       })
       .map((farmer: FarmerWithPubKey) => ({
         ...farmer,
-        harvests: farmer.harvests.filter((harvest) => !harvest.mint.equals(EMPTY_PUBLIC_KEY))
+        harvests: farmer.harvests.filter((harvest) => !harvest.mint.equals(EMPTY_PUBLIC_KEY)),
       }))
   }
 

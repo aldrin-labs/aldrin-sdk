@@ -4,8 +4,8 @@ import {
   GetProgramAccountsConfig,
   GetProgramAccountsResponse,
   Commitment,
-  GetProgramAccountsFilter
 } from '@solana/web3.js';
+import { GetProgramAccountsFilter } from '../types/web3';
 
 const convertFilter = (filter: GetProgramAccountsFilter): GetProgramAccountsFilter => {
   if ('dataSize' in filter) {
@@ -26,7 +26,7 @@ export const getProgramAccounts = async (
     const formattedConfig: GetProgramAccountsConfig = {
       commitment: config.commitment || 'confirmed',
       encoding: 'base64',
-      filters: config.filters?.map(convertFilter)
+      filters: config.filters?.map(convertFilter),
     };
 
     return connection.getProgramAccounts(programId, formattedConfig);

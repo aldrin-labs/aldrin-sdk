@@ -5,7 +5,7 @@ export type { GetProgramAccountsConfig };
 export const toProgramAccountConfig = (config: GetProgramAccountsConfig): GetProgramAccountsConfig => ({
   commitment: config.commitment || 'confirmed',
   encoding: 'base64',
-  filters: config.filters || []
+  filters: config.filters || [],
 });
 
 export const getProgramAccounts = async (

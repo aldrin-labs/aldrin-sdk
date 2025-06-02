@@ -7,7 +7,7 @@ import {
   Commitment,
   SendOptions,
   AccountInfo,
-  ParsedAccountData
+  ParsedAccountData,
 } from '@solana/web3.js';
 
 export interface BaseWallet {
@@ -37,7 +37,7 @@ export type {
   Connection,
   PublicKey,
   Transaction,
-  SendOptions
+  SendOptions,
 };
 
 export type ProgramAccount<T = AccountInfo<Buffer | ParsedAccountData>> = {

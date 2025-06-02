@@ -1,6 +1,6 @@
-import { Connection, PublicKey, Transaction, Keypair } from '@solana/web3.js';
+import { Connection, Transaction, Keypair } from '@solana/web3.js';
 import type { WalletAdapter } from '../types/web3';
-import { wrapWallet } from '../types/wallet-adapter';
+import { wrapWallet } from './wallet-adapter';
 import { log } from '../utils';
 
 export interface SendTransactionParams {
