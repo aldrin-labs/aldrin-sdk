@@ -3,7 +3,7 @@ import {
   PublicKey,
   GetProgramAccountsConfig,
   GetProgramAccountsResponse,
-  Commitment
+  Commitment,
 } from '@solana/web3.js';
 import { GetProgramAccountsFilter } from '../types/web3';
 
@@ -26,7 +26,7 @@ export const getProgramAccounts = async (
     const formattedConfig: GetProgramAccountsConfig = {
       commitment: config.commitment || 'confirmed',
       encoding: 'base64',
-      filters: config.filters?.map(convertFilter)
+      filters: config.filters?.map(convertFilter),
     };
 
     return connection.getProgramAccounts(programId, formattedConfig);

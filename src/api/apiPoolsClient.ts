@@ -33,7 +33,11 @@ export class AldrinApiPoolsClient extends AldrinApiClient {
     }
     `
 
-    const response = await this.gqlClient.request(query)
+    const response = await this.gqlClient.request(query) as {
+      getTotalVolumeLockedHistory: {
+        volumes: Array<{ vol: number; date: string }>
+      }
+    }
     return response.getTotalVolumeLockedHistory.volumes[0].vol
   }
 

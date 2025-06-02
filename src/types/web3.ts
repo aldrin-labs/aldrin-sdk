@@ -7,7 +7,7 @@ import {
   Commitment,
   SendOptions,
   AccountInfo,
-  ParsedAccountData
+  ParsedAccountData,
 } from '@solana/web3.js';
 
 export interface BaseWallet {
@@ -27,29 +27,18 @@ export interface WalletAdapter extends BaseWallet {
   ): Promise<string>;
 }
 
-// Define GetProgramAccountsFilter type since it's not available in @solana/web3.js v1.87.6
-export interface GetProgramAccountsFilter {
-  memcmp?: {
-    offset: number;
-    bytes: string;
-  };
-  dataSize?: number;
-}
-
 // Re-export types from @solana/web3.js
 export type {
   GetProgramAccountsConfig,
+  GetProgramAccountsFilter,
   Commitment,
   AccountInfo,
   ParsedAccountData,
   Connection,
   PublicKey,
   Transaction,
-  SendOptions
+  SendOptions,
 };
-
-// Export our custom type
-export { GetProgramAccountsFilter };
 
 export type ProgramAccount<T = AccountInfo<Buffer | ParsedAccountData>> = {
   pubkey: PublicKey;

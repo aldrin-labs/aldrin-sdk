@@ -130,7 +130,7 @@ export class FarmingClient {
       })
       .map((farmer: FarmerWithPubKey) => ({
         ...farmer,
-        harvests: farmer.harvests.filter((harvest) => !harvest.mint.equals(EMPTY_PUBLIC_KEY))
+        harvests: farmer.harvests.filter((harvest) => !harvest.mint.equals(EMPTY_PUBLIC_KEY)),
       }))
   }
 

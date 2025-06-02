@@ -7,8 +7,7 @@ This document explains the changes made to support wallet adapter compatibility 
 The Aldrin SDK has been updated to support the Solana Wallet Adapter standard, making it easier to integrate with various wallet providers. The changes include:
 
 1. Extended `Wallet` interface with optional WalletAdapter properties
-2. Custom `GetProgramAccountsFilter` type to maintain compatibility with @solana/web3.js v1.87.6
-3. Improved `wrapWallet` function to better handle different wallet implementations
+2. Improved `wrapWallet` function to better handle different wallet implementations
 
 ## Extended Wallet Interface
 
@@ -29,22 +28,9 @@ export interface Wallet {
 
 These optional properties allow the Wallet interface to be compatible with the WalletAdapter standard while maintaining backward compatibility with existing code.
 
-## Custom GetProgramAccountsFilter Type
+## Type Compatibility
 
-A custom `GetProgramAccountsFilter` type has been added to maintain compatibility with @solana/web3.js v1.87.6:
-
-```typescript
-// Define GetProgramAccountsFilter type since it's not available in @solana/web3.js v1.87.6
-export interface GetProgramAccountsFilter {
-  memcmp?: {
-    offset: number;
-    bytes: string;
-  };
-  dataSize?: number;
-}
-```
-
-This type is used throughout the codebase to ensure compatibility with the downgraded @solana/web3.js version.
+The SDK now uses the standard `GetProgramAccountsFilter` type from @solana/web3.js, ensuring full compatibility with the Solana ecosystem. All type definitions are re-exported from the main web3.js package for consistency.
 
 ## Improved wrapWallet Function
 

@@ -41,6 +41,6 @@ export function wrapWallet(wallet: Wallet | BaseWallet): WalletAdapter {
       : async (transaction: Transaction, connection: Connection) => {
           const signed = await wallet.signTransaction(transaction);
           return connection.sendRawTransaction(signed.serialize());
-        }
+        },
   };
 }
