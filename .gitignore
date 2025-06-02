@@ -8,3 +8,7 @@ package-lock.json
 
 .DS_STORE
 .VSCODE
+
+# Rust build artifacts
+rust/target/
+rust/Cargo.lock
