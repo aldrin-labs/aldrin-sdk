@@ -1,4 +1,4 @@
-import { Connection, PublicKey, Transaction, GetProgramAccountsConfig, AccountInfo } from '@solana/web3.js';
+import { Connection, Transaction, GetProgramAccountsConfig } from '@solana/web3.js';
 import { GetProgramAccountsFilter } from '../types/web3';
 import { DTwapPair } from './types';
 import { SOLANA_RPC_ENDPOINT, DTWAP_PROGRAM_ADDRESS } from '..';

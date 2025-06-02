@@ -1,5 +1,5 @@
 import { Connection, PublicKey, Transaction } from '@solana/web3.js';
-import { GetProgramAccountsConfig, WalletAdapter } from '../types/web3';
+import { GetProgramAccountsConfig } from '../types/web3';
 import { GetProgramAccountsFilter } from '../types/web3';
 import {
   ClaimFarmedParams,
