@@ -29,13 +29,13 @@ let pool_base_amount = BigUint::from(1_000_000u32);
 let pool_quote_amount = BigUint::from(2_000_000u32);
 
 // Want to swap 100K quote tokens
-let outcome_amount = BigUint::from(100_000u32);
+let amount_to_send = BigUint::from(100_000u32);
 
 // Calculate how many base tokens we'll receive
 let amount_out = calculate_swap_amount_out(
     &pool_base_amount,
     &pool_quote_amount, 
-    &outcome_amount,
+    &amount_to_send,
     CurveType::Product
 )?;
 
@@ -53,13 +53,13 @@ let pool_base_amount = BigUint::from(1_000_000u32);
 let pool_quote_amount = BigUint::from(2_000_000u32);
 
 // Want to receive 50K base tokens
-let min_income_amount = BigUint::from(50_000u32);
+let amount_to_receive = BigUint::from(50_000u32);
 
 // Calculate how many quote tokens we need to send
 let amount_in = calculate_swap_amount_in(
     &pool_base_amount,
     &pool_quote_amount,
-    &min_income_amount, 
+    &amount_to_receive, 
     CurveType::Product
 )?;
 
