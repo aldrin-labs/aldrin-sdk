@@ -53,6 +53,29 @@ async function trade() {
 trade()
 ```
 
+### Swap Calculations in Rust
+
+For high-performance applications or integration with Rust programs, swap amount calculations are also available in Rust:
+
+```rust
+use aldrin_swap_calc::{calculate_swap_amount_out, CurveType, SwapError};
+use num_bigint::BigUint;
+
+match calculate_swap_amount_out(
+    &BigUint::from(1_000_000u32), // pool base amount
+    &BigUint::from(2_000_000u32), // pool quote amount
+    &BigUint::from(100_000u32),   // amount to swap
+    CurveType::Product
+) {
+    Ok(amount_out) => println!("Will receive {} tokens", amount_out),
+    Err(SwapError::InsufficientLiquidity) => println!("Not enough liquidity"),
+    Err(SwapError::InvalidAmount) => println!("Invalid input amount"),
+    Err(e) => println!("Error: {:?}", e),
+}
+```
+
+See [Rust documentation](rust/README.md) for more details.
+
 ***
 
 ### Add [pool](https://dex.aldrin.com/pools) liquidity
