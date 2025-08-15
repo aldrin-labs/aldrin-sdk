@@ -3,6 +3,7 @@ import {
   Connection, PublicKey,
 } from '@solana/web3.js';
 import BN from 'bn.js';
+import { EventEmitter } from 'events';
 import { FarmingClient, PRECISION_NOMINATOR, TokenClient } from '.';
 import {
   CURVE, PoolClient,
@@ -22,6 +23,7 @@ import { TokenSwapGetFarmedParams, Wallet, WithReferral } from './types';
  * High-level API for Aldrin AMM Pools 
  */
 export class TokenSwap extends SwapBase {
+  private rpcEventEmitter?: EventEmitter;
 
   constructor(
     private pools: PoolRpcResponse[],
@@ -30,11 +32,64 @@ export class TokenSwap extends SwapBase {
     private farmingClient: FarmingClient,
     protected connection = new Connection(SOLANA_RPC_ENDPOINT),
     private wallet: Wallet | null = null,
-    private referralParams: WithReferral | undefined = undefined
+    private referralParams: WithReferral | undefined = undefined,
+    rpcEventEmitter?: EventEmitter
   ) {
 
     super(tokenClient, connection)
+    
+    this.rpcEventEmitter = rpcEventEmitter;
+    
+    // Set up event listener for RPC URL changes
+    if (this.rpcEventEmitter) {
+      this.setupRpcEventListener();
+    }
 
+  }
+
+  /**
+   * Sets up the event listener for RPC URL changes
+   */
+  private setupRpcEventListener(): void {
+    if (!this.rpcEventEmitter) return;
+    
+    this.rpcEventEmitter.on('rpcUrlChange', async (newRpcUrl: string) => {
+      try {
+        await this.updateRpcEndpoint(newRpcUrl);
+        this.rpcEventEmitter?.emit('rpcUrlChangeSuccess', newRpcUrl);
+      } catch (error) {
+        this.rpcEventEmitter?.emit('rpcUrlChangeError', error, newRpcUrl);
+      }
+    });
+  }
+
+  /**
+   * Updates the RPC endpoint and recreates all clients
+   */
+  private async updateRpcEndpoint(newRpcUrl: string): Promise<void> {
+    // Create new connection with the new RPC URL
+    const newConnection = new Connection(newRpcUrl);
+    
+    // Create new clients with the new connection
+    const newPoolClient = new PoolClient(newConnection);
+    const newTokenClient = new TokenClient(newConnection);
+    const newFarmingClient = new FarmingClient(newConnection);
+    
+    // Fetch updated pools data with the new connection
+    const [pools, v2Pools] = await Promise.all([
+      newPoolClient.getPools(),
+      newPoolClient.getV2Pools(),
+    ]);
+    
+    // Update all internal state
+    this.connection = newConnection;
+    this.poolClient = newPoolClient;
+    this.tokenClient = newTokenClient;
+    this.farmingClient = newFarmingClient;
+    this.pools = [...pools, ...v2Pools];
+    
+    // Update the parent SwapBase with the new token client and connection
+    super.updateConnection(newTokenClient, newConnection);
   }
 
   findPool(mintFrom: PublicKey, mintTo: PublicKey): { pool: PoolRpcResponse, isInverted: boolean } | null {
@@ -412,7 +467,7 @@ export class TokenSwap extends SwapBase {
    */
   static async initialize(params: TokenSwapLoadParams = {}): Promise<TokenSwap> {
 
-    const { connection = new Connection(SOLANA_RPC_ENDPOINT), wallet } = params
+    const { connection = new Connection(SOLANA_RPC_ENDPOINT), wallet, rpcEventEmitter } = params
     const poolClient = new PoolClient(connection)
     const tokenClient = new TokenClient(connection)
     const farmingClient = new FarmingClient(connection)
@@ -430,6 +485,7 @@ export class TokenSwap extends SwapBase {
       connection,
       wallet,
       params.referralParams,
+      rpcEventEmitter
     )
   }
 

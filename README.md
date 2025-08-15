@@ -35,6 +35,35 @@ const tokenSwap = await TokenSwap.initialize({
 });
 ```
 
+### Using Event-Driven RPC Switching
+For applications that need to dynamically switch RPC endpoints at runtime:
+
+```js
+import { EventEmitter } from 'events';
+import { TokenSwap } from '@aldrin_exchange/sdk';
+
+// Create an EventEmitter for RPC URL changes
+const rpcEventEmitter = new EventEmitter();
+
+// Initialize TokenSwap with event emitter
+const tokenSwap = await TokenSwap.initialize({
+  rpcEventEmitter: rpcEventEmitter
+});
+
+// Listen for successful/failed RPC changes
+rpcEventEmitter.on('rpcUrlChangeSuccess', (newUrl) => {
+  console.log(`Successfully switched to: ${newUrl}`);
+});
+
+rpcEventEmitter.on('rpcUrlChangeError', (error, attemptedUrl) => {
+  console.error(`Failed to switch to ${attemptedUrl}:`, error);
+});
+
+// Switch RPC endpoints dynamically
+rpcEventEmitter.emit('rpcUrlChange', 'https://your-helius-endpoint.com');
+rpcEventEmitter.emit('rpcUrlChange', 'https://your-quicknode-endpoint.com');
+```
+
 ## Usage
 
 ***
