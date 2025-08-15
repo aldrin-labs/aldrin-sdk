@@ -15,6 +15,26 @@
 2. Install library with `npm install @aldrin_exchange/sdk` or `yarn add @aldrin_exchange/sdk` 
 3. Check [Usage](#usage) section or take a look at [examples](https://github.com/aldrin-exchange/aldrin-sdk/tree/main/examples) and [API reference](https://github.com/aldrin-exchange/aldrin-sdk/tree/main/docs)
 
+## Custom RPC Configuration
+
+The SDK uses `https://api.mainnet-beta.solana.com` as the default RPC endpoint. You can customize this in several ways:
+
+### Using Environment Variable
+```bash
+export SOLANA_RPC_ENDPOINT="https://your-custom-rpc-endpoint.com"
+```
+
+### Using Custom Connection
+```js
+import { Connection } from '@solana/web3.js';
+import { TokenSwap } from '@aldrin_exchange/sdk';
+
+const customConnection = new Connection('https://your-custom-rpc-endpoint.com');
+const tokenSwap = await TokenSwap.initialize({ 
+  connection: customConnection 
+});
+```
+
 ## Usage
 
 ***
