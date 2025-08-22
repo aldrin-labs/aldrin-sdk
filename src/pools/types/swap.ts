@@ -1,5 +1,6 @@
 import { Connection, PublicKey } from '@solana/web3.js';
 import BN from 'bn.js';
+import { EventEmitter } from 'events';
 import { WithAuhority, WithWallet } from '.';
 import { PoolVersion, Wallet, WithReferral } from '../../types';
 import { LiquidityPool } from './pools';
@@ -53,6 +54,7 @@ export interface TokenSwapLoadParams {
   connection?: Connection
   wallet?: Wallet
   referralParams?: WithReferral
+  rpcEventEmitter?: EventEmitter // Optional EventEmitter for dynamic RPC URL changes
 }
 
 export type OptionalDepositAmounts = {

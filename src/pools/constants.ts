@@ -188,5 +188,8 @@ export const VESTING_DENOMINATOR = new BN(3) // User receive another 2/3 of rewa
 export const SWAP_FEE_NUMERATOR = new BN(3)
 export const SWAP_FEE_DENOMINATOR = new BN(1000)
 
-// export const SOLANA_RPC_ENDPOINT = 'https://api.mainnet-beta.solana.com'
-export const SOLANA_RPC_ENDPOINT = 'https://api.mainnet-beta.solana.com'
+// Default RPC endpoint - can be overridden via environment variable or constructor parameter
+export const DEFAULT_SOLANA_RPC_ENDPOINT = 'https://api.mainnet-beta.solana.com'
+
+// Allow custom RPC endpoint via environment variable
+export const SOLANA_RPC_ENDPOINT = process.env.SOLANA_RPC_ENDPOINT || DEFAULT_SOLANA_RPC_ENDPOINT

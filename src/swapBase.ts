@@ -51,4 +51,15 @@ export abstract class SwapBase {
     return walletTokens
 
   }
+
+  /**
+   * Updates the connection and token client (used for dynamic RPC switching)
+   */
+  protected updateConnection(tokenClient: TokenClient, connection: Connection): void {
+    this.tokenClient = tokenClient;
+    this.connection = connection;
+    // Clear caches when connection changes as they may be stale
+    this.mintInfos.clear();
+    this.walletTokens.clear();
+  }
 }
